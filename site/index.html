@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Monitoreo ejecutivo de El Niño en Perú: índices NOAA, pronósticos SENAMHI, comunicados ENFEN y escenarios de riesgo CENEPRED con trazabilidad y control de calidad.">
+  <meta name="theme-color" content="#122838">
+  <title>El Niño · Observatorio Perú</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="assets/vendor/leaflet.css">
+  <link rel="stylesheet" href="assets/style.css">
+  <script defer src="assets/vendor/leaflet.js"></script>
+  <script defer src="assets/vendor/leaflet-heat.js"></script>
+  <script defer src="assets/vendor/chart.umd.js"></script>
+  <script type="module" src="assets/app.mjs"></script>
+</head>
+<body>
+  <a class="skip" href="#main">Ir al contenido</a>
+  <aside class="sidebar">
+    <a class="brand" href="#panorama" aria-label="Observatorio Perú, inicio"><span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M3 12c5-7 9 7 14 0s9 5 12 0M3 20c5-7 9 7 14 0s9 5 12 0"/></svg></span><span>OBSERVATORIO<span class="brand-country">PERÚ</span></span></a>
+    <div class="sidebar-label">INTELIGENCIA CLIMÁTICA</div>
+    <nav aria-label="Navegación principal">
+      <a href="#panorama" class="nav-link active"><svg viewBox="0 0 24 24"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg>Panorama ejecutivo</a>
+      <a href="#series" class="nav-link"><svg viewBox="0 0 24 24"><path d="M3 3v18h18M6 15l5-5 4 3 6-8"/></svg>Series y pronósticos</a>
+      <a href="#zonas" class="nav-link"><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 11-8 11S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>Zonas críticas</a>
+      <a href="#fuentes" class="nav-link"><svg viewBox="0 0 24 24"><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6Z"/><path d="m8 11 3 3 5-6"/></svg>Fuentes y calidad</a>
+    </nav>
+    <div class="sidebar-bottom"><span class="mini-kicker">COBERTURA NACIONAL</span><p>El Niño en Perú</p><span>Datos oficiales.<br>Decisiones con contexto.</span><div class="source-names">ENFEN · SENAMHI<br>NOAA · CENEPRED</div><a href="https://github.com/Willy4903/observatorio-elnino-peru" target="_blank" rel="noopener">Ver repositorio <span aria-hidden="true">↗</span></a></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><span>MONITOREO AMBIENTAL <span class="slash">/</span> <span class="top-location">PERÚ</span></span><a href="#fuentes" id="global-status" class="health"><i></i>Verificando fuentes</a></header>
+    <main id="main">
+      <section id="panorama" class="overview">
+        <div class="page-heading"><div><div class="kicker">SEGUIMIENTO CLIMÁTICO Y TERRITORIAL</div><h1>Monitoreo de El Niño en Perú</h1><p class="subtitle">Observaciones del Pacífico, pronósticos y escenarios de riesgo.</p></div><div class="heading-actions"><span id="updated" class="updated">Cargando última actualización…</span><button id="download" class="button button-white"><svg viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>Exportar datos</button></div></div>
+        <div id="load-message" role="status" class="loading-message">Consultando datos oficiales verificados…</div>
+        <div id="alert-strip" class="alert-strip" hidden><div class="alert-indicator"></div><div><span class="tag-inline">ENFEN · ESTADO OFICIAL</span><span id="enfen-state">Sin comunicado verificado</span><span id="enfen-date" class="subtle"></span></div><a id="enfen-link" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener">Leer comunicado <span aria-hidden="true">↗</span></a></div>
+        <form id="filters" class="filters" aria-label="Filtros del dashboard">
+          <div class="filter-title"><svg viewBox="0 0 24 24"><path d="M3 5h18M6 12h12M9 19h6"/></svg><span>Explorar datos</span></div>
+          <label class="filter">Periodo<select id="period"><option value="range">Rango de fechas</option><option value="day">Día</option><option value="month">Mes</option></select></label>
+          <label class="filter" id="from-wrap">Desde<input type="date" id="from" required></label>
+          <label class="filter" id="to-wrap">Hasta<input type="date" id="to" required></label>
+          <label class="filter" id="month-wrap" hidden>Mes<input type="month" id="month"></label>
+          <label class="filter department-filter">Departamento<select id="department"><option value="all">Todo el Perú</option></select></label>
+          <button id="reset" type="button" class="reset" aria-label="Restablecer filtros">Restablecer</button>
+        </form>
+        <p id="filter-notice" class="filter-notice" aria-live="polite"></p>
+        <div class="kpi-grid">
+          <article class="kpi"><div class="kpi-top">PACÍFICO ORIENTAL <span class="small-dot teal"></span></div><h2>Niño 1+2</h2><div class="kpi-number" id="kpi12">—<span>°C</span></div><div class="kpi-detail" id="date12">Anomalía de temperatura superficial del mar</div><span class="kpi-footer">OBSERVACIÓN · NOAA CPC</span></article>
+          <article class="kpi"><div class="kpi-top">PACÍFICO CENTRAL <span class="small-dot blue"></span></div><h2>Niño 3.4</h2><div class="kpi-number" id="kpi34">—<span>°C</span></div><div class="kpi-detail" id="date34">Anomalía de temperatura superficial del mar</div><span class="kpi-footer">OBSERVACIÓN · NOAA CPC</span></article>
+          <article class="kpi"><div class="kpi-top">ESCENARIO DE RIESGO <span class="small-dot orange"></span></div><h2>Distritos en alto o muy alto</h2><div class="kpi-number" id="kpi-risk">—</div><div class="kpi-detail" id="risk-kpi-detail">Escenario distrital CENEPRED</div><span class="kpi-footer">ESCENARIO · CENEPRED</span></article>
+          <article class="kpi"><div class="kpi-top">PRONÓSTICO DISPONIBLE <span class="small-dot purple"></span></div><h2>Localidades con datos</h2><div class="kpi-number" id="kpi-forecast">—</div><div class="kpi-detail" id="forecast-kpi-detail">Temperatura y descripción de lluvia</div><span class="kpi-footer">PRONÓSTICO · SENAMHI</span></article>
+        </div>
+        <div class="map-layout">
+          <article class="panel map-panel">
+            <div class="panel-heading"><div><span class="kicker">LECTURA TERRITORIAL</span><h2>Mapa de monitoreo</h2></div><span id="map-kind" class="pill scenario">ESCENARIO</span></div>
+            <div class="segmented" role="group" aria-label="Tipo de información"><button type="button" data-kind="observation">Observaciones</button><button type="button" data-kind="forecast">Pronósticos</button><button type="button" data-kind="risk_scenario" class="selected" aria-pressed="true">Escenarios de riesgo</button></div>
+            <div class="map-controls"><label id="hazard-wrap">Peligro<select id="hazard"><option value="inundacion">Inundación</option><option value="movimientos_masa">Movimientos en masa</option></select></label><label>Capa<select id="map-layer"><option value="heat">Densidad de puntos críticos</option><option value="risk">Distritos en riesgo alto o muy alto</option></select></label><button type="button" id="map-reset" class="map-reset" title="Reencuadrar mapa">Ver ámbito</button></div>
+            <div class="map-container"><div id="map" role="region" aria-label="Mapa geográfico interactivo de Perú"></div><div class="map-overlay-note" id="map-overlay-note">CENEPRED · Inventario georreferenciado</div><div class="map-legend" id="map-legend"></div></div>
+            <div class="map-footnote" id="map-footnote"></div>
+          </article>
+          <aside class="panel priorities"><div class="panel-heading"><div><span class="kicker">PRIORIZACIÓN TERRITORIAL</span><h2 id="ranking-title">Dónde concentrar la mirada</h2></div></div><p id="ranking-subtitle" class="panel-description"></p><div id="ranking" class="ranking"></div><div id="executive-note" class="executive-note"></div><a href="#zonas" class="text-link">Explorar el detalle territorial <span aria-hidden="true">→</span></a></aside>
+        </div>
+      </section>
+      <section id="series" class="section">
+        <div class="section-heading"><div><span class="kicker">EVOLUCIÓN Y PERSPECTIVAS</span><h2>Series oceánicas y pronósticos</h2></div><label class="compact-label">Frecuencia NOAA<select id="frequency"><option value="weekly">Semanal</option><option value="monthly">Mensual oficial</option></select></label></div>
+        <div class="charts-grid">
+          <article class="panel chart-panel"><div class="panel-heading"><div><h3>Anomalía de temperatura del mar</h3><p>Niño 1+2 y Niño 3.4 · °C</p></div><span class="pill observation">OBSERVACIÓN</span></div><div class="chart-wrap"><canvas id="noaa-chart" aria-label="Serie de anomalías Niño 1+2 y Niño 3.4" role="img"></canvas><div class="chart-empty" id="noaa-empty" hidden>Sin observaciones publicadas en este periodo.</div></div><p class="chart-note" id="noaa-note">Cada punto conserva la frecuencia oficial. Sin interpolación diaria.</p></article>
+          <article class="panel chart-panel"><div class="panel-heading"><div><h3>Temperatura prevista en localidades</h3><p>Promedio de máximas y mínimas disponibles · °C</p></div><span class="pill forecast">PRONÓSTICO</span></div><div class="chart-wrap"><canvas id="forecast-chart" aria-label="Pronóstico de temperatura máxima y mínima" role="img"></canvas><div class="chart-empty" id="forecast-empty" hidden>Sin pronósticos archivados para este periodo.</div></div><p class="chart-note">Cobertura de localidades, sin ponderación por área. No es una temperatura observada.</p></article>
+        </div>
+        <article class="panel forecast-panel"><div class="panel-heading"><div><span class="kicker">PRECIPITACIÓN Y TEMPERATURA</span><h3>Pronóstico por localidad</h3><p id="forecast-summary"></p></div><label class="search"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg><input type="search" id="forecast-search" placeholder="Buscar localidad" aria-label="Buscar localidad de pronóstico"></label></div><div class="table-scroll"><table><thead><tr><th>Localidad / departamento</th><th>Fecha de validez</th><th>Máxima</th><th>Mínima</th><th>Precipitación y condiciones previstas</th><th>Fuente</th></tr></thead><tbody id="forecast-body"></tbody></table></div><div class="table-footer"><span id="forecast-count"></span><div><button type="button" id="forecast-prev" class="pager" aria-label="Pronósticos anteriores">←</button><button type="button" id="forecast-next" class="pager" aria-label="Pronósticos siguientes">→</button></div></div></article>
+      </section>
+      <section id="zonas" class="section">
+        <div class="section-heading"><div><span class="kicker">RIESGO Y EXPOSICIÓN</span><h2>Zonas críticas con respaldo oficial</h2></div><span class="context-label">Escenario CENEPRED · marco 2025–2027</span></div>
+        <article class="panel"><div class="panel-heading zones-toolbar"><div class="segmented small" role="group" aria-label="Detalle territorial"><button type="button" data-table="districts" class="selected" aria-pressed="true">Riesgo distrital</button><button type="button" data-table="points">Puntos y zonas críticas</button></div><label class="compact-label">Nivel<select id="risk-level"><option value="high">Alto y muy alto</option><option value="all">Todos los niveles</option><option value="Muy alto">Muy alto</option><option value="Alto">Alto</option><option value="Medio">Medio</option><option value="Bajo">Bajo</option></select></label><label id="document-date-wrap" class="checkbox-label" hidden><input type="checkbox" id="document-date">Filtrar fecha de ficha</label><label class="search"><input type="search" id="zone-search" placeholder="Departamento, distrito o sector" aria-label="Buscar zona crítica"></label></div><div class="table-scroll"><table><thead id="zone-head"></thead><tbody id="zone-body"></tbody></table></div><div class="table-footer"><span id="zone-count"></span><div><button type="button" id="zone-prev" class="pager" aria-label="Zonas anteriores">←</button><button type="button" id="zone-next" class="pager" aria-label="Zonas siguientes">→</button></div></div><p class="table-context" id="zone-context"></p></article>
+      </section>
+      <section id="fuentes" class="section sources-section">
+        <div class="section-heading"><div><span class="kicker">TRAZABILIDAD Y CONFIANZA</span><h2>Fuentes oficiales y calidad de datos</h2></div><a class="text-link" href="data/quality.json" target="_blank" rel="noopener">Ver reporte de calidad <span aria-hidden="true">↗</span></a></div>
+        <div class="source-grid" id="source-cards"></div>
+        <div class="method-grid"><article class="panel method"><h3>Cómo interpretar este dashboard</h3><dl><dt>Observaciones</dt><dd>Índices oceánicos calculados por NOAA CPC. Una anomalía aislada no declara un evento de El Niño.</dd><dt>Pronósticos</dt><dd>Temperatura y descripción de precipitación de SENAMHI. Los milímetros y probabilidades ausentes se mantienen como no disponibles.</dd><dt>Escenarios e inventarios</dt><dd>Categorías distritales y puntos documentados de SIGRID. No equivalen a eventos en curso ni a probabilidad diaria.</dd></dl></article><article class="panel method"><h3>Automatización y controles</h3><p>Consulta programada cada 6 horas, con frecuencia propia para cada fuente. Las publicaciones oficiales pueden tener rezago.</p><p>Validación de esquema, unidades, fechas, rangos físicos, UBIGEO, coordenadas, duplicados y paginación completa. Si falla una fuente, se conserva su última versión válida y se informa la incidencia.</p><p id="history-note"></p><a class="text-link" href="https://github.com/Willy4903/observatorio-elnino-peru/actions" target="_blank" rel="noopener">Ver ejecuciones de GitHub Actions <span aria-hidden="true">↗</span></a></article></div>
+      </section>
+      <footer><span>OBSERVATORIO PERÚ <span class="footer-separator">/</span> Monitoreo de El Niño</span><span>Fuentes: ENFEN · SENAMHI · NOAA CPC · CENEPRED</span></footer>
+    </main>
+  </div>
+</body>
+</html>

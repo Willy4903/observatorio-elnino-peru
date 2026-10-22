@@ -1,0 +1,89 @@
+name: Actualizar y publicar observatorio
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['site/data/**', 'docs/**', 'README.md']
+  schedule:
+    - cron: '27 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Consultar todas las fuentes sin esperar su intervalo'
+        required: false
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: observatorio-pages
+  cancel-in-progress: false
+jobs:
+  refresh:
+    name: Adquirir, verificar y conservar datos
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pages: read
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Preparar Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+      - name: Verificar lector de comunicados PDF
+        run: |
+          if ! command -v pdftotext >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y poppler-utils
+          fi
+      - name: Probar adquisición y filtros
+        run: |
+          python -m unittest discover -s tests -v
+          node --test tests/selectors.test.mjs
+          node --check site/assets/app.mjs
+      - name: Consultar fuentes según su disponibilidad
+        env:
+          FORCE_REFRESH: ${{ inputs.force || 'false' }}
+        run: |
+          if [ "$FORCE_REFRESH" = "true" ]; then
+            python pipeline/update.py --force
+          else
+            python pipeline/update.py
+          fi
+      - name: Verificar integridad y preparar mapas
+        run: |
+          python pipeline/update.py --validate-only
+          python pipeline/build.py
+      - name: Conservar datos y archivo de pronósticos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          if ! git diff --cached --quiet; then
+            git commit -m "data: actualizar fuentes oficiales y calidad"
+            git push origin HEAD:main
+          fi
+      - name: Configurar Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Preparar sitio verificado
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+          retention-days: 1
+  deploy:
+    name: Publicar en GitHub Pages
+    needs: refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar dashboard
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
