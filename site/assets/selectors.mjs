@@ -56,3 +56,34 @@ export function csv(rows, fields) {
   };
   return '\ufeff' + [fields.map(escape).join(','), ...rows.map(r => fields.map(f => escape(r[f])).join(','))].join('\r\n');
 }
+
+// Malla geográfica fija: 30 km entre centros vecinos en EPSG:3857.
+// Cada punto pertenece exactamente a una celda; el zoom no modifica el conteo.
+export function hexbinPoints(points, spacingKm = 30) {
+  if (!(spacingKm > 0) || !Number.isFinite(spacingKm)) throw new RangeError('El tamaño de celda debe ser positivo.');
+  const earth = 6378137, radius = spacingKm * 1000 / Math.sqrt(3), cells = new Map();
+  const inverse = (x,y) => [180 / Math.PI * (2 * Math.atan(Math.exp(y / earth)) - Math.PI / 2), x / earth * 180 / Math.PI];
+  for (const point of points) {
+    if (!Number.isFinite(point.lat) || !Number.isFinite(point.lon) || Math.abs(point.lat) > 85 || Math.abs(point.lon) > 180) continue;
+    const x = earth * point.lon * Math.PI / 180;
+    const y = earth * Math.log(Math.tan(Math.PI / 4 + point.lat * Math.PI / 360));
+    const q = (Math.sqrt(3) / 3 * x - y / 3) / radius, r = 2 * y / 3 / radius;
+    let rq = Math.round(q), rr = Math.round(r), rs = Math.round(-q-r);
+    const dq = Math.abs(rq-q), dr = Math.abs(rr-r), ds = Math.abs(rs+q+r);
+    if (dq > dr && dq > ds) rq = -rr-rs;
+    else if (dr > ds) rr = -rq-rs;
+    const id = `${rq}:${rr}`;
+    if (!cells.has(id)) {
+      const cx = radius * Math.sqrt(3) * (rq + rr / 2), cy = radius * 1.5 * rr;
+      const polygon = Array.from({length:6}, (_,i) => {
+        const angle = (60*i+30)*Math.PI/180;
+        return inverse(cx+radius*Math.cos(angle), cy+radius*Math.sin(angle));
+      });
+      cells.set(id, {id, center:inverse(cx,cy), polygon, count:0, departments:new Set(), points:[]});
+    }
+    const cell = cells.get(id);
+    cell.count++;cell.points.push(point);
+    if (point.department) cell.departments.add(point.department);
+  }
+  return [...cells.values()].map(c => ({...c, departments:[...c.departments].sort()})).sort((a,b) => b.count-a.count || a.id.localeCompare(b.id));
+}
