@@ -176,7 +176,7 @@ function renderKpis() {
 
 function initMap() {
   if (!window.L) { $('map').textContent='El componente del mapa no pudo cargarse.'; return; }
-  state.map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:false,minZoom:2,maxZoom:15});
+  state.map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:false,minZoom:2,maxZoom:15,zoomSnap:.25,zoomDelta:.5});
   state.map.createPane('borders');state.map.getPane('borders').style.zIndex=440;state.map.getPane('borders').style.pointerEvents='none';
   state.map.createPane('labels');state.map.getPane('labels').style.zIndex=460;state.map.getPane('labels').style.pointerEvents='none';
   const observer=new ResizeObserver(()=>{requestAnimationFrame(()=>{state.map.invalidateSize({pan:false});reframe();});});observer.observe($('map'));
