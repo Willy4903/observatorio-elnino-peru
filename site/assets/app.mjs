@@ -81,7 +81,9 @@ async function loadData() {
   const boundary=state.data.boundaries?.data;
   if (boundary) {
     const departments=[...boundary.features].sort((a,b)=>a.properties.name.localeCompare(b.properties.name,'es'));
-    $('department').insertAdjacentHTML('beforeend',departments.map(f=>`<option value="${e(f.properties.code)}">${e(titleCase(f.properties.name))}</option>`).join(''));
+    const selectedDepartment=$('department').value;
+    $('department').innerHTML='<option value="all">Todo el Perú</option>'+departments.map(f=>`<option value="${e(f.properties.code)}">${e(titleCase(f.properties.name))}</option>`).join('');
+    $('department').value=departments.some(f=>f.properties.code===selectedDepartment)?selectedDepartment:'all';
     state.departmentNames=Object.fromEntries(boundary.features.map(f=>[f.properties.code,normalize(f.properties.name)]));
   }
   if (state.data.senamhi_forecast) state.versions=[state.data.senamhi_forecast];
@@ -93,12 +95,37 @@ async function loadData() {
     $('enfen-link').href=safeUrl(bulletin.document_url,'https://enfen.imarpe.gob.pe/comunicados/');
   }
   $('updated').textContent=`Última ejecución: ${timestamp(manifest.generated_at)}`;
-  const operational=manifest.sources.filter(s=>s.kind!=='reference');
+  renderHealth();
+  $('history-note').textContent=manifest.history_start?`El archivo de pronósticos comienza el ${dateLabel(limaDate(manifest.history_start))}. Las series oceánicas conservan su historia oficial desde 1981/1982; no se reconstruyen pronósticos anteriores al archivo.`:'Aún no hay archivo histórico de pronósticos.';
+  renderSources();
+}
+
+function renderHealth() {
+  const operational=state.manifest.sources.filter(s=>s.kind!=='reference');
   const ok=operational.filter(s=>clientStatus(s)==='ok').length;
   $('global-status').innerHTML=`<i></i>${ok}/${operational.length} conjuntos al día`;
   $('global-status').classList.toggle('degraded',ok!==operational.length);
-  $('history-note').textContent=manifest.history_start?`El archivo de pronósticos comienza el ${dateLabel(limaDate(manifest.history_start))}. Las series oceánicas conservan su historia oficial desde 1981/1982; no se reconstruyen pronósticos anteriores al archivo.`:'Aún no hay archivo histórico de pronósticos.';
-  renderSources();
+}
+
+let refreshingPublication=false;
+async function refreshPublication() {
+  if (document.hidden || refreshingPublication || !state.manifest) return;
+  refreshingPublication=true;
+  try {
+    networkCache.delete('./data/manifest.json');
+    const next=await getJson('./data/manifest.json');
+    if (next.generated_at!==state.manifest.generated_at) {
+      networkCache.clear();
+      networkCache.set('./data/manifest.json',Promise.resolve(next));
+      state.versions=[];state.pointLite=null;delete state.data.cenepred_points;
+      await loadData();
+      await applyFilters();
+    } else {renderHealth();renderSources();}
+  } catch {
+    renderSources();
+    $('global-status').classList.add('degraded');
+    $('global-status').innerHTML='<i></i>Consulta de actualización pendiente';
+  } finally {refreshingPublication=false;}
 }
 
 async function ensureForecastHistory() {
@@ -372,6 +399,8 @@ function bindEvents() {
 
 try {
   setDefaults();await loadData();initMap();bindEvents();await applyFilters();
+  setInterval(()=>void refreshPublication(),15*60*1000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshPublication();});
 } catch(error) {
   $('load-message').hidden=false;$('load-message').classList.add('error');
   $('load-message').textContent='No se pudo cargar el conjunto de datos publicado. Revise la conexión y el estado de las ejecuciones en GitHub Actions.';

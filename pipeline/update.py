@@ -104,7 +104,7 @@ class Fetcher:
         for attempt in range(3):
             try:
                 req = Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
-                with urlopen(req, timeout=30) as response:
+                with urlopen(req, timeout=60) as response:
                     final_host = urlparse(response.url).hostname or ""
                     if not any(final_host == s or final_host.endswith("." + s) for s in allowed):
                         raise ValueError("Redirección fuera de los dominios oficiales")
@@ -118,7 +118,7 @@ class Fetcher:
                     raise
                 if attempt == 2:
                     raise
-                time.sleep(1 + attempt * 2)
+                time.sleep(5 * (2 ** attempt))
         raise RuntimeError("Adquisición incompleta")
 
     def text(self, url):
@@ -388,7 +388,7 @@ COLLECTORS = {"noaa_weekly": lambda f: collect_noaa(f), "noaa_monthly": lambda f
 
 
 def source_due(state, hours, force=False):
-    if force or not state or not state.get("last_success"):
+    if force or not state or not state.get("last_success") or state.get("error"):
         return True
     # Ventanas UTC evitan saltarse una ejecución por segundos de diferencia del runner.
     window = hours * 3600

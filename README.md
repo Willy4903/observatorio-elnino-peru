@@ -18,6 +18,8 @@ El workflow se ejecuta a las 00:27, 06:27, 12:27 y 18:27 UTC: 19:27 del día ant
 
 GitHub puede retrasar ejecuciones programadas. No es streaming ni una garantía de tiempo real. La fecha del dato, la consulta y la actualización del contenido se conservan por separado. Los cambios reales se detectan mediante SHA-256; una consulta reciente no convierte un dato antiguo en vigente.
 
+Una página abierta comprueba la publicación cada 15 minutos y al volver a su pestaña. Si hay una versión nueva, actualiza los datos conservando los filtros. Los recursos del sitio se versionan por su hash para evitar utilizar código anterior desde la caché.
+
 ## Lectura · Distingue observaciones, pronósticos y escenarios
 
 - Observaciones: se conservan las fechas y frecuencias oficiales. El filtro diario no interpola índices semanales. El mensual usa meses completos publicados. Niño 1+2 no es ICEN; Niño 3.4 no es ONI ni RONI. La alerta corresponde a ENFEN.
@@ -47,7 +49,7 @@ python pipeline/update.py --force
 python pipeline/build.py
 python -m unittest discover -s tests -v
 node --test tests/selectors.test.mjs
-python -m http.server 8000 --directory site
+python -m http.server 8000 --directory dist
 ```
 
 Abre `http://localhost:8000`. Para actualizar una fuente:
@@ -57,7 +59,7 @@ python pipeline/update.py --only senamhi_forecast --force
 python pipeline/build.py
 ```
 
-Publicación: repositorio público, Settings → Pages → Source: GitHub Actions. El workflow conserva los datos mediante `GITHUB_TOKEN` y publica el artefacto verificado. No usa secretos personales. Los permisos de escritura se limitan a los jobs necesarios; las acciones están fijadas a commits.
+Publicación: repositorio público, Settings → Pages → Source: GitHub Actions. `pipeline/build.py` genera `dist/` con recursos versionados. El workflow conserva los datos mediante `GITHUB_TOKEN` y publica ese artefacto verificado. No usa secretos personales. Los permisos de escritura se limitan a los jobs necesarios; las acciones están fijadas a commits.
 
 Pages y los runners estándar de Actions son gratuitos en repositorios públicos según las condiciones de GitHub. Los artefactos de despliegue se conservan un día. En repositorios públicos sin actividad, GitHub puede desactivar programaciones a los 60 días; el dashboard muestra la falta de actualización. El archivo y el historial git crecen con el tiempo y deben revisarse si se aproximan los límites del repositorio o de Pages.
 
