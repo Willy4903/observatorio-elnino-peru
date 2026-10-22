@@ -197,12 +197,12 @@ function renderMap() {
   }
   if (state.kind==='risk_scenario' && state.layer==='heat') {
     const points=selectedPoints();
-    if (points.length && L.heatLayer) addMapLayer(L.heatLayer(points.map(p=>[p.lat,p.lon,1]),{radius:17,blur:18,maxZoom:9,max:3,minOpacity:.22,gradient:{.15:'#41a7bc',.35:'#67bd9c',.55:'#e2d88b',.75:'#e6a26c',1:'#c44e45'}}));
+    if (points.length && L.heatLayer) addMapLayer(L.heatLayer(points.map(p=>[p.lat,p.lon,1]),{radius:13,blur:12,maxZoom:9,max:Math.max(2,points.length/1000),minOpacity:.18,gradient:{.15:'#41a7bc',.35:'#67bd9c',.55:'#e2d88b',.75:'#e6a26c',1:'#c44e45'}}));
     // Los puntos exactos aparecen al acercar; el canvas evita miles de nodos DOM.
     if (state.map.getZoom()>=7 && points.length<7000) addMapLayer(L.layerGroup(points.map(p=>L.circleMarker([p.lat,p.lon],{radius:3,color:'#9c5d3c',weight:.5,fillColor:'#d59864',fillOpacity:.7}).bindPopup(`<strong>${e(p.place||p.id)}</strong><br>${e(titleCase(p.district||p.department))}<br>${HAZARDS[p.hazard]}<br>Ficha: ${dateLabel(p.document_date)}<br>Inventario; no evento actual`))));
     legend('Concentración de puntos documentados','Menor densidad','Mayor densidad','heat');
     $('map-overlay-note').textContent=`SIGRID · ${fmt(points.length)} puntos de ${HAZARDS[state.hazard].toLowerCase()}`;
-    $('map-footnote').textContent='El calor indica densidad de puntos documentados, con peso unitario. No representa lluvia, severidad ni probabilidad. Las fechas de ficha se filtran solo al activar esa opción en Zonas críticas.';
+    $('map-footnote').textContent='Densidad de puntos documentados, con peso unitario y escala relativa a la selección y al zoom. No representa lluvia, severidad ni probabilidad. El filtro por fecha de ficha es opcional en Zonas críticas.';
     if (!points.length) showMapEmpty('Sin puntos documentados para la selección. No equivale a ausencia de peligro.');
   } else if (state.kind==='risk_scenario') {
     legend('Distritos en alto o muy alto','0%','100%');
