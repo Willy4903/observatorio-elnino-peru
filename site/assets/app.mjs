@@ -1,5 +1,6 @@
 import {oceanScalarLayer, oceanVectorLayer} from './ocean.mjs';
-import {normalize, inRange, highRisk, mean, limaDate, selectNoaa, selectForecasts, riskByDepartment, forecastByDepartment, forecastByDate, territorialCoverage, csv, hexbinPoints} from './selectors.mjs';
+import {GLOSSARY,GLOSSARY_CATEGORIES} from './glossary.mjs';
+import {normalize, inRange, highRisk, mean, limaDate, selectNoaa, selectForecasts, riskByDepartment, forecastByDepartment, forecastByDate, territorialCoverage, forecastSummary, districtOptions, pointMatchesDistrict, csv, hexbinPoints} from './selectors.mjs';
 
 const $ = id => document.getElementById(id);
 const fmt = (n, digits = 0) => n == null ? '—' : new Intl.NumberFormat('es-PE', {maximumFractionDigits: digits, minimumFractionDigits: digits}).format(n);
@@ -12,9 +13,9 @@ function safeUrl(url, fallback = 'https://sigrid.cenepred.gob.pe/sigridv3/') {
 }
 const HAZARDS = {inundacion:'Inundación',movimientos_masa:'Movimientos en masa'};
 const STATUS = {ok:'Disponible',stale:'Desactualizado',degraded:'Consulta fallida',unavailable:'Sin datos'};
-const state = {kind:'observation',layer:'sst',vectors:true,oceanExtent:'national',inspectorDepartment:'20',inspectorDistrict:null,hazard:'inundacion',frequency:'weekly',table:'districts',forecastPage:0,zonePage:0,from:'',to:'',department:'all',data:{},versions:[],forecastRows:[],zoneRows:[],history:[],map:null,mapLayers:[],territoryMarkers:[],polygons:null,noaaChart:null,forecastChart:null};
+const state = {kind:'observation',layer:'sst',vectors:true,oceanExtent:'national',inspectorDepartment:'all',inspectorDistrict:null,district:'all',hazard:'inundacion',frequency:'weekly',table:'districts',forecastPage:0,zonePage:0,from:'',to:'',department:'all',data:{},versions:[],forecastRows:[],zoneRows:[],history:[],map:null,mapLayers:[],territoryMarkers:[],polygons:null,noaaChart:null,forecastChart:null};
 const networkCache = new Map();
-const PAGE = 12;
+const PAGE = window.matchMedia('(max-width:600px)').matches?6:12;
 
 async function getJson(path) {
   if (!networkCache.has(path)) networkCache.set(path, fetch(path, {cache:'no-cache'}).then(async r => {
@@ -34,7 +35,7 @@ function clientStatus(source) {
   if (!source.last_success) return 'unavailable';
   if (source.error) return 'degraded';
   const age = (Date.now() - new Date(source.last_success)) / 3600000;
-  const maxHours = source.id === 'boundaries' ? 1440 : 72;
+  const maxHours = source.kind === 'reference' ? 1440 : 72;
   if (age > maxHours) return 'stale';
   if (source.latest_date && source.max_age_days != null && (new Date(limaDate())-new Date(source.latest_date))/86400000 > source.max_age_days) return 'stale';
   return source.status;
@@ -46,6 +47,7 @@ function setDefaults() {
   const end = new Date(today+'T12:00:00Z'); end.setUTCDate(end.getUTCDate()+3);
   $('from').value=start.toISOString().slice(0,10); $('to').value=end.toISOString().slice(0,10); $('month').value=today.slice(0,7);
   $('period').value='range'; $('department').value='all';
+  state.district='all';state.inspectorDistrict=null;
   updatePeriodInputs();
 }
 function updatePeriodInputs() {
@@ -64,9 +66,11 @@ function readFilters() {
   } else {
     state.from=$('from').value; state.to=period==='day'?state.from:$('to').value;
   }
+  if(state.department!==$('department').value){state.district='all';state.inspectorDistrict=null;}
   state.department=$('department').value;
   if (!state.from || !state.to || state.from>state.to) {
     $('filter-notice').textContent='Elige un periodo válido: la fecha inicial debe ser anterior o igual a la final.';
+    $('filter-notice').closest('details').open=true;
     return false;
   }
   return true;
@@ -74,7 +78,9 @@ function readFilters() {
 
 async function loadData() {
   const manifest=await getJson('./data/manifest.json'); state.manifest=manifest;
-  const needed=manifest.sources.filter(s=>s.last_success && s.id!=='cenepred_points');
+  const geometryHash=manifest.sources.find(s=>s.id==='district_boundaries')?.data_sha256;
+  if(state.districtGeometryHash!==geometryHash){state.districtFeaturesByDepartment={};state.districtGeometryHash=geometryHash;delete state.data.district_boundaries;}
+  const needed=manifest.sources.filter(s=>s.last_success && !['cenepred_points','district_boundaries'].includes(s.id));
   const loaded=await Promise.allSettled(needed.map(async s=>{state.data[s.id]=await getJson(`./data/${s.file??s.id+'.json'}`);}));
   const errors=loaded.filter(x=>x.status==='rejected');
   if (errors.length) { $('load-message').textContent=`${errors.length} conjunto(s) no pudieron cargarse. Consulte Fuentes y calidad.`; $('load-message').classList.add('error'); }
@@ -85,7 +91,7 @@ async function loadData() {
     const selectedDepartment=$('department').value;
     $('department').innerHTML='<option value="all">Todo el Perú</option>'+departments.map(f=>`<option value="${e(f.properties.code)}">${e(titleCase(f.properties.name))}</option>`).join('');
     $('department').value=departments.some(f=>f.properties.code===selectedDepartment)?selectedDepartment:'all';
-    $('inspector-department').innerHTML=departments.map(f=>`<option value="${e(f.properties.code)}">${e(titleCase(f.properties.name))}</option>`).join('');
+    $('inspector-department').innerHTML='<option value="all">Todo el Perú</option>'+departments.map(f=>`<option value="${e(f.properties.code)}">${e(titleCase(f.properties.name))}</option>`).join('');
     state.departmentNames=Object.fromEntries(boundary.features.map(f=>[f.properties.code,normalize(f.properties.name)]));
   }
   state.oceanVersions=Object.fromEntries(['noaa_ocean_sst','noaa_ocean_currents'].map(id=>[id,state.data[id]?[state.data[id]]:[]]));
@@ -124,7 +130,7 @@ async function refreshPublication() {
       state.versions=[];state.pointLite=null;delete state.data.cenepred_points;
       await loadData();
       await applyFilters();
-    } else {renderHealth();renderSources();}
+    } else {renderHealth();renderSources();renderInsights();}
   } catch {
     renderSources();
     $('global-status').classList.add('degraded');
@@ -157,9 +163,25 @@ function allPoints() {
 }
 function pointMatchesDepartment(r) {return state.department==='all' || normalize(r.department)===state.departmentNames?.[state.department];}
 function selectedPoints() {
-  return allPoints().filter(r=>r.hazard===state.hazard && pointMatchesDepartment(r) && (!$('document-date').checked || inRange(r.document_date,state.from,state.to)));
+  const district=selectedDistrict();
+  return allPoints().filter(r=>r.hazard===state.hazard && pointMatchesDepartment(r) && (state.district==='all'||pointMatchesDistrict(r,district)) && (!$('document-date').checked || inRange(r.document_date,state.from,state.to)));
 }
-function selectedRisks() {return (state.data.cenepred_risk?.data??[]).filter(r=>r.hazard===state.hazard && (state.department==='all'||r.department_code===state.department));}
+function selectedRisks() {return (state.data.cenepred_risk?.data??[]).filter(r=>r.hazard===state.hazard && (state.department==='all'||r.department_code===state.department) && (state.district==='all'||r.ubigeo===state.district));}
+function selectedDistrict(){
+  if(state.district==='all')return null;
+  const rows=state.data.cenepred_risk?.data??[],record=rows.find(r=>r.ubigeo===state.district&&r.hazard===state.hazard);
+  if(record)return record;
+  const metadata=rows.find(r=>r.ubigeo===state.district);return metadata?{...metadata,hazard:state.hazard,risk_level:null}:null;
+}
+async function ensureDistrictBoundaries(){
+  if(state.department==='all'||state.districtFeaturesByDepartment?.[state.department])return;
+  const code=state.department;
+  const source=state.manifest.sources.find(s=>s.id==='district_boundaries');if(!source?.last_success)return;
+  try{(state.districtFeaturesByDepartment??={})[code]=await getJson(`./data/districts/${code}.json.gz`);}catch{
+    try{state.data.district_boundaries??=await getJson('./data/'+source.file);}catch{state.districtGeometryError=true;}
+  }
+}
+function districtFeaturesForDepartment(){return state.districtFeaturesByDepartment?.[state.department]?.data.features??state.data.district_boundaries?.data.features.filter(f=>f.properties.department_code===state.department)??[];}
 
 function renderKpis() {
   const key=state.frequency==='monthly'?'noaa_monthly':'noaa_weekly',all=state.data[key]?.data??[];
@@ -183,7 +205,7 @@ function renderKpis() {
   $('bar-risk').parentNode.title='Porcentaje de distritos clasificados en alto o muy alto';
   const locations=new Set(state.forecastRows.map(r=>r.locality_id));
   $('kpi-forecast').textContent=state.data.senamhi_forecast?fmt(locations.size):'—';
-  $('forecast-kpi-detail').textContent=state.forecastRows.length?`${fmt(state.forecastRows.length)} registros localidad / día`:'Sin pronósticos en el periodo';
+  $('forecast-kpi-detail').textContent=state.forecastRows.length?`${fmt(state.forecastRows.length)} registros localidad / día${state.district!=='all'?' · ámbito departamental':''}`:'Sin pronósticos en el periodo';
   const coverage=new Set((state.data.senamhi_forecast?.data??[]).map(r=>r.locality_id)).size;
   $('bar-forecast').style.width=coverage?100*locations.size/coverage+'%':'0%';
   $('bar-forecast').parentNode.title='Localidades de la selección respecto del inventario de pronósticos disponible';
@@ -194,6 +216,7 @@ function initMap() {
   state.map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:false,minZoom:2,maxZoom:15,zoomSnap:.25,zoomDelta:.5,zoomAnimation:false,fadeAnimation:false});
   state.map.createPane('borders');state.map.getPane('borders').style.zIndex=440;state.map.getPane('borders').style.pointerEvents='none';
   state.map.createPane('labels');state.map.getPane('labels').style.zIndex=460;state.map.getPane('labels').style.pointerEvents='none';
+  state.map.createPane('districts');state.map.getPane('districts').style.zIndex=450;
   const observer=new ResizeObserver(()=>{requestAnimationFrame(()=>{state.map.invalidateSize({pan:false});reframe();});});observer.observe($('map'));
   for(const [name,z] of [['ocean',250],['oceanVectors',350],['graticule',300]]){state.map.createPane(name);state.map.getPane(name).style.zIndex=z;state.map.getPane(name).style.pointerEvents='none';}
   state.map.attributionControl.addAttribution('NOAA CoastWatch / CENEPRED SIGRID');
@@ -215,20 +238,30 @@ function densityLegend() {
   $('map-legend').innerHTML='<div class="legend-title">PUNTOS POR CELDA · 30 KM</div>'+DENSITY_STEPS.map(s=>`<div class="legend-step"><i style="background:${s.color}"></i><span>${s.label}</span></div>`).join('')+'<div class="legend-empty">Malla fija · conteo de inventario<br>Sin celda: sin puntos registrados</div>';
 }
 function renderInspector(cell=null) {
-  const code=state.department==='all'?state.inspectorDepartment:state.department;
+  const code=state.department,national=code==='all';
   const feature=state.data.boundaries?.data.features.find(f=>f.properties.code===code);
-  const name=titleCase(feature?.properties.name??'Piura');
-  const district=state.inspectorDistrict?.department_code===code?state.inspectorDistrict:null;
-  const risks=(state.data.cenepred_risk?.data??[]).filter(r=>r.department_code===code&&r.hazard===state.hazard),high=risks.filter(r=>highRisk(r.risk_level)),classified=risks.filter(r=>r.risk_level);
-  const points=allPoints().filter(p=>p.hazard===state.hazard&&normalize(p.department)===normalize(feature?.properties.name));
-  const forecasts=state.forecastRows.filter(r=>r.department_code===code),tmax=forecasts.length?Math.max(...forecasts.map(r=>r.tmax_c)):null,tmin=forecasts.length?Math.min(...forecasts.map(r=>r.tmin_c)):null;
+  const name=national?'Perú':titleCase(feature?.properties.name??code);
+  const district=selectedDistrict();
+  const risks=selectedRisks(),high=risks.filter(r=>highRisk(r.risk_level)),classified=risks.filter(r=>r.risk_level);
+  const points=selectedPoints();
+  const forecasts=state.forecastRows,tmax=forecasts.length?Math.max(...forecasts.map(r=>r.tmax_c)):null,tmin=forecasts.length?Math.min(...forecasts.map(r=>r.tmin_c)):null;
   const locations=new Set(forecasts.map(r=>r.locality_id)).size,dates=[...new Set(forecasts.map(r=>r.valid_date))].sort();
   const badge=district?`<span class="level level-${district.risk_level?.toLowerCase().replaceAll(' ','-')??'none'}">${e(district.risk_level??'Sin categoría')}</span>`:'<span class="pill scenario">ESCENARIO</span>';
   const title=cell?`${fmt(cell.count)} puntos documentados`:district?`${name} — ${titleCase(district.district)}`:`${name} · lectura territorial`;
-  $('inspector-ubigeo').textContent=district?`UBIGEO ${district.ubigeo}`:`DPTO. ${code}`;
+  $('inspector-ubigeo').textContent=district?`UBIGEO ${district.ubigeo}`:national?'25 TERRITORIOS':`DPTO. ${code}`;
   $('inspector-department').value=code;
+  renderDistrictPicker();
   document.querySelectorAll('[data-department]').forEach(b=>{b.classList.toggle('selected',b.dataset.department===code);b.setAttribute('aria-pressed',String(b.dataset.department===code));});
-  $('inspector-content').innerHTML=`<div class="inspector-title-row"><div><h3>${e(title)}</h3><p class="inspector-scope">${cell?`Celda ${e(cell.id)} · ${e(cell.departments.map(titleCase).join(' / '))}`:`${e(HAZARDS[state.hazard])} · CENEPRED, marco 2025–2027`}</p></div>${badge}</div><div class="inspector-metrics"><div class="inspector-metric"><span>TEMPERATURA MÁXIMA PREVISTA</span><b>${fmt(tmax,1)} °C</b><small>Mayor máxima publicada en localidades del departamento</small></div><div class="inspector-metric"><span>TEMPERATURA MÍNIMA PREVISTA</span><b>${fmt(tmin,1)} °C</b><small>Menor mínima publicada en localidades del departamento</small></div></div><div class="inspector-facts"><h4>COBERTURA Y ESCENARIO OFICIAL</h4><dl><div><dt>Distritos en alto o muy alto</dt><dd class="hot">${fmt(high.length)} / ${fmt(classified.length)}</dd></div><div><dt>Puntos documentados</dt><dd>${fmt(points.length)}</dd></div><div><dt>Localidades con pronóstico</dt><dd class="cyan">${fmt(locations)}</dd></div><div><dt>Validez de pronósticos</dt><dd>${dates.length?`${dateLabel(dates[0]).slice(0,7)} – ${dateLabel(dates.at(-1)).slice(0,7)}`:'Sin cobertura'}</dd></div></dl></div><div class="inspector-weather">${forecasts.length?e(forecasts.find(r=>r.rain_mentioned)?.description??forecasts[0].description):'Sin pronóstico archivado para esta selección.'}<br><span class="text-slate-500">Lluvia cualitativa SENAMHI · no se publican mm en esta tabla. El escenario no representa una emergencia en curso.</span></div>`;
+  const weatherScope=district?`Departamento de ${name}`:national?'Perú · localidades disponibles':name;
+  $('inspector-content').innerHTML=`<div class="inspector-title-row"><div><h3>${e(title)}</h3><p class="inspector-scope">${cell?`Celda ${e(cell.id)} · ${e(cell.departments.map(titleCase).join(' / '))}`:`${e(HAZARDS[state.hazard])} · CENEPRED, marco 2025–2027`}${district?`<br>${e(titleCase(district.province))} · UBIGEO ${e(district.ubigeo)}`:''}</p></div>${badge}</div><div class="inspector-metrics"><div class="inspector-metric"><span>TEMPERATURA MÁXIMA PREVISTA</span><b>${fmt(tmax,1)} °C</b><small>Mayor máxima publicada · ${e(weatherScope)}</small></div><div class="inspector-metric"><span>TEMPERATURA MÍNIMA PREVISTA</span><b>${fmt(tmin,1)} °C</b><small>Menor mínima publicada · ${e(weatherScope)}</small></div></div><div class="inspector-facts"><h4>COBERTURA Y ESCENARIO OFICIAL</h4><dl><div><dt>Distritos en alto o muy alto</dt><dd class="hot">${classified.length?`${fmt(high.length)} / ${fmt(classified.length)}`:'Sin clasificación'}</dd></div><div><dt>${district?'Puntos vinculados al distrito':'Puntos documentados'}</dt><dd>${fmt(points.length)}</dd></div><div><dt>Localidades con pronóstico${district?' · departamento':''}</dt><dd class="cyan">${fmt(locations)}</dd></div><div><dt>Validez de pronósticos</dt><dd>${dates.length?`${dateLabel(dates[0]).slice(0,7)} – ${dateLabel(dates.at(-1)).slice(0,7)}`:'Sin cobertura'}</dd></div></dl></div><div class="inspector-weather">${district?`Pronóstico de ámbito departamental (${e(name)}): `:''}${forecasts.length?e(forecasts.find(r=>r.rain_mentioned)?.description??forecasts[0].description):'Sin pronóstico archivado para esta selección.'}<br><span class="text-slate-500">Lluvia cualitativa SENAMHI · no se publican mm en esta tabla. El escenario no representa una emergencia en curso.</span></div>`;
+}
+function renderDistrictPicker(){
+  const rows=districtOptions(state.data.cenepred_risk?.data??[],state.department),provinces=[...new Set(rows.map(r=>r.province))];
+  $('inspector-district').innerHTML='<option value="all">Todos los distritos</option>'+provinces.map(province=>`<optgroup label="${e(titleCase(province))}">${rows.filter(r=>r.province===province).map(r=>`<option value="${e(r.ubigeo)}">${e(titleCase(r.district))}</option>`).join('')}</optgroup>`).join('');
+  $('inspector-district').disabled=state.department==='all'||!rows.length;$('inspector-district').value=state.district;
+  $('district-picker-label').textContent=state.department==='all'?'DISTRITO · ELIGE UN DEPARTAMENTO':`DISTRITO · ${rows.length} EN EL ESCENARIO`;
+  $('clear-territory').disabled=state.department==='all'&&state.district==='all';
+  $('district-scope-note').textContent=state.district!=='all'?'Riesgo y puntos: distrito seleccionado. Los puntos se vinculan por coincidencia exacta de departamento, provincia y distrito. SENAMHI conserva el ámbito departamental: esta fuente no aporta correspondencia distrital oficial.':state.department==='all'?'Elige un departamento para habilitar sus distritos.':'Distritos disponibles en el escenario CENEPRED 2025–2027. Elige uno para ver su categoría y puntos documentados.';
 }
 function selectedOcean(id){return (state.oceanVersions?.[id]??[]).filter(env=>inRange(env.meta.latest_date,state.from,state.to)).sort((a,b)=>a.meta.latest_date.localeCompare(b.meta.latest_date)||a.meta.fetched_at.localeCompare(b.meta.fetched_at)).at(-1)??null;}
 async function ensureOceanHistory(){
@@ -253,7 +286,7 @@ function territorialMarkers(){
     const center=L.geoJSON(feature).getBounds().getCenter();
     const point=[...points].sort((a,b)=>(Math.abs(a.lat-center.lat)+Math.abs(a.lon-center.lng))-(Math.abs(b.lat-center.lat)+Math.abs(b.lon-center.lng)))[0]??{lat:center.lat,lon:center.lng};
     const summary=coverage.find(r=>r.code===code),risk=summary.risk;
-    const name=titleCase(feature.properties.name),selected=(state.department==='all'?state.inspectorDepartment:state.department)===code;
+    const name=titleCase(feature.properties.name),selected=state.department===code;
     const detail=state.kind==='forecast'?`${fmt(summary.localities)} localidades`:(risk?.total?`${fmt(risk.high)} distritos en alto / muy alto`:'Sin clasificación');
     const icon=L.divIcon({className:`coastal-marker territory-marker ${selected?'selected':''} ${code==='07'?'label-left':''}`,html:`<span class="signal-dot"></span><span class="signal-label">${e(name.toUpperCase())}</span>`,iconSize:[12,12],iconAnchor:[0,0]});
     const marker=L.marker([point.lat,point.lon],{icon,zIndexOffset:selected?1000:800,keyboard:true,title:`${name}: ${detail} · ${HAZARDS[state.hazard]}`,alt:`Seleccionar ${name}`});
@@ -279,9 +312,18 @@ function layoutTerritoryLabels(){
   }
 }
 function selectTerritory(code){
-  state.inspectorDepartment=code;state.inspectorDistrict=null;
+  state.inspectorDepartment=code;state.inspectorDistrict=null;state.district='all';
+  if(code==='all')state.oceanExtent='national';
   $('department').value=code;
   void applyFilters(true);
+}
+function selectDistrict(code){
+  if(code!=='all'){
+    const record=(state.data.cenepred_risk?.data??[]).find(r=>r.ubigeo===code);if(!record)return;
+    state.department=record.department_code;$('department').value=record.department_code;state.inspectorDepartment=record.department_code;
+    $('risk-level').value='all';
+  }
+  state.district=code;state.inspectorDistrict=selectedDistrict();void applyFilters(true);
 }
 function renderCoverage(){
   const rows=territorialCoverage(state.data.boundaries?.data.features??[],state.data.cenepred_risk?.data??[],selectForecasts(state.versions,{...state,department:'all'}),state.hazard);
@@ -298,11 +340,33 @@ function addGraticule(){
 }
 function reframe() {
   if (!state.map) return;
+  const district=districtFeaturesForDepartment().find(f=>f.properties.ubigeo===state.district);
+  if(district){state.map.fitBounds(L.geoJSON(district).getBounds(),{padding:[35,45],maxZoom:11});return;}
   const feature=state.data.boundaries?.data.features.find(f=>f.properties.code===state.department);
   if (feature) state.map.fitBounds(L.geoJSON(feature).getBounds(),{padding:[30,30],maxZoom:9});
   else if(state.kind==='observation'&&state.oceanExtent!=='national')state.map.fitBounds(state.oceanExtent==='pacific'?[[-22,-174],[7,-66]]:[[-19.5,-99],[1,-69]],{padding:[20,35]});
   else if(state.data.boundaries?.data)state.map.fitBounds(L.geoJSON(state.data.boundaries.data).getBounds(),{paddingTopLeft:[35,65],paddingBottomRight:[35,100]});
   else state.map.fitBounds([[-18.5,-82.5],[0.3,-68.4]],{padding:[35,65]});
+}
+const DISTRICT_COLORS={Bajo:'#22b8cf',Medio:'#facc15',Alto:'#fb923c','Muy alto':'#f43f5e'};
+function renderDistrictMap(){
+  if(state.department==='all')return;
+  const features=districtFeaturesForDepartment();
+  if(!features.length){$('map-footnote').textContent+=' Cartografía distrital no disponible en esta publicación; se conserva el encuadre departamental.';return;}
+  const levels=new Map((state.data.cenepred_risk?.data??[]).filter(r=>r.hazard===state.hazard).map(r=>[r.ubigeo,r.risk_level]));
+  const risk=state.kind==='risk_scenario'&&state.layer==='risk',heat=state.kind==='risk_scenario'&&state.layer==='heat';
+  addMapLayer(L.geoJSON({type:'FeatureCollection',features},{pane:'districts',renderer:L.svg({pane:'districts'}),interactive:!heat,
+    style:f=>{const selected=f.properties.ubigeo===state.district,active=state.district==='all'||selected;return {color:selected?'#fef08a':'#80c7df',weight:selected?2.5:.65,opacity:selected?1:risk?.7:.4,fill:!heat,fillColor:risk?(DISTRICT_COLORS[levels.get(f.properties.ubigeo)]??'#334155'):'#0b1727',fillOpacity:risk?(active?.8:.2):0};},
+    onEachFeature:(feature,layer)=>{if(heat)return;const p=feature.properties;layer.bindTooltip(`<strong>${e(titleCase(p.district))}</strong><br>${e(titleCase(p.province))} · UBIGEO ${e(p.ubigeo)}<br>CENEPRED: ${e(levels.get(p.ubigeo)??'Sin categoría')}<br>Clic para filtrar el distrito`,{sticky:true,className:'territory-tooltip'});layer.on('click',()=>selectDistrict(p.ubigeo));}
+  }));
+  if(risk){
+    $('map-title').textContent=state.district==='all'?'Riesgo oficial por distrito':`Riesgo distrital · ${titleCase(selectedDistrict()?.district??'Selección')}`;
+    $('map-legend').innerHTML='<div class="legend-title">RIESGO DISTRITAL · CENEPRED</div>'+Object.entries(DISTRICT_COLORS).map(([name,color])=>`<div class="legend-step"><i style="background:${color}"></i><span>${name}</span></div>`).join('')+'<div class="legend-empty">Gris: sin categoría. Marco 2025–2027.</div>';
+    $('map-overlay-note').textContent=`${features.length} distritos cartografiados · ${HAZARDS[state.hazard]}`;
+    $('map-footnote').textContent='Categorías oficiales del escenario CENEPRED 2025–2027 en su cartografía distrital de referencia. No representan emergencias actuales ni probabilidad diaria. Selecciona un distrito para inspeccionarlo. La cartografía se consulta por UBIGEO y puede diferir de la demarcación administrativa más reciente.';
+  }
+  if(state.district!=='all'&&state.kind==='forecast')$('map-footnote').textContent+=' El contorno destaca el distrito seleccionado; los valores de SENAMHI conservan su ámbito departamental porque la fuente no proporciona una correspondencia distrital oficial.';
+  if(state.district!=='all'&&heat)$('map-footnote').textContent+=' Puntos del distrito vinculados por coincidencia exacta de departamento, provincia y distrito en la ficha; los registros sin correspondencia no se asignan.';
 }
 function addMapLayer(layer) {layer.addTo(state.map);state.mapLayers.push(layer);}
 
@@ -392,8 +456,10 @@ function renderMap() {
       }
     }else territorialMarkers();
   }
+  renderDistrictMap();
   renderInspector();
   renderCoverage();
+  renderInsights();
   renderRanking(groups);
 }
 function showMapEmpty(text) { const el=document.createElement('div');el.className='map-no-data';el.textContent=text;$('map').parentNode.append(el); }
@@ -408,6 +474,13 @@ function renderRanking(groups) {
     $('executive-note').innerHTML='<span class="note-kicker">CRITERIO DE LECTURA</span>La anomalía de Niño 1+2 no equivale al ICEN. La de Niño 3.4 no equivale al ONI ni al RONI. El diagnóstico y la alerta se consultan en ENFEN.';
     return;
   }
+  const district=selectedDistrict();
+  if(district&&state.kind==='risk_scenario'){
+    $('ranking-title').textContent=`${titleCase(district.district)} · escenario distrital`;
+    $('ranking-subtitle').textContent=`${titleCase(district.province)}, ${titleCase(district.department)} · UBIGEO ${district.ubigeo}`;
+    $('ranking').innerHTML=`<div class="district-ranking"><span class="kicker">${e(HAZARDS[state.hazard])}</span><h3>${e(district.risk_level??'Sin clasificación')}</h3><p>Categoría distrital oficial · marco 2025–2027</p></div>`;
+    $('executive-note').innerHTML='<span class="note-kicker">CONTEXTO DEL DISTRITO</span>La categoría corresponde al escenario CENEPRED y no a un evento actual. Los puntos se vinculan por coincidencia administrativa exacta. El pronóstico conserva su ámbito departamental.';return;
+  }
   const forecast=state.kind==='forecast';
   $('ranking-title').textContent=forecast?'Perspectiva por departamento':'Dónde concentrar la mirada';
   $('ranking-subtitle').textContent=forecast?(state.layer==='rain'?'Mención de precipitación en registros de localidad y día. No es probabilidad.':'Departamentos ordenados por temperatura prevista media de localidades disponibles.'):`${HAZARDS[state.hazard]}: porcentaje de distritos clasificados en riesgo alto o muy alto.`;
@@ -421,7 +494,8 @@ function rankRow(i,label,value,detail,unit,max) {
 }
 
 function chartConfig(labels,datasets) {
-  return {type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',align:'start',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:6,boxHeight:6,padding:18,font:{size:10},color:'#9db7d3'}},tooltip:{backgroundColor:'#12273d',padding:10,titleFont:{size:10},bodyFont:{size:10}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:6,color:'#88a6c5',font:{size:9}},border:{display:false}},y:{grid:{color:'#26394d'},ticks:{color:'#88a6c5',font:{size:9},padding:8},border:{display:false},title:{display:true,text:'°C',font:{size:9},color:'#88a6c5'}}}}};
+  const small=window.matchMedia('(max-width:600px)').matches;
+  return {type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',align:'start',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:6,boxHeight:6,padding:small?12:18,font:{size:small?11:10},color:'#9db7d3'}},tooltip:{backgroundColor:'#12273d',padding:10,titleFont:{size:small?12:10},bodyFont:{size:small?12:10}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:small?3:6,color:'#88a6c5',font:{size:small?11:9}},border:{display:false}},y:{grid:{color:'#26394d'},ticks:{color:'#88a6c5',font:{size:small?11:9},padding:8},border:{display:false},title:{display:true,text:'°C',font:{size:small?11:9},color:'#88a6c5'}}}}};
 }
 function renderCharts() {
   if (!window.Chart) return;
@@ -449,7 +523,8 @@ function renderForecastTable() {
   $('forecast-count').textContent=rows.length?`${fmt(start+1)}–${fmt(Math.min(start+PAGE,rows.length))} de ${fmt(rows.length)} registros`:'0 registros';
   $('forecast-prev').disabled=state.forecastPage===0; $('forecast-next').disabled=start+PAGE>=rows.length;
   const dates=[...new Set(state.forecastRows.map(r=>r.valid_date))].sort();
-  $('forecast-summary').textContent=dates.length?`Validez disponible: ${dateLabel(dates[0])} a ${dateLabel(dates.at(-1))}. Lluvia cualitativa; temperaturas en °C.`:'La tabla conserva únicamente lo publicado y archivado; los periodos sin cobertura permanecen vacíos.';
+  $('forecast-summary').textContent=(dates.length?`Validez disponible: ${dateLabel(dates[0])} a ${dateLabel(dates.at(-1))}. Lluvia cualitativa; temperaturas en °C.`:'La tabla conserva únicamente lo publicado y archivado; los periodos sin cobertura permanecen vacíos.')+(state.district!=='all'?' Ámbito departamental: estas localidades no se asignan al distrito seleccionado sin una correspondencia oficial.':'');
+  labelResponsiveTable('forecast-body');
 }
 
 function renderZones() {
@@ -467,16 +542,73 @@ function renderZones() {
   $('zone-count').textContent=rows.length?`${fmt(start+1)}–${fmt(Math.min(start+PAGE,rows.length))} de ${fmt(rows.length)} ${points?'puntos documentados':'distritos'}`:'0 registros';
   $('zone-prev').disabled=state.zonePage===0; $('zone-next').disabled=start+PAGE>=rows.length;
   $('zone-context').textContent=points?'La fecha corresponde al documento técnico, no a un evento actual. El filtro de fecha es opcional. Registros sin fecha quedan fuera al activarlo. Una ficha puede tener varios puntos.':'Categoría distrital publicada por CENEPRED. El servicio 2025–2027 no informa evolución diaria ni fecha de emisión individual. El calendario general no modifica este escenario.';
+  labelResponsiveTable('zone-body');
+}
+function labelResponsiveTable(id){
+  const body=$(id),headers=[...body.closest('table').querySelectorAll('thead th')].map(th=>th.textContent);
+  body.querySelectorAll('tr').forEach(row=>[...row.cells].forEach((cell,i)=>{if(cell.colSpan===1)cell.dataset.label=headers[i]??'';}));
 }
 
+function sourceDataLabel(s){
+  if(s.id==='senamhi_forecast'){
+    const dates=[...new Set((state.data.senamhi_forecast?.data??[]).map(r=>r.valid_date))].sort();
+    return dates.length?`Validez: ${dateLabel(dates[0])} – ${dateLabel(dates.at(-1))}`:'Sin validez publicada disponible';
+  }
+  if(s.id==='enfen')return s.latest_date?`Comunicado: ${dateLabel(s.latest_date)}`:'Sin comunicado verificado';
+  if(s.id==='cenepred_risk')return 'Marco 2025–2027 · emisión no informada';
+  if(s.id==='cenepred_points')return 'Fecha de ficha individual · emisión global no informada';
+  if(s.id==='boundaries')return 'Geometría de referencia · revisión oficial no informada';
+  if(s.id==='district_boundaries')return 'Cartografía del escenario 2025–2027 · revisión oficial no informada';
+  return s.latest_date?`${s.id==='noaa_monthly'?'Cierre mensual':'Último dato'}: ${dateLabel(s.latest_date)}`:'Fecha no informada por la fuente';
+}
 function renderSources() {
-  const providers=[{name:'ENFEN',ids:['enfen'],url:'https://enfen.imarpe.gob.pe/comunicados/'},{name:'SENAMHI',ids:['senamhi_forecast'],url:'https://www.senamhi.gob.pe/?p=pronostico-meteorologico'},{name:'NOAA',ids:['noaa_weekly','noaa_monthly','noaa_ocean_sst','noaa_ocean_currents'],url:'https://www.cpc.ncep.noaa.gov/data/indices/'},{name:'CENEPRED',ids:['cenepred_risk','cenepred_points','boundaries'],url:'https://sigrid.cenepred.gob.pe/sigridv3/'}];
+  const providers=[{name:'ENFEN',ids:['enfen'],url:'https://enfen.imarpe.gob.pe/comunicados/'},{name:'SENAMHI',ids:['senamhi_forecast'],url:'https://www.senamhi.gob.pe/?p=pronostico-meteorologico'},{name:'NOAA',ids:['noaa_weekly','noaa_monthly','noaa_ocean_sst','noaa_ocean_currents'],url:'https://www.cpc.ncep.noaa.gov/data/indices/'},{name:'CENEPRED',ids:['cenepred_risk','cenepred_points','boundaries','district_boundaries'],url:'https://sigrid.cenepred.gob.pe/sigridv3/'}];
   const order={ok:0,stale:1,degraded:2,unavailable:3};
   $('source-cards').innerHTML=providers.map(p=>{
     const sources=p.ids.map(id=>state.manifest.sources.find(s=>s.id===id)).filter(Boolean);
     const status=sources.map(clientStatus).sort((a,b)=>order[b]-order[a])[0]??'unavailable';
-    return `<article class="source-card"><div class="source-card-header"><h3>${p.name}</h3><span class="source-state ${status}">${STATUS[status]}</span></div>${sources.map(s=>`<div class="source-item"><div class="source-title">${e(s.title)}</div><div class="source-meta">${fmt(s.records??0)} registros · ${STATUS[clientStatus(s)]}<br>${s.latest_date?'Último dato: '+dateLabel(s.latest_date):'Fecha temporal: no informada en API'}<br>Consulta: ${timestamp(s.last_success)}<br>${e(s.cadence)}${s.data_sha256?`<br>SHA-256: ${e(s.data_sha256.slice(0,12))}…`:''}</div>${s.error?`<div class="source-error">${e(s.error)}${s.last_success?' · Se conserva la última versión válida.':''}</div>`:''}<div class="source-links"><a class="text-link" href="${e(safeUrl(s.url,p.url))}" target="_blank" rel="noopener">Origen ↗</a>${s.last_success?`<a class="text-link" href="data/${e(s.file??s.id+'.json')}" target="_blank" rel="noopener">Datos y trazabilidad ↗</a>`:''}</div></div>`).join('')}<a href="${p.url}" target="_blank" rel="noopener">Referencia oficial ↗</a></article>`;
+    return `<article class="source-card"><div class="source-card-header"><h3>${p.name}</h3><span class="source-state ${status}">${STATUS[status]}</span></div>${sources.map(s=>`<div class="source-item" id="source-${e(s.id)}"><div class="source-title">${e(s.title)}</div><div class="source-meta">${s.last_success?fmt(s.records??0)+' registros':'Sin conjunto validado'} · ${STATUS[clientStatus(s)]}</div><dl class="source-dates"><div><dt>Dato / validez</dt><dd>${e(sourceDataLabel(s))}</dd></div><div><dt>Consulta válida</dt><dd>${e(timestamp(s.last_success))}</dd></div><div><dt>Último intento</dt><dd>${e(timestamp(s.checked_at))}</dd></div><div><dt>Cambio detectado aquí</dt><dd>${e(timestamp(s.data_updated_at))}</dd></div></dl><p class="source-meta">${e(s.cadence)}${s.id==='senamhi_forecast'?'<br>Hora de emisión: no publicada en esta tabla.':''}</p>${s.error?`<p class="source-error">Falló la última consulta.${s.last_success?' Se conserva la última descarga válida.':' No hay una descarga válida disponible.'}</p>`:''}${clientStatus(s)==='stale'?'<p class="source-error">Producto con rezago: comprobar su fecha antes de interpretarlo como situación actual.</p>':''}<details class="source-technical"><summary>Detalle de trazabilidad</summary><p>${s.data_sha256?'SHA-256: '+e(s.data_sha256):'Sin hash validado'}${s.error?'<br>Incidencia: '+e(s.error):''}</p></details><div class="source-links"><a class="text-link" href="${e(safeUrl(s.url,p.url))}" target="_blank" rel="noopener">Origen ↗</a>${s.last_success?`<a class="text-link" href="data/${e(s.file??s.id+'.json')}" target="_blank" rel="noopener">Datos y trazabilidad ↗</a>`:''}</div></div>`).join('')}<a href="${p.url}" target="_blank" rel="noopener">Referencia oficial ↗</a></article>`;
   }).join('');
+  $('data-freshness').innerHTML=[['enfen','ENFEN'],['noaa_weekly','NOAA CPC'],['noaa_ocean_sst','NOAA TSM'],['senamhi_forecast','SENAMHI'],['cenepred_risk','CENEPRED']].map(([id,label])=>{const s=state.manifest.sources.find(s=>s.id===id);return s?`<a href="#source-${id}" class="freshness-item ${clientStatus(s)}"><span>${label}<i>${STATUS[clientStatus(s)]}</i></span><b>${e(sourceDataLabel(s))}</b></a>`:'';}).join('');
+}
+
+function renderInsights(){
+  if(!state.manifest)return;
+  const scope=state.department==='all'?'Todo el Perú':titleCase(state.data.boundaries?.data.features.find(f=>f.properties.code===state.department)?.properties.name??state.department);
+  const district=selectedDistrict(),riskScope=district?`${titleCase(district.district)}, ${titleCase(district.province)}, ${scope}`:scope;
+  $('insight-scope').textContent=`${riskScope} · ${dateLabel(state.from)} – ${dateLabel(state.to)}. El comunicado ENFEN muestra su última publicación verificada; el escenario conserva el marco 2025–2027.${district?' Pronósticos: ámbito departamental.':''}`;
+  const bulletin=state.data.enfen?.data;
+  const key=state.frequency==='monthly'?'noaa_monthly':'noaa_weekly',all=state.data[key]?.data??[],index=selectNoaa(all,state,state.frequency==='monthly').at(-1),previous=index?all.filter(r=>r.date<index.date).at(-1):null;
+  const signed=value=>`${value>0?'+':''}${fmt(value,2)}`;
+  const risks=selectedRisks(),classified=risks.filter(r=>r.risk_level),high=classified.filter(r=>highRisk(r.risk_level));
+  const forecasts=forecastSummary(state.forecastRows);
+  const issues=state.manifest.sources.filter(s=>s.kind!=='reference'&&clientStatus(s)!=='ok');
+  const source=id=>state.manifest.sources.find(s=>s.id===id);
+  const incident=id=>{const s=source(id);return s&&clientStatus(s)!=='ok'?` Fuente: ${STATUS[clientStatus(s)].toLowerCase()}; revisar vigencia.`:'';};
+  const range=forecasts.dates.length?`${dateLabel(forecasts.dates[0])} – ${dateLabel(forecasts.dates.at(-1))}`:'Sin validez disponible';
+  const cards=[
+    {type:'ESTADO OFICIAL · ENFEN',tone:'red',title:bulletin?.alert??'Sin comunicado verificado',text:bulletin?`Publicado el ${dateLabel(bulletin.published_date)}. Es el estado del último documento incorporado; no una alerta generada por los filtros.${incident('enfen')}`:'La falta de comunicado incorporado no permite asignar un estado.',note:'Revisar el diagnóstico y las perspectivas en el comunicado completo.',url:bulletin?safeUrl(bulletin.document_url):'#fuentes',action:'Leer comunicado oficial',external:Boolean(bulletin)},
+    {type:'OBSERVACIÓN · NOAA CPC',tone:'orange',title:index?`Niño 1+2: ${signed(index.nino12_anomaly)} °C`:'Sin índice para el periodo',text:index?`Niño 3.4: ${signed(index.nino34_anomaly)} °C · ${dateLabel(index.date)} · ${state.frequency==='monthly'?'mensual':'semanal'}.${previous?` Cambio Niño 1+2: ${signed(index.nino12_anomaly-previous.nino12_anomaly)} °C frente a la publicación anterior.`:''}${incident(key)}`:'No se interpola un valor diario cuando no existe publicación.',note:'La anomalía regional no sustituye al ICEN, ONI o RONI.',url:'#series',action:'Examinar la serie'},
+    {type:`ESCENARIO · ${HAZARDS[state.hazard].toUpperCase()}`,tone:'amber',title:district?`${titleCase(district.district)}: ${district.risk_level??'sin categoría'}`:classified.length?`${fmt(high.length)} distritos en alto / muy alto`:'Sin clasificación disponible',text:classified.length?`${fmt(classified.length)} distritos clasificados en ${riskScope}. Marco CENEPRED 2025–2027.${incident('cenepred_risk')}`:'Los territorios sin clasificación permanecen sin dato.',note:'Permite priorizar revisión distrital; no informa daños ni emergencias en curso.',url:'#zonas',action:'Revisar distritos y fichas'},
+    {type:'PRONÓSTICO · TEMPERATURA',tone:'cyan',title:forecasts.max?`Mayor máxima: ${fmt(forecasts.max.tmax_c,1)} °C`:'Sin temperatura prevista',text:forecasts.max?`${titleCase(forecasts.max.locality)}, ${titleCase(forecasts.max.department)} · ${dateLabel(forecasts.max.valid_date)}.${forecasts.min?` Menor mínima: ${fmt(forecasts.min.tmin_c,1)} °C en ${titleCase(forecasts.min.locality)}, ${dateLabel(forecasts.min.valid_date)}.`:''}${incident('senamhi_forecast')}`:'No hay localidades con temperaturas publicadas para esta selección.',note:'Extremos entre registros disponibles; no promedio de todo el departamento.',url:'#meteo',action:'Ver localidades y fechas'},
+    {type:'PRONÓSTICO · PRECIPITACIÓN',tone:'cyan',title:forecasts.records?`${fmt(forecasts.rainRecords)} registros mencionan precipitación`:'Sin texto de pronóstico',text:forecasts.records?`De ${fmt(forecasts.records)} registros localidad/día; ${fmt(forecasts.rainLocalities)} localidades con mención. Validez: ${range}.${incident('senamhi_forecast')}`:'No se genera un pronóstico a partir de la señal oceánica.',note:'El conteo de menciones no mide intensidad, milímetros ni probabilidad de lluvia.',url:'#meteo',action:'Consultar los textos oficiales'},
+    {type:'VIGENCIA Y COBERTURA',tone:'slate',title:issues.length?`${issues.length} conjuntos requieren revisión`:'Fuentes operativas al día',text:issues.length?issues.map(s=>`${s.title}: ${STATUS[clientStatus(s)].toLowerCase()}${s.latest_date?' (dato '+dateLabel(s.latest_date)+')':''}`).join('. ')+'.':'Sin incidencias de consulta ni rezago según los umbrales de cada producto.',note:'Una descarga reciente no convierte un dato antiguo en actual. Verifique fecha, cobertura y estado.',url:'#fuentes',action:'Revisar fechas y calidad'},
+  ];
+  $('insight-cards').innerHTML=cards.map(c=>`<article class="insight-card insight-${c.tone}"><span class="insight-type">${e(c.type)}</span><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></article>`).join('');
+}
+function renderGlossary(){
+  const search=normalize($('glossary-search').value),category=$('glossary-category').value;
+  const rows=GLOSSARY.filter(([,term,group,definition])=>(category==='all'||category===group)&&normalize(term+' '+definition).includes(search));
+  $('glossary-count').textContent=`${rows.length} de ${GLOSSARY.length} términos`;
+  $('glossary-empty').hidden=rows.length>0;
+  $('glossary-entries').innerHTML=rows.map(([id,term,group,definition,url,reference])=>`<details id="term-${id}" class="glossary-entry" ${search?'open':''}><summary><span>${e(term)}</span><small>${e(GLOSSARY_CATEGORIES[group])}</small></summary><p>${e(definition)}</p><a href="${e(url)}"${url.startsWith('https://')?' target="_blank" rel="noopener"':''}>${e(reference)} ↗</a></details>`).join('');
+}
+function openGlossaryTerm(){
+  if(!/^#term-[a-z0-9-]+$/.test(location.hash))return;
+  if(!GLOSSARY.some(([id])=>'#term-'+id===location.hash))return;
+  $('glossary-search').value='';$('glossary-category').value='all';renderGlossary();
+  const target=document.getElementById(location.hash.slice(1));target.open=true;
+  requestAnimationFrame(()=>target.scrollIntoView({block:'center',behavior:'smooth'}));
 }
 
 let rendering=0;
@@ -484,7 +616,7 @@ async function applyFilters(fit=false) {
   if (!readFilters()) return;
   const turn=++rendering;
   state.forecastPage=0;state.zonePage=0;
-  await Promise.all([ensureForecastHistory(),ensureOceanHistory()]);
+  await Promise.all([ensureForecastHistory(),ensureOceanHistory(),ensureDistrictBoundaries()]);
   try {await ensurePoints();} catch (error) {$('filter-notice').textContent='No se pudo cargar el inventario geográfico. Las otras fuentes conservan su disponibilidad.';console.error(error);}
   if (turn!==rendering) return;
   state.forecastRows=selectForecasts(state.versions,state);
@@ -515,6 +647,9 @@ async function exportData() {
   const link=document.createElement('a');link.href=url;link.download=`elnino_${state.kind}_${state.from}_${state.to}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function bindEvents() {
+  $('glossary-search').addEventListener('input',renderGlossary);$('glossary-category').addEventListener('change',renderGlossary);
+  $('glossary-clear').addEventListener('click',()=>{$('glossary-search').value='';$('glossary-category').value='all';renderGlossary();$('glossary-search').focus();});
+  window.addEventListener('hashchange',openGlossaryTerm);
   $('filters').addEventListener('submit',event=>event.preventDefault());
   for (const id of ['from','to','month','department']) $(id).addEventListener('change',()=>void applyFilters(id==='department'));
   $('period').addEventListener('change',()=>{updatePeriodInputs();void applyFilters();});
@@ -522,13 +657,15 @@ function bindEvents() {
   document.querySelectorAll('[data-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.kind)));
   document.querySelectorAll('[data-map-mode]').forEach(b=>b.addEventListener('click',()=>{const mode=b.dataset.mapMode;setKind(mode==='sst'?'observation':mode==='rain'?'forecast':'risk_scenario');if(mode!=='sst'){state.layer=mode;$('map-layer').value=mode;renderMap();}}));
   $('vectors-toggle').addEventListener('click',()=>{if(state.kind!=='observation'){state.vectors=true;setKind('observation');}else{state.vectors=!state.vectors;renderMap();}});
-  const showExtent=extent=>{state.oceanExtent=extent;$('department').value='all';state.inspectorDistrict=null;void applyFilters(true);};
+  const showExtent=extent=>{state.oceanExtent=extent;$('department').value='all';state.district='all';state.inspectorDistrict=null;void applyFilters(true);};
   $('national-view').addEventListener('click',()=>showExtent('national'));$('coverage-all').addEventListener('click',()=>showExtent('national'));
   $('coast-view').addEventListener('click',()=>showExtent('coast'));
   $('pacific-view').addEventListener('click',()=>showExtent('pacific'));$('nino34-inset').addEventListener('click',()=>showExtent(state.oceanExtent==='pacific'?'national':'pacific'));
   $('inspector-department').addEventListener('change',()=>selectTerritory($('inspector-department').value));
+  $('inspector-district').addEventListener('change',()=>selectDistrict($('inspector-district').value));
+  $('clear-territory').addEventListener('click',()=>showExtent('national'));
   $('territory-grid').addEventListener('click',event=>{const button=event.target.closest('[data-department]');if(button)selectTerritory(button.dataset.department);});
-  const inspectRow=event=>{const row=event.target.closest('tr[data-ubigeo]');if(!row)return;const record=selectedRisks().find(r=>r.ubigeo===row.dataset.ubigeo);if(!record)return;state.inspectorDepartment=record.department_code;state.inspectorDistrict=record;renderInspector();};
+  const inspectRow=event=>{if(event.target.closest('a'))return;const row=event.target.closest('tr[data-ubigeo]');if(row)selectDistrict(row.dataset.ubigeo);};
   $('zone-body').addEventListener('click',inspectRow);$('zone-body').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();inspectRow(event);}});
   $('map-layer').addEventListener('change',()=>{state.layer=$('map-layer').value;renderMap();});
   $('hazard').addEventListener('change',()=>{state.hazard=$('hazard').value;state.zonePage=0;renderKpis();renderMap();renderZones();});
@@ -558,14 +695,14 @@ function bindEvents() {
   $('download').addEventListener('click',exportData);
   const tickClock=()=>{$('clockPET').textContent=new Intl.DateTimeFormat('es-PE',{timeZone:'America/Lima',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date())+' LIMA · UTC−5';};tickClock();setInterval(tickClock,30000);
   state.map?.on('mousemove',event=>{if(state.kind!=='observation'||!state.activeSst)return;const lat=Math.floor(event.latlng.lat/.25)*.25+.125,lon=Math.floor(event.latlng.lng/.25)*.25+.125,row=state.sstLookup?.get(`${Math.round(lat/.25)}:${Math.round(lon/.25)}`);$('ocean-date').textContent=row?`${fmt(row.sst_c,1)} °C · anom. ${row.anomaly_c>0?'+':''}${fmt(row.anomaly_c,1)} °C`:'Celda sin dato';});
-  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)document.querySelectorAll('.nav-link').forEach(a=>a.classList.toggle('active',a.hash==='#'+entry.target.id));},{rootMargin:'-10% 0px -65% 0px'});
+  const observer=new IntersectionObserver(entries=>{for(const entry of entries)if(entry.isIntersecting)document.querySelectorAll('.nav-link,.mobile-nav a').forEach(a=>a.classList.toggle('active',a.hash==='#'+entry.target.id));},{rootMargin:'-10% 0px -65% 0px'});
   document.querySelectorAll('section[id]').forEach(s=>observer.observe(s));
   state.map?.on('zoomend',()=>{if(state.kind==='risk_scenario'&&state.layer==='heat')renderMap();});
   state.map?.on('moveend zoomend',()=>requestAnimationFrame(layoutTerritoryLabels));
 }
 
 try {
-  setDefaults();await loadData();initMap();bindEvents();await applyFilters(true);
+  setDefaults();renderGlossary();await loadData();initMap();bindEvents();await applyFilters(true);openGlossaryTerm();
   setInterval(()=>void refreshPublication(),15*60*1000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refreshPublication();});
 } catch(error) {

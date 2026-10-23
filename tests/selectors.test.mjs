@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {selectNoaa, selectForecasts, riskByDepartment, territorialCoverage, normalize, csv} from '../site/assets/selectors.mjs';
+import {selectNoaa, selectForecasts, riskByDepartment, territorialCoverage, forecastSummary, districtOptions, pointMatchesDistrict, normalize, csv} from '../site/assets/selectors.mjs';
 
 test('el día no interpola índices semanales',()=>{
   assert.equal(selectNoaa([{date:'2026-10-14'}],{from:'2026-10-15',to:'2026-10-15'}).length,0);
@@ -60,6 +60,36 @@ test('un cambio de peligro conserva territorios y no sustituye la ausencia de cl
   assert.equal(rows.length,25);
   for(const row of rows)assert.equal(row.risk?.high??0,risks.filter(r=>r.department_code===row.code&&r.hazard==='movimientos_masa'&&['Alto','Muy alto'].includes(r.risk_level)).length);
   assert.ok(territorialCoverage(boundaries,[],[],'inundacion').every(r=>r.risk===null));
+});
+test('los insights de pronóstico conservan localidades, fechas y conteos de los registros oficiales',()=>{
+  const rows=readOfficial('senamhi_forecast.json.gz'),summary=forecastSummary(rows);
+  assert.equal(summary.records,rows.length);
+  assert.equal(summary.max.tmax_c,Math.max(...rows.map(r=>r.tmax_c)));
+  assert.equal(summary.min.tmin_c,Math.min(...rows.map(r=>r.tmin_c)));
+  assert.ok(rows.includes(summary.max)&&rows.includes(summary.min));
+  assert.equal(summary.rainRecords,rows.filter(r=>r.rain_mentioned===true).length);
+  assert.equal(summary.rainLocalities,new Set(rows.filter(r=>r.rain_mentioned===true).map(r=>r.locality_id)).size);
+  assert.deepEqual(summary.dates,[...new Set(rows.map(r=>r.valid_date))].sort());
+});
+test('un periodo sin pronósticos conserva extremos nulos y ninguna fecha ni localidad ficticia',()=>{
+  assert.deepEqual(forecastSummary([]),{records:0,localities:0,rainRecords:0,rainLocalities:0,dates:[],max:null,min:null});
+});
+test('el selector distrital conserva UBIGEO únicos por departamento y no duplica peligros',()=>{
+  const risks=readOfficial('cenepred_risk.json.gz'),features=readOfficial('district_boundaries.json.gz').features;
+  const chosen=Array.from({length:25},(_,i)=>String(i+1).padStart(2,'0')).flatMap(code=>{
+    const rows=districtOptions(risks,code);assert.ok(rows.every(r=>r.department_code===code));return rows.map(r=>r.ubigeo);
+  });
+  assert.equal(chosen.length,new Set(chosen).size);
+  assert.deepEqual([...chosen].sort(),features.map(f=>f.properties.ubigeo).sort());
+  assert.deepEqual(districtOptions(risks,'all'),[]);
+});
+test('los puntos distritales requieren coincidencia de departamento, provincia y distrito',()=>{
+  const points=readOfficial('cenepred_points.json.gz'),risks=readOfficial('cenepred_risk.json.gz'),point=points.find(p=>p.department&&p.province&&p.district);
+  const district=risks.find(r=>normalize(r.department)===normalize(point.department)&&normalize(r.province)===normalize(point.province)&&normalize(r.district)===normalize(point.district));
+  assert.ok(district);assert.equal(pointMatchesDistrict(point,district),true);
+  assert.equal(pointMatchesDistrict({...point,province:null},district),false);
+  assert.equal(pointMatchesDistrict({...point,department:'OTRO DEPARTAMENTO'},district),false);
+  assert.equal(pointMatchesDistrict(point,null),false);
 });
 
 test('la malla conserva cada punto oficial una sola vez, sin depender del orden',()=>{

@@ -54,6 +54,18 @@ export function territorialCoverage(features, risks, forecasts, hazard) {
   const weather = new Map(forecastByDepartment(forecasts).map(row => [row.code, row]));
   return features.map(({properties:{code,name}}) => ({code, name, risk: risk.get(code) ?? null, localities: weather.get(code)?.count ?? 0})).sort((a,b) => a.name.localeCompare(b.name,'es'));
 }
+export function forecastSummary(rows) {
+  const max=rows.filter(r=>Number.isFinite(r.tmax_c)).sort((a,b)=>b.tmax_c-a.tmax_c)[0]??null;
+  const min=rows.filter(r=>Number.isFinite(r.tmin_c)).sort((a,b)=>a.tmin_c-b.tmin_c)[0]??null;
+  const rain=rows.filter(r=>r.rain_mentioned===true),dates=[...new Set(rows.map(r=>r.valid_date))].sort();
+  return {records:rows.length,localities:new Set(rows.map(r=>r.locality_id)).size,rainRecords:rain.length,rainLocalities:new Set(rain.map(r=>r.locality_id)).size,dates,max,min};
+}
+export function districtOptions(rows, department) {
+  return [...new Map(rows.filter(r=>r.department_code===department).map(r=>[r.ubigeo,r])).values()].sort((a,b)=>a.province.localeCompare(b.province,'es')||a.district.localeCompare(b.district,'es'));
+}
+export function pointMatchesDistrict(point, district) {
+  return Boolean(district&&normalize(point.department)===normalize(district.department)&&normalize(point.province)===normalize(district.province)&&normalize(point.district)===normalize(district.district));
+}
 export function csv(rows, fields) {
   const escape = value => {
     let s = value == null ? '' : String(value);

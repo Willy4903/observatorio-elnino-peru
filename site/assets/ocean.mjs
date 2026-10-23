@@ -15,7 +15,7 @@ function canvasLayer(rows,{vectors=false,step=.25}={}) {
       this._map=map;this._canvas=L.DomUtil.create('canvas','ocean-grid-canvas');
       this._ctx=this._canvas.getContext('2d');map.getPane(vectors?'oceanVectors':'ocean').appendChild(this._canvas);
       this._redraw=this.draw.bind(this);map.on('moveend zoomend resize',this._redraw);this.draw();
-      if(vectors&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const tick=t=>{this.draw(t);this._frame=requestAnimationFrame(tick);};this._frame=requestAnimationFrame(tick);}
+      if(vectors&&!matchMedia('(prefers-reduced-motion: reduce)').matches){let last=0;const tick=t=>{if(t-last>=1000/24){if(!document.hidden)this.draw(t);last=t;}this._frame=requestAnimationFrame(tick);};this._frame=requestAnimationFrame(tick);}
     },
     onRemove(map) {map.off('moveend zoomend resize',this._redraw);cancelAnimationFrame(this._frame);this._canvas.remove();this._map=null;},
     draw(t=0) {

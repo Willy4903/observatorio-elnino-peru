@@ -1,4 +1,5 @@
 import datetime as dt
+import copy
 from pathlib import Path
 import sys
 import tempfile
@@ -113,6 +114,28 @@ class AcquisitionIntegrity(unittest.TestCase):
         if not (u.DATA / "manifest.json").exists():
             self.skipTest("Primera adquisición aún no ejecutada")
         self.assertGreaterEqual(u.validate_files(), 1)
+
+    def test_official_district_cartography_matches_risk_ubigeo(self):
+        districts = u.load(u.source_path('district_boundaries'))
+        if not districts:
+            self.skipTest('Cartografía distrital aún no adquirida')
+        features = districts['data']['features']
+        u.validate_district_geometries(features)
+        risk_codes = {r['ubigeo'] for r in u.load(u.source_path('cenepred_risk'))['data']}
+        self.assertEqual({f['properties']['ubigeo'] for f in features}, risk_codes)
+
+    def test_district_cartography_rejects_duplicated_codes_and_bad_geometry(self):
+        districts = u.load(u.source_path('district_boundaries'))
+        if not districts:
+            self.skipTest('Cartografía distrital aún no adquirida')
+        features = copy.deepcopy(districts['data']['features'])
+        features[1]['properties']['ubigeo'] = features[0]['properties']['ubigeo']
+        with self.assertRaisesRegex(ValueError, 'duplicado'):
+            u.validate_district_geometries(features)
+        features = copy.deepcopy(districts['data']['features'])
+        features[0]['geometry'] = {'type': 'Point', 'coordinates': [-77, -12]}
+        with self.assertRaisesRegex(ValueError, 'no poligonal'):
+            u.validate_district_geometries(features)
 
 
 if __name__ == "__main__":

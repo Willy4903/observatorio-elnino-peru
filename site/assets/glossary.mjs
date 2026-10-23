@@ -1,0 +1,42 @@
+const NOAA='https://www.cpc.ncep.noaa.gov/data/indices/';
+const OISST='https://www.ncei.noaa.gov/products/optimum-interpolation-sst';
+const ENFEN='https://enfen.imarpe.gob.pe/download/nota-tecnica-enfen-01-2024-definicion-operacional-de-los-eventos-el-nino-costero-y-la-nina-costera-en-el-peru/';
+const SENAMHI='https://www.senamhi.gob.pe/?p=pronostico-meteorologico';
+const CENEPRED='https://dimse.cenepred.gob.pe/simse/cenepred/docs/glosario-terminos-grd-cenepred.pdf';
+const METHOD='#metodologia';
+// Definiciones breves en lenguaje sencillo; cada entrada conserva su referencia.
+export const GLOSSARY=[
+  ['tsm','TSM / SST','oceano','Temperatura superficial del mar. SST es la sigla en inglés. Se expresa en °C; corresponde al océano, no al aire sobre tierra.',OISST,'NOAA NCEI'],
+  ['anomalia','Anomalía térmica','oceano','Diferencia de temperatura respecto de la referencia climática del producto. Un valor positivo indica más calor que esa referencia; no declara por sí solo un evento.',OISST,'NOAA NCEI'],
+  ['climatologia','Climatología de referencia','oceano','Promedio climático utilizado para comparar el dato. La base y la metodología dependen del producto; anomalías de productos distintos pueden diferir.',OISST,'NOAA NCEI'],
+  ['nino12','Región Niño 1+2','oceano','Área del Pacífico oriental entre 0°–10°S y 90°W–80°W. Su anomalía regional no representa la temperatura de una ciudad peruana.',NOAA,'NOAA CPC'],
+  ['nino34','Región Niño 3.4','oceano','Área del Pacífico ecuatorial central y oriental entre 5°N–5°S y 170°W–120°W. El valor semanal mostrado no equivale al ONI ni al RONI.',NOAA,'NOAA CPC'],
+  ['icen','ICEN','oceano','Índice Costero El Niño utilizado por ENFEN con metodología y criterios de persistencia propios. No se sustituye por una anomalía semanal de Niño 1+2.',ENFEN,'ENFEN'],
+  ['oni','ONI','oceano','Índice Oceánico El Niño: media móvil de tres meses de anomalías TSM en Niño 3.4. Es diferente de la serie semanal de este dashboard.','https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/oni/v6/','NOAA CPC'],
+  ['roni','RONI','oceano','Media móvil de tres meses del índice relativo Niño 3.4, que considera el contexto térmico tropical. El dashboard no lo calcula a partir de sus indicadores.','https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/','NOAA CPC'],
+  ['oisst','OISST','oceano','Análisis de NOAA que combina observaciones e interpolación para obtener una rejilla oceánica. Aquí se muestra el producto preliminar diario; sus valores pueden revisarse.',OISST,'NOAA NCEI'],
+  ['corrientes','Corrientes geostróficas','oceano','Estimación de la circulación a partir de la altimetría oceánica. Las flechas muestran dirección del análisis experimental; su animación no predice trayectorias ni toda la corriente superficial.','https://coastwatch.pfeg.noaa.gov/erddap/info/nesdisSSH1day/index.html','NOAA CoastWatch'],
+  ['observacion','Observación y análisis','datos','Describe condiciones medidas o analizadas para una fecha pasada. Los campos NOAA son análisis con metodología propia; una consulta reciente no cambia la fecha que representan.',METHOD,'Metodología del dashboard'],
+  ['pronostico','Pronóstico','meteo','Información sobre condiciones futuras previstas. Su fecha de validez indica el día al que se refiere; no es una observación ni una garantía de ocurrencia.',SENAMHI,'SENAMHI'],
+  ['validez','Fecha de validez','meteo','Día o intervalo al que corresponde un pronóstico. Los filtros usan esa fecha; la descarga del archivo puede haber ocurrido antes.',METHOD,'Metodología del dashboard'],
+  ['emision','Fecha de emisión','datos','Momento en que la entidad produce o publica un producto. Si la fuente no lo informa, permanece desconocido; la hora de consulta no lo reemplaza.',METHOD,'Metodología del dashboard'],
+  ['precipitacion','Precipitación','meteo','Agua que llega desde la atmósfera, como lluvia o nieve. Esta tabla de SENAMHI aporta descripciones; no permite completar cantidades en mm ni probabilidades ausentes.',SENAMHI,'SENAMHI'],
+  ['tmax','Temperatura máxima / mínima','meteo','Mayor y menor temperatura previstas para una localidad y día. Los promedios mostrados se limitan a localidades disponibles y no representan toda la superficie del departamento.',SENAMHI,'SENAMHI'],
+  ['mencion-lluvia','Mención de precipitación','meteo','Conteo de textos localidad/día que mencionan precipitación. Su proporción no es probabilidad de lluvia, intensidad ni porcentaje del territorio afectado.',METHOD,'Metodología del dashboard'],
+  ['peligro','Peligro','riesgo','Posibilidad de que un fenómeno potencialmente dañino ocurra en un lugar y periodo, con determinada intensidad. Inundaciones y movimientos en masa se consultan por separado.',CENEPRED,'CENEPRED'],
+  ['exposicion','Exposición','riesgo','Personas, infraestructura, servicios o actividades ubicados donde pueden resultar afectados por un fenómeno. Este dashboard no estima población expuesta.',CENEPRED,'CENEPRED'],
+  ['vulnerabilidad','Vulnerabilidad','riesgo','Susceptibilidad de la población, infraestructura o actividades a sufrir daños ante un peligro. Se relaciona con condiciones de exposición, fragilidad y resiliencia.',CENEPRED,'CENEPRED'],
+  ['riesgo','Riesgo de desastre','riesgo','Posibilidad de daños o pérdidas por la interacción entre un peligro y condiciones de vulnerabilidad. Las categorías publicadas no equivalen a un daño ya ocurrido.',CENEPRED,'CENEPRED'],
+  ['escenario','Escenario de riesgo','riesgo','Representación territorial para analizar efectos potenciales bajo determinadas condiciones. Aquí se conserva el marco CENEPRED 2025–2027; no se inventa una evolución diaria.',METHOD,'Metodología del dashboard'],
+  ['alto-muy-alto','Alto / muy alto','riesgo','Categorías distritales del servicio consultado. El porcentaje departamental cuenta esos distritos entre los clasificados; no es una probabilidad ni una categoría oficial del departamento.',METHOD,'Metodología del dashboard'],
+  ['inventario','Inventario de puntos críticos','riesgo','Conjunto de ubicaciones documentadas en fichas técnicas. Una ficha puede contener varios puntos; el conteo no es un número de emergencias ni de personas afectadas.',METHOD,'Metodología del dashboard'],
+  ['movimientos-masa','Movimientos en masa','riesgo','Desplazamientos de suelo o roca, como deslizamientos y flujos. El escenario de esta capa se consulta por separado del de inundación.','https://sigrid.cenepred.gob.pe/sigridv3/','CENEPRED SIGRID'],
+  ['densidad','Mapa de calor / densidad','datos','Aquí representa puntos documentados por celda fija. Más puntos no implica mayor precipitación, severidad o probabilidad. La leyenda usa los mismos intervalos en todo el país.',METHOD,'Metodología del dashboard'],
+  ['coropleta','Coropleta departamental','datos','Mapa que colorea cada departamento según un indicador. En temperatura resume localidades disponibles; en riesgo muestra proporción distrital. El relleno no añade mediciones donde no existen.',METHOD,'Metodología del dashboard'],
+  ['ubigeo','UBIGEO','datos','Código de identificación territorial. El código distrital de seis dígitos permite vincular registros de una misma unidad; no es un indicador de riesgo.',METHOD,'Metodología del dashboard'],
+  ['rezago','Rezago del dato','datos','Tiempo entre la fecha representada por un dato y la fecha actual. Volver a descargar el mismo producto antiguo no elimina su rezago.',METHOD,'Metodología del dashboard'],
+  ['cobertura','Cobertura / sin dato','datos','Territorios, localidades y fechas presentes en una fuente. La ausencia de registros se muestra explícitamente y no demuestra ausencia de peligro o lluvia.',METHOD,'Metodología del dashboard'],
+  ['consulta','Consulta válida','datos','Momento de una descarga que supera los controles. Se distingue del último intento fallido, de la emisión oficial y de la fecha del dato.',METHOD,'Metodología del dashboard'],
+  ['actualizacion','Cambio detectado','datos','Última adquisición en que cambió el contenido validado del producto en este dashboard. No equivale a la fecha oficial de emisión.',METHOD,'Metodología del dashboard'],
+];
+export const GLOSSARY_CATEGORIES={oceano:'Océano e índices',meteo:'Meteorología',riesgo:'Gestión del riesgo',datos:'Lectura de datos'};

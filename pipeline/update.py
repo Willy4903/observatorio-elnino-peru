@@ -55,8 +55,9 @@ SOURCES = {
     "cenepred_risk": {"provider": "CENEPRED · SIGRID", "title": "Escenarios distritales por lluvias", "kind": "risk_scenario", "url": SIG, "hours": 24, "max_age_days": None, "cadence": "Consulta diaria; según revisión de SIGRID"},
     "cenepred_points": {"provider": "CENEPRED · SIGRID", "title": "Inventario de puntos y zonas críticas", "kind": "risk_inventory", "url": SIG, "hours": 24, "max_age_days": None, "cadence": "Consulta diaria; según revisión de SIGRID"},
     "boundaries": {"provider": "CENEPRED · SIGRID", "title": "Límites departamentales", "kind": "reference", "url": SIG + "/0", "hours": 720, "max_age_days": None, "cadence": "Consulta mensual"},
+    "district_boundaries": {"provider": "CENEPRED · SIGRID", "title": "Límites distritales del escenario", "kind": "reference", "url": SIG + "/8", "hours": 720, "max_age_days": None, "cadence": "Consulta mensual; cartografía del escenario"},
 }
-COMPRESSED = {"noaa_ocean_sst", "noaa_ocean_currents", "noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points"}
+COMPRESSED = {"noaa_ocean_sst", "noaa_ocean_currents", "noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points", "district_boundaries"}
 
 
 def source_path(source_id):
@@ -450,7 +451,42 @@ def collect_boundaries(fetcher):
     return {"type": "FeatureCollection", "features": rows}, {"latest_date": None, "units": "EPSG:4326", "notes": ["Límites de referencia publicados por SIGRID; geometría simplificada para visualización."]}, []
 
 
-COLLECTORS = {"noaa_ocean_sst": lambda f: collect_ocean(f), "noaa_ocean_currents": lambda f: collect_ocean(f, True), "noaa_weekly": lambda f: collect_noaa(f), "noaa_monthly": lambda f: collect_noaa(f, True), "senamhi_forecast": collect_forecast, "enfen": collect_enfen, "cenepred_risk": collect_risk, "cenepred_points": collect_points, "boundaries": collect_boundaries}
+def validate_district_geometries(rows):
+    if not 1800 <= len(rows) <= 2500:
+        raise ValueError("Cobertura distrital inesperada")
+    codes = set()
+    for f in rows:
+        code = f["properties"].get("ubigeo")
+        if not re.fullmatch(r"\d{6}", code or "") or code in codes:
+            raise ValueError("UBIGEO distrital inválido o duplicado")
+        codes.add(code)
+        geom = f.get("geometry") or {}
+        if geom.get("type") not in ("Polygon", "MultiPolygon"):
+            raise ValueError("Geometría distrital no poligonal")
+        polygons = [geom["coordinates"]] if geom["type"] == "Polygon" else geom["coordinates"]
+        if not polygons or any(not polygon for polygon in polygons):
+            raise ValueError("Polígono distrital vacío")
+        for polygon in polygons:
+            for ring in polygon:
+                if len(ring) < 4 or ring[0] != ring[-1]:
+                    raise ValueError("Anillo distrital inválido")
+                for point in ring:
+                    if len(point) < 2 or not valid_number(point[0], -82.5, -68) or not valid_number(point[1], -19, 1):
+                        raise ValueError("Coordenada distrital fuera de Perú")
+    if {code[:2] for code in codes} != {str(i).zfill(2) for i in range(1, 26)}:
+        raise ValueError("Faltan departamentos en la cartografía distrital")
+
+
+def collect_district_boundaries(fetcher):
+    rows = arcgis_all(fetcher, 8, "objectid,ubigeo,nombdep,nombprov,nombdist", True, True, {"maxAllowableOffset": 0.002, "geometryPrecision": 4})
+    validate_district_geometries(rows)
+    for f in rows:
+        p = f["properties"]
+        f["properties"] = {"ubigeo": p["ubigeo"], "department_code": p["ubigeo"][:2], "department": p["nombdep"], "province": p["nombprov"], "district": p["nombdist"]}
+    return {"type": "FeatureCollection", "features": rows}, {"latest_date": None, "units": "EPSG:4326", "notes": ["Cartografía distrital de referencia del servicio CENEPRED 2025–2027, simplificada para visualización.", "No representa demarcación legal actualizada ni una serie diaria. Se vincula al escenario mediante UBIGEO."]}, []
+
+
+COLLECTORS = {"noaa_ocean_sst": lambda f: collect_ocean(f), "noaa_ocean_currents": lambda f: collect_ocean(f, True), "noaa_weekly": lambda f: collect_noaa(f), "noaa_monthly": lambda f: collect_noaa(f, True), "senamhi_forecast": collect_forecast, "enfen": collect_enfen, "cenepred_risk": collect_risk, "cenepred_points": collect_points, "boundaries": collect_boundaries, "district_boundaries": collect_district_boundaries}
 
 
 def source_due(state, hours, force=False):

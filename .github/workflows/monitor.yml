@@ -44,6 +44,7 @@ jobs:
           node --test tests/selectors.test.mjs
           node --check site/assets/app.mjs
           node --check site/assets/ocean.mjs
+          node --check site/assets/glossary.mjs
       - name: Consultar fuentes según su disponibilidad
         env:
           FORCE_REFRESH: ${{ inputs.force || 'false' }}
