@@ -30,6 +30,8 @@ def build():
     entry = entry.replace("'./ocean.mjs'", f"'./ocean.mjs?v={ocean_hash}'")
     glossary_hash = hashlib.sha256((source / 'assets/glossary.mjs').read_bytes()).hexdigest()[:12]
     entry = entry.replace("'./glossary.mjs'", f"'./glossary.mjs?v={glossary_hash}'")
+    weather_hash = hashlib.sha256((source / 'assets/weather.mjs').read_bytes()).hexdigest()[:12]
+    entry = entry.replace("'./weather.mjs'", f"'./weather.mjs?v={weather_hash}'")
     entry_hash = hashlib.sha256(entry.encode()).hexdigest()[:12]
     entry_name = f"app-{entry_hash}.mjs"
     (target / "assets" / entry_name).write_text(entry)

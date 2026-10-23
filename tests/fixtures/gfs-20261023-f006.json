@@ -1,0 +1,17 @@
+{
+  "source": "https://nomads.ncep.noaa.gov/",
+  "run": "2026-10-23T00:00:00+00:00",
+  "lead_hours": 6,
+  "variables": [
+    "TMAX",
+    "TMIN",
+    "APCP"
+  ],
+  "bounding_box": [
+    -83,
+    -19,
+    -67,
+    1
+  ],
+  "sha256": "af4e66c9deea388902fee82f9cd48bad7d05ce4fc23c678ad5befad2d30953d8"
+}

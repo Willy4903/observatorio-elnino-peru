@@ -15,6 +15,8 @@ Dashboard: https://Willy4903.github.io/observatorio-elnino-peru/
 | ENFEN | Último comunicado, fecha, estado de alerta y PDF | Cada 12 h | Al emitirse un comunicado |
 | CENEPRED / SIGRID | Escenarios distritales por inundación y movimientos en masa; puntos críticos | Diaria | Según revisión del servicio |
 | CENEPRED / SIGRID | Límites departamentales | Mensual | Según revisión del servicio |
+| NOAA NCEP / NOMADS | GFS 0,25°: temperatura a 2 m y precipitación por celda, consultadas para 1.891 puntos distritales | Cada 6 h | Ciclos de modelo de 00, 06, 12 y 18 UTC; se esperan 6 h para disponibilidad completa |
+| SENAMHI / ENFEN / IMARPE / NOAA / COEN-INDECI | Catálogos oficiales, diagnóstico ENSO, informes técnicos y noticias | Cada 6, 12 o 24 h, según el portal | Se conservan publicación, corte o periodo explícitos; no se infieren emergencias |
 | CENEPRED / SIGRID | Cartografía distrital del escenario (carga al elegir departamento) | Mensual | Según revisión del servicio |
 
 El workflow se ejecuta a las 00:27, 06:27, 12:27 y 18:27 UTC: 19:27 del día anterior, 01:27, 07:27 y 13:27 de Lima. Cada fuente respeta su intervalo en ventanas UTC. También se ejecuta al cambiar código o manualmente en Actions → Actualizar y publicar observatorio → Run workflow.
@@ -29,7 +31,7 @@ Una página abierta comprueba la publicación cada 15 minutos y al volver a su p
 
 - Observaciones: se conservan las fechas y frecuencias oficiales. El filtro diario no interpola índices semanales. El mensual usa meses completos publicados. Niño 1+2 no es ICEN; Niño 3.4 no es ONI ni RONI. La alerta corresponde a ENFEN.
 - Cobertura nacional: los 24 departamentos y la Provincia Constitucional del Callao se conservan en el mapa, el selector territorial y la comparación nacional. «Perú completo» muestra el país entero; «Costa y océano» y «Pacífico» permiten examinar el contexto oceánico. Elegir un territorio filtra el detalle y permite acercar el mapa. La comparación mantiene los 25 territorios aunque una fuente no publique datos para alguno y distingue «sin pronóstico» de un conteo de riesgo igual a cero. Los nombres del mapa evitan solaparse; todos los marcadores siguen disponibles al señalar, enfocar o acercar.
-- Distritos: elegir un departamento habilita los distritos disponibles en el escenario. Se cargan sus polígonos SIGRID por UBIGEO para visualizar la categoría oficial, seleccionar un distrito y acercarse a él. Los puntos se vinculan mediante coincidencia normalizada exacta de departamento, provincia y distrito, sin asignaciones aproximadas. «Todos los distritos» conserva el departamento; «Quitar filtro» en el inspector elimina ambos filtros territoriales y vuelve al Perú completo, conservando fechas y capa. La cartografía corresponde al servicio 2025–2027 y no se presenta como demarcación legal actualizada. La tabla de localidades SENAMHI carece de correspondencia distrital oficial: sus pronósticos permanecen identificados como departamentales al seleccionar un distrito.
+- Distritos: elegir un departamento habilita los distritos disponibles en el escenario. Se cargan sus polígonos SIGRID por UBIGEO para visualizar la categoría oficial, seleccionar un distrito y acercarse a él. Los puntos se vinculan mediante coincidencia normalizada exacta de departamento, provincia y distrito, sin asignaciones aproximadas. «Todos los distritos» conserva el departamento; «Quitar filtro» en el inspector elimina ambos filtros territoriales y vuelve al Perú completo, conservando fechas y capa. La cartografía corresponde al servicio 2025–2027 y no se presenta como demarcación legal actualizada. El pronóstico distrital usa NOAA GFS en la celda de 0,25° más próxima a un punto interior calculado desde la cartografía. Varios distritos pequeños pueden compartir celda; no es una estación ni promedio distrital. SENAMHI permanece disponible por localidad y sus registros no se asignan a distritos sin una correspondencia verificable.
 - Campo oceánico: la vista principal replica el centro de control de referencia con el análisis diario OISST, direcciones de corrientes geostróficas, rejilla de coordenadas y navegación departamental. El campo mantiene los valores de cada celda oficial y su máscara; no se generan manchas térmicas propias ni se pinta la TSM sobre tierra. Las fechas del campo, de los vectores y de los índices CPC son independientes y visibles. Las flechas indican dirección; su animación no predice la deriva. Los marcadores seleccionan territorios, no representan estaciones, anomalías locales ni eventos actuales.
 - Archivo oceánico: `ocean_history.json` registra las instantáneas obtenidas desde la primera adquisición. El filtro selecciona el último campo con fecha dentro del periodo. Si no hay una instantánea descargada para ese periodo, se informa la falta de cobertura. El rezago no desaparece al volver a descargar el mismo dato.
 - Pronósticos: el calendario filtra la fecha de validez. La tabla SENAMHI no publica hora de emisión; `fetched_at` es la consulta. El año se infiere por proximidad y se valida contra una ventana operativa. Los textos se conservan; mm y probabilidades permanecen `null`.
@@ -38,7 +40,7 @@ Una página abierta comprueba la publicación cada 15 minutos y al volver a su p
 - Puntos críticos: inventario documentado, no emergencias actuales. El mapa de calor cuenta puntos en una malla hexagonal fija de 30 km entre centros en EPSG:3857 (distancia terrestre aproximada). Cada punto se cuenta una sola vez. Los colores usan los mismos intervalos en todo el país y a cualquier zoom: 1–4, 5–19, 20–49, 50–99 y 100 o más puntos. Las celdas no delimitan áreas de peligro ni representan lluvia o severidad. Al acercar se muestran las ubicaciones exactas; cada celda dispone de conteo, departamentos e inspector. Una ficha puede tener varios puntos. El filtro opcional por fecha de ficha excluye registros sin fecha.
 - Temperatura departamental: promedio de localidades y días disponibles, sin ponderación por área; no representa toda la superficie del departamento.
 - Mención de precipitación: proporción de textos localidad/día con términos de lluvia, llovizna, chubascos o precipitación. No es probabilidad ni porcentaje del área. La interpretación conserva el texto oficial.
-- Lectura ejecutiva: seis tarjetas calculadas sobre las publicaciones y filtros activos muestran estado ENFEN, señal oceánica, riesgo distrital, extremos de temperatura previstos, menciones de precipitación y vigencia de fuentes. Identifican el tipo de información, fechas, limitaciones y acceso al detalle. Son una síntesis derivada, no nuevas alertas oficiales ni un modelo de predicción.
+- Lectura ejecutiva: seis tarjetas calculadas sobre las publicaciones y filtros activos muestran estado ENFEN, señal oceánica, riesgo distrital, extremos de temperatura previstos, precipitación del modelo GFS o menciones cualitativas SENAMHI, y vigencia de fuentes. Identifican el tipo de información, fechas, limitaciones y acceso al detalle. Son una síntesis derivada, no nuevas alertas oficiales ni un modelo de predicción.
 - Glosario: 32 términos consultables por texto y categoría, con definiciones breves y referencias oficiales o explicación de uso en el dashboard. Incluye TSM, anomalías, Niño 1+2 / 3.4, ICEN, ONI, RONI, OISST, validez, vulnerabilidad, riesgo, cobertura y rezago. Los indicadores enlazan a sus términos.
 - Fechas visibles: la franja de productos identifica fecha o validez por fuente. Cada producto separa fecha del dato, última consulta válida, último intento y último cambio de contenido detectado aquí. Una fecha de emisión que la fuente no publica se mantiene como no informada. Las incidencias conservan el dato anterior e indican que debe revisarse su vigencia.
 
@@ -56,9 +58,10 @@ En celulares se utiliza una columna, navegación inferior, controles de al menos
 
 ## Desarrollo · Ejecuta y verifica
 
-Requisitos: Python 3.11+, Node.js para pruebas y `pdftotext` de Poppler para el comunicado ENFEN. Python utiliza solo la biblioteca estándar.
+Requisitos: Python 3.11+, Node.js para pruebas y `pdftotext` de Poppler para el comunicado ENFEN. El lector GRIB2 GFS requiere ecCodes y NumPy, fijados en `pipeline/requirements.txt`; los demás colectores usan la biblioteca estándar.
 
 ```bash
+python -m pip install -r pipeline/requirements.txt
 python pipeline/update.py --force
 python pipeline/build.py
 python -m unittest discover -s tests -v
@@ -95,3 +98,11 @@ Pages y los runners estándar de Actions son gratuitos en repositorios públicos
 - [GitHub: Pages con Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
 
 Las licencias de bibliotecas están en `site/assets/vendor/`. Los datos conservan su atribución institucional; su utilización no implica aval institucional del dashboard.
+
+## Pronóstico distrital y navegación en celular
+
+- Fuente seleccionable: modelo NOAA GFS o localidades SENAMHI; las cantidades de lluvia GFS no se mezclan con menciones cualitativas.
+- GFS: doce recortes oficiales GRIB2 para tres ventanas de 24 h. Se validan ciclo, unidades, nivel de temperatura (2 m), intervalos de 6 h, malla, valores finitos y cobertura UBIGEO. Cuatro acumulados no superpuestos forman cada ventana. Se muestran emisión, inicio, fin, punto distrital y celda. La fecha filtra el cierre en Lima; no se presenta como día civil. El archivo comienza con la primera adquisición.
+- Arrastre y zoom táctil en Leaflet; el botón «Pausar gestos» permite volver a desplazar la página desde el mapa. Un cambio de tamaño no restablece el encuadre elegido por el usuario.
+- «Reproducir fechas» cambia entre publicaciones/ventanas disponibles, sin interpolar días. Gotas y pulsos gráficos se anclan a puntos con datos; no simulan viento, propagación, velocidad o probabilidad. Se pueden pausar y respetan movimiento reducido y pestañas en segundo plano.
+- Catálogos: los ocho portales sugeridos tienen consulta y estado propios. Las referencias COEN son accesos de consulta; las noticias INDECI y simulaciones no se cuentan ni se geolocalizan como emergencias.

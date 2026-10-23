@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Adquisición oficial, validación y publicación atómica. Python 3.11+, sin paquetes.
+"""Adquisición oficial, validación y publicación atómica. Python 3.11+; ecCodes y NumPy para GFS.
 
 Los errores de una fuente conservan su última versión válida y quedan expuestos
 en manifest.json. Los datos ausentes nunca se sustituyen por cero.
@@ -28,6 +28,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import quote, urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
+import documents
+import gfs
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "site" / "data"
@@ -56,8 +58,10 @@ SOURCES = {
     "cenepred_points": {"provider": "CENEPRED · SIGRID", "title": "Inventario de puntos y zonas críticas", "kind": "risk_inventory", "url": SIG, "hours": 24, "max_age_days": None, "cadence": "Consulta diaria; según revisión de SIGRID"},
     "boundaries": {"provider": "CENEPRED · SIGRID", "title": "Límites departamentales", "kind": "reference", "url": SIG + "/0", "hours": 720, "max_age_days": None, "cadence": "Consulta mensual"},
     "district_boundaries": {"provider": "CENEPRED · SIGRID", "title": "Límites distritales del escenario", "kind": "reference", "url": SIG + "/8", "hours": 720, "max_age_days": None, "cadence": "Consulta mensual; cartografía del escenario"},
+    "district_forecast": {"provider": "NOAA NCEP · GFS", "title": "Pronóstico de modelo por distrito · GFS 0,25°", "kind": "forecast", "url": gfs.NOMADS + "gribfilter.php?ds=gfs_0p25", "hours": 6, "max_age_days": 3, "cadence": "Consulta cada 6 horas; ciclo GFS completo disponible, con emisión y ventanas de 24 h explícitas"},
 }
-COMPRESSED = {"noaa_ocean_sst", "noaa_ocean_currents", "noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points", "district_boundaries"}
+SOURCES.update({key: {"provider": p, "title": t, "url": url, "hours": hours, "kind": "reference", "category": "documents", "max_age_days": None, "cadence": f"Consulta cada {hours} horas; según publicación oficial"} for key, (p, t, url, hours) in documents.SPECS.items()})
+COMPRESSED = {"noaa_ocean_sst", "noaa_ocean_currents", "noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points", "district_boundaries", "district_forecast"}
 
 
 def source_path(source_id):
@@ -103,7 +107,7 @@ class Fetcher:
         self.provenance = []
 
     def get(self, url):
-        allowed = ("senamhi.gob.pe", "imarpe.gob.pe", "noaa.gov", "cenepred.gob.pe")
+        allowed = ("senamhi.gob.pe", "imarpe.gob.pe", "noaa.gov", "cenepred.gob.pe", "indeci.gob.pe", "gob.pe")
         host = urlparse(url).hostname or ""
         if not any(host == suffix or host.endswith("." + suffix) for suffix in allowed):
             raise ValueError("Dominio no autorizado para adquisición oficial")
@@ -487,6 +491,16 @@ def collect_district_boundaries(fetcher):
 
 
 COLLECTORS = {"noaa_ocean_sst": lambda f: collect_ocean(f), "noaa_ocean_currents": lambda f: collect_ocean(f, True), "noaa_weekly": lambda f: collect_noaa(f), "noaa_monthly": lambda f: collect_noaa(f, True), "senamhi_forecast": collect_forecast, "enfen": collect_enfen, "cenepred_risk": collect_risk, "cenepred_points": collect_points, "boundaries": collect_boundaries, "district_boundaries": collect_district_boundaries}
+def collect_district_forecast(fetcher):
+    districts = load(source_path("district_boundaries"))
+    if not districts:
+        raise ValueError("Sin cartografía distrital validada para muestrear GFS")
+    rows, details, rejected = gfs.collect(fetcher, districts["data"]["features"], dt.datetime.fromisoformat(NOW))
+    details["district_geometry_sha256"] = districts["meta"]["data_sha256"]
+    return rows, details, rejected
+
+COLLECTORS["district_forecast"] = collect_district_forecast
+COLLECTORS.update({key: (lambda f, source_id=key: documents.collect(f, source_id, TODAY)) for key in documents.SPECS})
 
 
 def source_due(state, hours, force=False):
@@ -521,16 +535,18 @@ def freshness(state, spec):
 
 
 def archive_forecast(envelope):
+    model = envelope["meta"].get("source_id") == "district_forecast"
+    folder, index_name = ("grids", "district_forecast_history.json") if model else ("forecasts", "forecast_history.json")
     stamp = dt.datetime.fromisoformat(NOW).strftime("%Y-%m-%dT%H%M%SZ")
-    path = DATA / "history" / "forecasts" / (stamp + "-" + envelope["meta"]["data_sha256"][:12] + ".json.gz")
+    path = DATA / "history" / folder / (stamp + "-" + envelope["meta"]["data_sha256"][:12] + ".json.gz")
     if not path.exists():
         write_atomic(path, envelope)
-    index = load(DATA / "forecast_history.json", {"versions": []})
+    index = load(DATA / index_name, {"versions": []})
     rel = str(path.relative_to(DATA))
     if not any(v["path"] == rel for v in index["versions"]):
         index["versions"].append({"path": rel, "collected_at": NOW, "valid_from": min(r["valid_date"] for r in envelope["data"]), "valid_to": max(r["valid_date"] for r in envelope["data"]), "sha256": envelope["meta"]["data_sha256"]})
     index["versions"].sort(key=lambda v: v["collected_at"])
-    write_atomic(DATA / "forecast_history.json", index)
+    write_atomic(DATA / index_name, index)
 
 
 def archive_ocean(envelope):
@@ -564,7 +580,7 @@ def update_source(source_id, previous):
         meta = {"source_id": source_id, "provider": spec["provider"], "kind": spec["kind"], "source_url": spec["url"], "fetched_at": NOW, "data_updated_at": NOW if changed else old_file["meta"]["data_updated_at"], "data_sha256": data_hash, "records": count, "provenance": fetcher.provenance, **details}
         envelope = {"meta": meta, "data": rows}
         write_atomic(source_path(source_id), envelope)
-        if source_id == "senamhi_forecast" and changed:
+        if source_id in ("senamhi_forecast", "district_forecast") and changed:
             archive_forecast(envelope)
         state.update({"file": source_path(source_id).name, "last_success": NOW, "data_updated_at": meta["data_updated_at"], "data_sha256": data_hash, "records": count, "latest_date": details.get("latest_date"), "rejected_records": len(rejected), "changed": changed})
         quality = {"source_id": source_id, "result": "passed", "records": count, "rejected_records": len(rejected), "rejected_sample": rejected[:20], "requests": len(fetcher.provenance), "sha256": data_hash}

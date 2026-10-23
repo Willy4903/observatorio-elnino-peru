@@ -11,12 +11,13 @@ export function selectNoaa(rows, {from, to}, monthly = false) {
   // Un valor mensual representa un periodo, no una observación diaria.
   return rows.filter(r => monthly ? r.date <= to && r.period_end >= from : inRange(r.date, from, to));
 }
-export function selectForecasts(versions, {from, to, department = 'all'}) {
+export function selectForecasts(versions, {from, to, department = 'all', district = 'all'}) {
   const chosen = new Map();
   for (const version of [...versions].sort((a, b) => a.meta.fetched_at.localeCompare(b.meta.fetched_at))) {
     const collectedDate = limaDate(version.meta.fetched_at);
     for (const row of version.data) {
       if (!inRange(row.valid_date, from, to) || (department !== 'all' && row.department_code !== department)) continue;
+      if (district !== 'all' && row.ubigeo !== district) continue;
       // Nunca reconstruir un pronóstico histórico con una consulta posterior a su validez.
       if (collectedDate > row.valid_date) continue;
       chosen.set(`${row.locality_id}|${row.valid_date}`, {...row, collected_at: version.meta.fetched_at});
@@ -42,7 +43,7 @@ export function forecastByDepartment(rows, metric = 'tmax') {
     if (!groups.has(r.department_code)) groups.set(r.department_code, {code: r.department_code, name: r.department, rows: []});
     groups.get(r.department_code).rows.push(r);
   }
-  return [...groups.values()].map(g => ({...g, count: new Set(g.rows.map(r => r.locality_id)).size, value: metric === 'rain' ? 100 * g.rows.filter(r => r.rain_mentioned).length / g.rows.length : mean(g.rows.map(r => metric === 'tmin' ? r.tmin_c : r.tmax_c))})).sort((a, b) => b.value - a.value);
+  return [...groups.values()].map(g => ({...g, count: new Set(g.rows.map(r => r.locality_id)).size, value: metric === 'rain' ? (g.rows.some(r=>Number.isFinite(r.precipitation_mm)) ? mean(g.rows.map(r=>r.precipitation_mm).filter(Number.isFinite)) : 100 * g.rows.filter(r => r.rain_mentioned).length / g.rows.length) : mean(g.rows.map(r => metric === 'tmin' ? r.tmin_c : r.tmax_c))})).sort((a, b) => b.value - a.value);
 }
 export function forecastByDate(rows) {
   const dates = [...new Set(rows.map(r => r.valid_date))].sort();

@@ -1,6 +1,20 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {selectNoaa, selectForecasts, riskByDepartment, territorialCoverage, forecastSummary, districtOptions, pointMatchesDistrict, normalize, csv} from '../site/assets/selectors.mjs';
+import {forecastDates,frameRows,weatherByDistrict,rainColor} from '../site/assets/weather.mjs';
+
+test('el filtro distrital conserva celdas reales y no hereda el pronóstico departamental',()=>{
+  const env=JSON.parse(gunzipSync(readFileSync(new URL('../site/data/district_forecast.json.gz',import.meta.url))));
+  const rows=selectForecasts([env],{from:'2026-01-01',to:'2099-12-31',department:'15',district:'150132'});
+  assert.equal(rows.length,3);assert.ok(rows.every(r=>r.ubigeo==='150132'));
+  const dates=forecastDates(rows);assert.equal(dates.length,3);assert.equal(frameRows(rows,dates[0]).length,1);
+  const grouped=weatherByDistrict(frameRows(rows,dates[0]),'rain');assert.equal(grouped[0].value,rows.find(r=>r.valid_date===dates[0]).precipitation_mm);
+  const sen=readOfficial('senamhi_forecast.json.gz');
+  assert.equal(selectForecasts([{meta:env.meta,data:sen}],{from:'2026-01-01',to:'2099-12-31',district:'150132'}).length,0);
+});
+test('el color de lluvia diferencia cero, dato ausente y cantidades positivas',()=>{
+  assert.notEqual(rainColor(null),rainColor(0));assert.notEqual(rainColor(0),rainColor(.01));assert.notEqual(rainColor(2),rainColor(50));
+});
 
 test('el día no interpola índices semanales',()=>{
   assert.equal(selectNoaa([{date:'2026-10-14'}],{from:'2026-10-15',to:'2026-10-15'}).length,0);

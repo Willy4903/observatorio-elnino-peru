@@ -1,5 +1,6 @@
 import {oceanScalarLayer, oceanVectorLayer} from './ocean.mjs';
 import {GLOSSARY,GLOSSARY_CATEGORIES} from './glossary.mjs';
+import {forecastDates,frameRows,weatherByDistrict,rainColor,weatherMotionLayer} from './weather.mjs';
 import {normalize, inRange, highRisk, mean, limaDate, selectNoaa, selectForecasts, riskByDepartment, forecastByDepartment, forecastByDate, territorialCoverage, forecastSummary, districtOptions, pointMatchesDistrict, csv, hexbinPoints} from './selectors.mjs';
 
 const $ = id => document.getElementById(id);
@@ -15,6 +16,12 @@ const HAZARDS = {inundacion:'Inundación',movimientos_masa:'Movimientos en masa'
 const STATUS = {ok:'Disponible',stale:'Desactualizado',degraded:'Consulta fallida',unavailable:'Sin datos'};
 const state = {kind:'observation',layer:'sst',vectors:true,oceanExtent:'national',inspectorDepartment:'all',inspectorDistrict:null,district:'all',hazard:'inundacion',frequency:'weekly',table:'districts',forecastPage:0,zonePage:0,from:'',to:'',department:'all',data:{},versions:[],forecastRows:[],zoneRows:[],history:[],map:null,mapLayers:[],territoryMarkers:[],polygons:null,noaaChart:null,forecastChart:null};
 const networkCache = new Map();
+Object.assign(state,{forecastProvider:'gfs',gridVersions:[],gridHistory:[],frameDate:'all',weatherMotion:!matchMedia('(prefers-reduced-motion: reduce)').matches,playing:false});
+const modelWeather=()=>state.forecastProvider==='gfs';
+const weatherProvider=()=>modelWeather()?'NOAA GFS':'SENAMHI';
+const mapForecastRows=()=>frameRows(state.forecastRows,state.frameDate);
+const contextForecastRows=()=>modelWeather()&&state.district!=='all'?frameRows(selectForecasts(state.gridVersions,{...state,district:'all'}),state.frameDate):mapForecastRows();
+const windowLabel=row=>row?.valid_start?`${timestamp(row.valid_start)} → ${timestamp(row.valid_end)}`:row?dateLabel(row.valid_date):'Sin ventana disponible';
 const compactScreen=()=>window.matchMedia('(max-width:767px), (max-width:1023px) and (max-height:600px)').matches;
 const PAGE = compactScreen()?6:12;
 
@@ -98,6 +105,8 @@ async function loadData() {
   state.oceanVersions=Object.fromEntries(['noaa_ocean_sst','noaa_ocean_currents'].map(id=>[id,state.data[id]?[state.data[id]]:[]]));
   try{state.oceanHistory=(await getJson('./data/ocean_history.json')).versions;}catch{state.oceanHistory=[];}
   if (state.data.senamhi_forecast) state.versions=[state.data.senamhi_forecast];
+  state.gridVersions=state.data.district_forecast?[state.data.district_forecast]:[];
+  try{state.gridHistory=(await getJson('./data/district_forecast_history.json')).versions;}catch{state.gridHistory=[];}
   try { state.history=(await getJson('./data/forecast_history.json')).versions; } catch {state.history=[];}
   const bulletin=state.data.enfen?.data;
   if (bulletin) {
@@ -116,6 +125,42 @@ function renderHealth() {
   const ok=operational.filter(s=>clientStatus(s)==='ok').length;
   $('global-status').innerHTML=`<i></i>${ok}/${operational.length} conjuntos al día`;
   $('global-status').classList.toggle('degraded',ok!==operational.length);
+}
+
+async function ensureGridHistory(){
+  const choices=new Map();
+  for(const v of state.gridHistory){
+    if(v.valid_from>state.to||v.valid_to<state.from||limaDate(v.collected_at)>state.to)continue;
+    for(let day=new Date(v.valid_from+'T12:00:00Z');day.toISOString().slice(0,10)<=v.valid_to;day.setUTCDate(day.getUTCDate()+1)){
+      const date=day.toISOString().slice(0,10);if(inRange(date,state.from,state.to)&&limaDate(v.collected_at)<=date&&(!choices.has(date)||choices.get(date).collected_at<v.collected_at))choices.set(date,v);
+    }
+  }
+  const known=new Set(state.gridVersions.map(v=>v.meta.data_sha256));
+  await Promise.allSettled([...new Map([...choices.values()].map(v=>[v.path,v])).values()].filter(v=>!known.has(v.sha256)&&/^history\/grids\/\d{4}-\d{2}-\d{2}T\d{6}Z-[a-f0-9]+\.json\.gz$/.test(v.path)).map(async v=>{state.gridVersions.push(await getJson('./data/'+v.path));}));
+}
+function refreshWeatherRows(){
+  state.forecastRows=selectForecasts(modelWeather()?state.gridVersions:state.versions,state);
+  const dates=forecastDates(state.forecastRows);
+  if(state.frameDate!=='all'&&!dates.includes(state.frameDate))state.frameDate=dates.find(d=>d>=limaDate())??dates.at(-1)??'all';
+}
+function renderTimeline(){
+  const forecast=state.kind==='forecast';$('weather-controls').hidden=!forecast;$('map-layer-wrap').hidden=forecast;
+  $('forecast-provider-wrap').hidden=!forecast;$('forecast-provider').value=state.forecastProvider;$('weather-provider').value=state.forecastProvider;
+  const dates=forecastDates(state.forecastRows);
+  $('forecast-frame').innerHTML='<option value="all">Resumen del periodo</option>'+dates.map(d=>`<option value="${d}">${e(dateLabel(d))}</option>`).join('');
+  $('weather-metric').innerHTML=[['tmax','Temperatura máxima'],['tmin','Temperatura mínima'],['rain',modelWeather()?'Lluvia · mm / 24 h':'Mención de lluvia']].map(([v,label])=>`<option value="${v}">${label}</option>`).join('');$('weather-metric').value=['tmax','tmin','rain'].includes(state.layer)?state.layer:'tmax';
+  $('forecast-frame').value=state.frameDate;$('forecast-frame').disabled=!dates.length;
+  $('map-play').disabled=dates.length<2;$('map-play').textContent=state.playing?'Pausar fechas':'Reproducir fechas';$('map-play').setAttribute('aria-pressed',String(state.playing));
+  $('weather-motion').textContent=state.weatherMotion?'Efectos activados':'Efectos pausados';$('weather-motion').setAttribute('aria-pressed',String(state.weatherMotion));
+  $('weather-motion-note').textContent=modelWeather()?'Efectos ilustrativos sobre puntos con pronóstico; no indican dirección ni velocidad. Fechas reales.':'SENAMHI: reproducción de fechas reales, sin animar cantidades o ubicaciones no publicadas.';
+}
+let playbackTimer;
+function stopPlayback(){clearInterval(playbackTimer);state.playing=false;if($('map-play')){$('map-play').textContent='Reproducir fechas';$('map-play').setAttribute('aria-pressed','false');}}
+function startPlayback(){
+  const dates=forecastDates(state.forecastRows);if(dates.length<2)return;
+  stopPlayback();state.playing=true;
+  const advance=()=>{if(document.hidden)return;state.frameDate=dates[(dates.indexOf(state.frameDate)+1)%dates.length];renderMap();};
+  advance();playbackTimer=setInterval(advance,2200);
 }
 
 let refreshingPublication=false;
@@ -205,21 +250,23 @@ function renderKpis() {
   $('bar-risk').style.width=classified.length?100*high.length/classified.length+'%':'0%';
   $('bar-risk').parentNode.title='Porcentaje de distritos clasificados en alto o muy alto';
   const locations=new Set(state.forecastRows.map(r=>r.locality_id));
-  $('kpi-forecast').textContent=state.data.senamhi_forecast?fmt(locations.size):'—';
-  $('forecast-kpi-detail').textContent=state.forecastRows.length?`${fmt(state.forecastRows.length)} registros localidad / día${state.district!=='all'?' · ámbito departamental':''}`:'Sin pronósticos en el periodo';
-  const coverage=new Set((state.data.senamhi_forecast?.data??[]).map(r=>r.locality_id)).size;
+  $('kpi-forecast').textContent=state.data[modelWeather()?'district_forecast':'senamhi_forecast']?fmt(locations.size):'—';
+  $('forecast-kpi-detail').textContent=state.forecastRows.length?`${fmt(state.forecastRows.length)} registros ${modelWeather()?'punto / ventana de 24 h':'localidad / día'}`:'Sin pronósticos en el periodo';
+  $('weather-kpi-label').textContent=modelWeather()?'DISTRITOS CON MODELO':'LOCALIDADES CON PRONÓSTICO';$('weather-kpi-provider').textContent=weatherProvider();$('weather-kpi-footer').textContent=modelWeather()?'PRONÓSTICO · MODELO NOAA GFS':'PRONÓSTICO · SENAMHI';
+  const coverage=new Set((state.data[modelWeather()?'district_forecast':'senamhi_forecast']?.data??[]).map(r=>r.locality_id)).size;
   $('bar-forecast').style.width=coverage?100*locations.size/coverage+'%':'0%';
-  $('bar-forecast').parentNode.title='Localidades de la selección respecto del inventario de pronósticos disponible';
+  $('bar-forecast').parentNode.title='Puntos de la selección respecto de la cobertura de la fuente de pronóstico';
 }
 
 function initMap() {
   if (!window.L) { $('map').textContent='El componente del mapa no pudo cargarse.'; return; }
-  state.map=L.map('map',{zoomControl:true,preferCanvas:true,scrollWheelZoom:false,minZoom:2,maxZoom:15,zoomSnap:.25,zoomDelta:.5,zoomAnimation:false,fadeAnimation:false});
+  state.map=L.map('map',{zoomControl:true,preferCanvas:true,dragging:true,touchZoom:true,doubleClickZoom:true,boxZoom:false,scrollWheelZoom:false,minZoom:2,maxZoom:15,zoomSnap:.25,zoomDelta:.5,zoomAnimation:true,fadeAnimation:false});
   state.map.createPane('borders');state.map.getPane('borders').style.zIndex=440;state.map.getPane('borders').style.pointerEvents='none';
   state.map.createPane('labels');state.map.getPane('labels').style.zIndex=460;state.map.getPane('labels').style.pointerEvents='none';
   state.map.createPane('districts');state.map.getPane('districts').style.zIndex=450;
-  const observer=new ResizeObserver(()=>{requestAnimationFrame(()=>{state.map.invalidateSize({pan:false});reframe();});});observer.observe($('map'));
+  const observer=new ResizeObserver(()=>{requestAnimationFrame(()=>state.map.invalidateSize({pan:false}));});observer.observe($('map'));
   for(const [name,z] of [['ocean',250],['oceanVectors',350],['graticule',300]]){state.map.createPane(name);state.map.getPane(name).style.zIndex=z;state.map.getPane(name).style.pointerEvents='none';}
+  state.map.createPane('weatherEffects');state.map.getPane('weatherEffects').style.zIndex=455;state.map.getPane('weatherEffects').style.pointerEvents='none';
   state.map.attributionControl.addAttribution('NOAA CoastWatch / CENEPRED SIGRID');
   state.map.fitBounds([[-18.5,-82.5],[0.3,-68.4]],{padding:[25,35]});
 }
@@ -239,22 +286,31 @@ function densityLegend() {
   $('map-legend').innerHTML='<div class="legend-title">PUNTOS POR CELDA · 30 KM</div>'+DENSITY_STEPS.map(s=>`<div class="legend-step"><i style="background:${s.color}"></i><span>${s.label}</span></div>`).join('')+'<div class="legend-empty">Malla fija · conteo de inventario<br>Sin celda: sin puntos registrados</div>';
 }
 function renderInspector(cell=null) {
-  const code=state.department,national=code==='all';
-  const feature=state.data.boundaries?.data.features.find(f=>f.properties.code===code);
-  const name=national?'Perú':titleCase(feature?.properties.name??code);
-  const district=selectedDistrict();
-  const risks=selectedRisks(),high=risks.filter(r=>highRisk(r.risk_level)),classified=risks.filter(r=>r.risk_level);
-  const points=selectedPoints();
-  const forecasts=state.forecastRows,tmax=forecasts.length?Math.max(...forecasts.map(r=>r.tmax_c)):null,tmin=forecasts.length?Math.min(...forecasts.map(r=>r.tmin_c)):null;
-  const locations=new Set(forecasts.map(r=>r.locality_id)).size,dates=[...new Set(forecasts.map(r=>r.valid_date))].sort();
+  const code=state.department,national=code==='all',feature=state.data.boundaries?.data.features.find(f=>f.properties.code===code);
+  const name=national?'Perú':titleCase(feature?.properties.name??code),district=selectedDistrict();
+  const risks=selectedRisks(),classified=risks.filter(r=>r.risk_level),high=classified.filter(r=>highRisk(r.risk_level)),points=selectedPoints();
+  const forecasts=mapForecastRows(),tmax=forecasts.length?Math.max(...forecasts.map(r=>r.tmax_c)):null,tmin=forecasts.length?Math.min(...forecasts.map(r=>r.tmin_c)):null;
+  const locations=new Set(forecasts.map(r=>r.locality_id)).size,dates=forecastDates(forecasts),model=modelWeather(),first=forecasts[0];
+  const rain=mean(forecasts.map(r=>r.precipitation_mm).filter(Number.isFinite));
   const badge=district?`<span class="level level-${district.risk_level?.toLowerCase().replaceAll(' ','-')??'none'}">${e(district.risk_level??'Sin categoría')}</span>`:'<span class="pill scenario">ESCENARIO</span>';
   const title=cell?`${fmt(cell.count)} puntos documentados`:district?`${name} — ${titleCase(district.district)}`:`${name} · lectura territorial`;
   $('inspector-ubigeo').textContent=district?`UBIGEO ${district.ubigeo}`:national?'25 TERRITORIOS':`DPTO. ${code}`;
-  $('inspector-department').value=code;
-  renderDistrictPicker();
+  $('inspector-department').value=code;renderDistrictPicker();
   document.querySelectorAll('[data-department]').forEach(b=>{b.classList.toggle('selected',b.dataset.department===code);b.setAttribute('aria-pressed',String(b.dataset.department===code));});
-  const weatherScope=district?`Departamento de ${name}`:national?'Perú · localidades disponibles':name;
-  $('inspector-content').innerHTML=`<div class="inspector-title-row"><div><h3>${e(title)}</h3><p class="inspector-scope">${cell?`Celda ${e(cell.id)} · ${e(cell.departments.map(titleCase).join(' / '))}`:`${e(HAZARDS[state.hazard])} · CENEPRED, marco 2025–2027`}${district?`<br>${e(titleCase(district.province))} · UBIGEO ${e(district.ubigeo)}`:''}</p></div>${badge}</div><div class="inspector-metrics"><div class="inspector-metric"><span>TEMPERATURA MÁXIMA PREVISTA</span><b>${fmt(tmax,1)} °C</b><small>Mayor máxima publicada · ${e(weatherScope)}</small></div><div class="inspector-metric"><span>TEMPERATURA MÍNIMA PREVISTA</span><b>${fmt(tmin,1)} °C</b><small>Menor mínima publicada · ${e(weatherScope)}</small></div></div><div class="inspector-facts"><h4>COBERTURA Y ESCENARIO OFICIAL</h4><dl><div><dt>Distritos en alto o muy alto</dt><dd class="hot">${classified.length?`${fmt(high.length)} / ${fmt(classified.length)}`:'Sin clasificación'}</dd></div><div><dt>${district?'Puntos vinculados al distrito':'Puntos documentados'}</dt><dd>${fmt(points.length)}</dd></div><div><dt>Localidades con pronóstico${district?' · departamento':''}</dt><dd class="cyan">${fmt(locations)}</dd></div><div><dt>Validez de pronósticos</dt><dd>${dates.length?`${dateLabel(dates[0]).slice(0,7)} – ${dateLabel(dates.at(-1)).slice(0,7)}`:'Sin cobertura'}</dd></div></dl></div><div class="inspector-weather">${district?`Pronóstico de ámbito departamental (${e(name)}): `:''}${forecasts.length?e(forecasts.find(r=>r.rain_mentioned)?.description??forecasts[0].description):'Sin pronóstico archivado para esta selección.'}<br><span class="text-slate-500">Lluvia cualitativa SENAMHI · no se publican mm en esta tabla. El escenario no representa una emergencia en curso.</span></div>`;
+  const weatherScope=model?(district?'Celda GFS próxima al punto del distrito':'Puntos distritales disponibles'):'Localidades SENAMHI disponibles';
+  const reading=model?(first?`Modelo NOAA GFS · emisión ${timestamp(first.issued_at)}. ${dates.length===1?'Ventana: '+windowLabel(first):dates.length+' ventanas de 24 h; consulta el detalle por fecha.'}`:'Sin pronóstico GFS validado para esta selección.'):forecasts.length?forecasts.find(r=>r.rain_mentioned)?.description??forecasts[0].description:'Sin localidad SENAMHI vinculada a este distrito; consulta NOAA GFS.';
+  $('inspector-content').innerHTML=`<div class="inspector-title-row"><div><h3>${e(title)}</h3><p class="inspector-scope">${cell?`Celda ${e(cell.id)}`:`${e(HAZARDS[state.hazard])} · CENEPRED, marco 2025–2027`}${district?`<br>${e(titleCase(district.province))} · UBIGEO ${e(district.ubigeo)}`:''}</p></div>${badge}</div>
+    <div class="weather-source-label">PRONÓSTICO · ${e(weatherProvider())}${model?' · MODELO 0,25°':''}</div>
+    <div class="inspector-metrics"><div class="inspector-metric"><span>TEMPERATURA MÁXIMA PREVISTA</span><b>${fmt(tmax,1)} °C</b><small>Mayor máxima · ${e(weatherScope)}</small></div><div class="inspector-metric"><span>TEMPERATURA MÍNIMA PREVISTA</span><b>${fmt(tmin,1)} °C</b><small>Menor mínima · ${e(weatherScope)}</small></div>${model?`<div class="inspector-metric inspector-rain"><span>PRECIPITACIÓN PREVISTA · 24 H</span><b>${fmt(rain,2)} mm</b><small>${dates.length>1||locations>1?'Promedio de puntos / ventanas disponibles':'Acumulado del modelo en la ventana'} · no es probabilidad</small></div>`:''}</div>
+    <div class="inspector-facts"><h4>COBERTURA Y ESCENARIO OFICIAL</h4><dl><div><dt>Distritos en alto o muy alto</dt><dd class="hot">${classified.length?`${fmt(high.length)} / ${fmt(classified.length)}`:'Sin clasificación'}</dd></div><div><dt>${district?'Puntos vinculados al distrito':'Puntos documentados'}</dt><dd>${fmt(points.length)}</dd></div><div><dt>${model?'Puntos distritales con modelo':'Localidades con pronóstico'}</dt><dd class="cyan">${fmt(locations)}</dd></div><div><dt>Fechas de cierre / validez</dt><dd>${dates.length?`${dateLabel(dates[0]).slice(0,7)} – ${dateLabel(dates.at(-1)).slice(0,7)}`:'Sin cobertura'}</dd></div></dl></div>
+    <div class="inspector-weather">${e(reading)}<br><span>${model?'Muestreo de una celda, sin corrección por altitud; varios distritos pueden compartirla. Las ventanas no son días civiles de Lima.':'Lluvia cualitativa SENAMHI; no se publican mm ni probabilidades en esta tabla.'} El escenario CENEPRED no representa una emergencia en curso.</span></div>`;
+}
+function renderWeatherCards(){
+  const model=modelWeather(),dates=forecastDates(state.forecastRows).slice(-7);
+  $('weather-provider-label').textContent=`PRONÓSTICO METEOROLÓGICO · ${weatherProvider()}${model?' · MODELO':''}`;
+  $('forecast-chart-note').textContent=model?'Extremos previstos de 24 h, promediados entre puntos distritales de la selección. El eje fecha indica el cierre de cada ventana, no un día civil.':'Promedio de localidades SENAMHI disponibles en el periodo. No es un promedio territorial.';
+  $('weather-days').innerHTML=dates.map(date=>{const rows=frameRows(state.forecastRows,date),first=rows[0],rain=mean(rows.map(r=>r.precipitation_mm).filter(Number.isFinite));return `<button type="button" class="weather-day ${state.frameDate===date?'selected':''}" data-weather-date="${date}" aria-pressed="${state.frameDate===date}"><span>${e(dateLabel(date))}${model?' · cierre':''}</span><strong><b>${fmt(mean(rows.map(r=>r.tmax_c)),1)}°</b><i>${fmt(mean(rows.map(r=>r.tmin_c)),1)}°</i></strong><small>${model?fmt(rain,2)+' mm / 24 h':rows.some(r=>r.rain_mentioned)?'Texto menciona precipitación':'Consultar texto oficial'}</small><em>${model?e(windowLabel(first)):fmt(new Set(rows.map(r=>r.locality_id)).size)+' localidades'}<br>${model&&rows.length>1?fmt(rows.length)+' puntos · valores medios':model?'Punto de referencia del distrito':''}</em></button>`;}).join('')||'<p class="weather-unavailable">Sin pronóstico publicado o archivado para esta selección. No se sustituyen datos ausentes por cero.</p>';
+  $('weather-issue').textContent=model?(state.data.district_forecast?`NOAA GFS · resolución 0,25° · emisión más reciente: ${timestamp(state.data.district_forecast.meta.issued_at)}. Celda más próxima a un punto interior de la cartografía distrital CENEPRED 2025–2027. La fecha de cierre, el inicio y el fin de cada ventana se muestran en Lima. No es una estación ni el pronóstico oficial SENAMHI.`:'NOAA GFS: todavía no hay una descarga validada. Consulta Fuentes y calidad.'):'SENAMHI conserva sus textos y temperaturas por localidad. Las localidades sin correspondencia distrital verificable no se asignan al distrito seleccionado.';
 }
 function renderDistrictPicker(){
   const rows=districtOptions(state.data.cenepred_risk?.data??[],state.department),provinces=[...new Set(rows.map(r=>r.province))];
@@ -262,7 +318,7 @@ function renderDistrictPicker(){
   $('inspector-district').disabled=state.department==='all'||!rows.length;$('inspector-district').value=state.district;
   $('district-picker-label').textContent=state.department==='all'?'DISTRITO · ELIGE UN DEPARTAMENTO':`DISTRITO · ${rows.length} EN EL ESCENARIO`;
   $('clear-territory').disabled=state.department==='all'&&state.district==='all';
-  $('district-scope-note').textContent=state.district!=='all'?'Riesgo y puntos: distrito seleccionado. Los puntos se vinculan por coincidencia exacta de departamento, provincia y distrito. SENAMHI conserva el ámbito departamental: esta fuente no aporta correspondencia distrital oficial.':state.department==='all'?'Elige un departamento para habilitar sus distritos.':'Distritos disponibles en el escenario CENEPRED 2025–2027. Elige uno para ver su categoría y puntos documentados.';
+  $('district-scope-note').textContent=state.district!=='all'?(modelWeather()?'Riesgo y puntos: distrito seleccionado. Pronóstico: celda NOAA GFS próxima al punto interior del distrito. Consulta su emisión y ventana; la topografía local puede no estar resuelta.':'SENAMHI no aporta una correspondencia distrital en esta tabla. Selecciona NOAA GFS para consultar el modelo por distrito; el riesgo y los puntos conservan el distrito seleccionado.'):state.department==='all'?'Elige un departamento para habilitar sus distritos.':'Distritos disponibles en el escenario CENEPRED 2025–2027. Elige uno para ver su categoría y puntos documentados.';
 }
 function selectedOcean(id){return (state.oceanVersions?.[id]??[]).filter(env=>inRange(env.meta.latest_date,state.from,state.to)).sort((a,b)=>a.meta.latest_date.localeCompare(b.meta.latest_date)||a.meta.fetched_at.localeCompare(b.meta.fetched_at)).at(-1)??null;}
 async function ensureOceanHistory(){
@@ -278,7 +334,7 @@ async function ensureOceanHistory(){
 function oceanIndex(rows,step){return new Map(rows.map(r=>[`${Math.round(r.lat/step)}:${Math.round(r.lon/step)}`,r]));}
 function territorialMarkers(){
   const features=state.data.boundaries?.data.features??[];
-  const coverage=territorialCoverage(features,state.data.cenepred_risk?.data??[],selectForecasts(state.versions,{...state,department:'all'}),state.hazard);
+  const coverage=territorialCoverage(features,state.data.cenepred_risk?.data??[],selectForecasts(state.versions,{...state,department:'all',district:'all'}),state.hazard);
   state.territoryMarkers=[];
   for(const feature of features){
     const {code}=feature.properties;
@@ -323,11 +379,12 @@ function selectDistrict(code){
     const record=(state.data.cenepred_risk?.data??[]).find(r=>r.ubigeo===code);if(!record)return;
     state.department=record.department_code;$('department').value=record.department_code;state.inspectorDepartment=record.department_code;
     $('risk-level').value='all';
+    state.forecastProvider='gfs';
   }
   state.district=code;state.inspectorDistrict=selectedDistrict();void applyFilters(true);
 }
 function renderCoverage(){
-  const rows=territorialCoverage(state.data.boundaries?.data.features??[],state.data.cenepred_risk?.data??[],selectForecasts(state.versions,{...state,department:'all'}),state.hazard);
+  const rows=territorialCoverage(state.data.boundaries?.data.features??[],state.data.cenepred_risk?.data??[],selectForecasts(state.versions,{...state,department:'all',district:'all'}),state.hazard);
   const riskCount=rows.filter(r=>r.risk?.total).length,weatherCount=rows.filter(r=>r.localities).length;
   $('coverage-summary').textContent=`${rows.length} territorios navegables · ${riskCount}/${rows.length} con clasificación CENEPRED (${HAZARDS[state.hazard]}) · ${weatherCount}/${rows.length} con pronósticos SENAMHI en el periodo.`;
   $('territory-grid').innerHTML=rows.map(r=>`<button type="button" class="territory-card ${state.department===r.code?'selected':''}" data-department="${e(r.code)}" aria-pressed="${state.department===r.code}"><span class="territory-card-title"><span>${e(titleCase(r.name))}</span><small>${e(r.code)}</small></span><span class="territory-risk"><span>ALTO / MUY ALTO</span><b>${r.risk?.total?`${fmt(r.risk.high)} <small>/ ${fmt(r.risk.total)}</small>`:'Sin clasificación'}</b></span><span class="territory-weather ${r.localities?'':'no-coverage'}">${r.localities?`${fmt(r.localities)} localidades · pronóstico`:'Sin pronóstico en el periodo'}</span></button>`).join('');
@@ -356,9 +413,10 @@ function renderDistrictMap(){
   if(!features.length){$('map-footnote').textContent+=' Cartografía distrital no disponible en esta publicación; se conserva el encuadre departamental.';return;}
   const levels=new Map((state.data.cenepred_risk?.data??[]).filter(r=>r.hazard===state.hazard).map(r=>[r.ubigeo,r.risk_level]));
   const risk=state.kind==='risk_scenario'&&state.layer==='risk',heat=state.kind==='risk_scenario'&&state.layer==='heat';
+  const weather=state.kind==='forecast'&&modelWeather(),weatherValues=new Map(weatherByDistrict(contextForecastRows(),state.layer).map(r=>[r.ubigeo,r]));
   addMapLayer(L.geoJSON({type:'FeatureCollection',features},{pane:'districts',renderer:L.svg({pane:'districts'}),interactive:!heat,
-    style:f=>{const selected=f.properties.ubigeo===state.district,active=state.district==='all'||selected;return {color:selected?'#fef08a':'#80c7df',weight:selected?2.5:.65,opacity:selected?1:risk?.7:.4,fill:!heat,fillColor:risk?(DISTRICT_COLORS[levels.get(f.properties.ubigeo)]??'#334155'):'#0b1727',fillOpacity:risk?(active?.8:.2):0};},
-    onEachFeature:(feature,layer)=>{if(heat)return;const p=feature.properties;layer.bindTooltip(`<strong>${e(titleCase(p.district))}</strong><br>${e(titleCase(p.province))} · UBIGEO ${e(p.ubigeo)}<br>CENEPRED: ${e(levels.get(p.ubigeo)??'Sin categoría')}<br>Clic para filtrar el distrito`,{sticky:true,className:'territory-tooltip'});layer.on('click',()=>selectDistrict(p.ubigeo));}
+    style:f=>{const selected=f.properties.ubigeo===state.district,active=state.district==='all'||selected,value=weatherValues.get(f.properties.ubigeo)?.value;return {color:selected?'#fef08a':'#80c7df',weight:selected?2.5:.65,opacity:selected?1:risk||weather?.7:.4,fill:!heat,fillColor:weather?(state.layer==='rain'?rainColor(value):colorFor(value,state.layer==='tmin'?-15:0,45)):risk?(DISTRICT_COLORS[levels.get(f.properties.ubigeo)]??'#334155'):'#0b1727',fillOpacity:risk||weather?(active?.8:.2):0};},
+    onEachFeature:(feature,layer)=>{if(heat)return;const p=feature.properties,w=weatherValues.get(p.ubigeo);layer.bindTooltip(`<strong>${e(titleCase(p.district))}</strong><br>${e(titleCase(p.province))} · UBIGEO ${e(p.ubigeo)}<br>${weather?`NOAA GFS: ${w?fmt(w.value,1)+(state.layer==='rain'?' mm / 24 h':' °C'):'Sin pronóstico'}<br>Celda del modelo; no promedio del área`:`CENEPRED: ${e(levels.get(p.ubigeo)??'Sin categoría')}`}<br>Toca para filtrar el distrito`,{sticky:true,className:'territory-tooltip'});layer.on('click',()=>selectDistrict(p.ubigeo));}
   }));
   if(risk){
     $('map-title').textContent=state.district==='all'?'Riesgo oficial por distrito':`Riesgo distrital · ${titleCase(selectedDistrict()?.district??'Selección')}`;
@@ -366,25 +424,30 @@ function renderDistrictMap(){
     $('map-overlay-note').textContent=`${features.length} distritos cartografiados · ${HAZARDS[state.hazard]}`;
     $('map-footnote').textContent='Categorías oficiales del escenario CENEPRED 2025–2027 en su cartografía distrital de referencia. No representan emergencias actuales ni probabilidad diaria. Selecciona un distrito para inspeccionarlo. La cartografía se consulta por UBIGEO y puede diferir de la demarcación administrativa más reciente.';
   }
-  if(state.district!=='all'&&state.kind==='forecast')$('map-footnote').textContent+=' El contorno destaca el distrito seleccionado; los valores de SENAMHI conservan su ámbito departamental porque la fuente no proporciona una correspondencia distrital oficial.';
+  if(state.district!=='all'&&state.kind==='forecast')$('map-footnote').textContent+=modelWeather()?' El distrito muestra la celda GFS más próxima a su punto interior de referencia, no un promedio distrital ni una estación.':' SENAMHI: no se asignan localidades al distrito sin una correspondencia geográfica verificable; cambia a NOAA GFS para consultar el modelo distrital.';
   if(state.district!=='all'&&heat)$('map-footnote').textContent+=' Puntos del distrito vinculados por coincidencia exacta de departamento, provincia y distrito en la ficha; los registros sin correspondencia no se asignan.';
 }
 function addMapLayer(layer) {layer.addTo(state.map);state.mapLayers.push(layer);}
 
 function renderMap() {
   if (!state.map) return;
+  renderTimeline();
   state.mapLayers.forEach(l=>state.map.removeLayer(l));state.mapLayers=[];state.territoryMarkers=[];
   document.querySelectorAll('.map-no-data').forEach(el=>el.remove());
   const ocean=state.kind==='observation';$('nino34-inset').hidden=!ocean;$('ocean-readout').hidden=!ocean;$('pacific-view').hidden=!ocean;$('coast-view').hidden=!ocean;
   for(const [id,extent] of [['national-view','national'],['coast-view','coast'],['pacific-view','pacific']]){const selected=state.department==='all'&&state.oceanExtent===extent;$(id).classList.toggle('selected',selected);$(id).setAttribute('aria-pressed',String(selected));}
   document.querySelector('[data-map-mode="risk"]').innerHTML=`<i></i>Riesgo · ${HAZARDS[state.hazard]}`;
+  document.querySelector('[data-map-mode="rain"]').innerHTML=`<i></i>Precipitación · ${weatherProvider()}`;
   document.querySelectorAll('[data-map-mode]').forEach(b=>{const active=b.dataset.mapMode===(ocean?'sst':state.layer);b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});
   $('vectors-toggle').classList.toggle('selected',state.vectors&&ocean);$('vectors-toggle').setAttribute('aria-pressed',String(state.vectors&&ocean));
   const labels={observation:'ANÁLISIS NOAA',forecast:'PRONÓSTICO',risk_scenario:state.layer==='heat'?'INVENTARIO':'ESCENARIO'};
   $('map-title').textContent=state.kind==='observation'?'Anomalía de temperatura superficial del mar y corrientes geostróficas':state.kind==='forecast'?'Perspectiva meteorológica territorial':state.layer==='heat'?'Concentración de puntos críticos':'Distritos en riesgo alto o muy alto';
-  $('map-eyebrow').textContent=state.kind==='observation'?'DOMINIO OCEÁNICO-ATMOSFÉRICO':state.kind==='forecast'?'PRONÓSTICOS · SENAMHI':'DOMINIO TERRITORIAL · CENEPRED';
+  $('map-eyebrow').textContent=state.kind==='observation'?'DOMINIO OCEÁNICO-ATMOSFÉRICO':state.kind==='forecast'?`PRONÓSTICOS · ${weatherProvider()}${modelWeather()?' · MODELO 0,25°':''}`:'DOMINIO TERRITORIAL · CENEPRED';
   $('map-kind').textContent=labels[state.kind]; $('map-kind').className='pill '+({observation:'observation',forecast:'forecast',risk_scenario:'scenario'}[state.kind]);
-  const groups=state.kind==='forecast'?forecastByDepartment(state.forecastRows,state.layer):riskByDepartment(state.data.cenepred_risk?.data??[],state.hazard,state.department);
+  const weatherRows=contextForecastRows(),model=state.kind==='forecast'&&modelWeather();
+  $('map-legend').classList.toggle('rain-legend',model&&state.layer==='rain');
+  if(model){const place=selectedDistrict()?.district??state.data.boundaries?.data.features.find(f=>f.properties.code===state.department)?.properties.name??'Perú';$('map-title').textContent=`${state.layer==='rain'?'Lluvia prevista · 24 h':state.layer==='tmin'?'Temperatura mínima':'Temperatura máxima'} · ${titleCase(place)}`;}
+  const groups=state.kind==='forecast'?forecastByDepartment(weatherRows,state.layer):riskByDepartment(state.data.cenepred_risk?.data??[],state.hazard,state.department);
   const values=new Map(groups.map(g=>[g.code,g]));
   let min=0,max=100;
   if (state.kind==='forecast' && state.layer!=='rain') {min=state.layer==='tmin'?-15:0;max=45;}
@@ -392,10 +455,11 @@ function renderMap() {
   if (boundary) {
     state.polygons=L.geoJSON(boundary,{
       style:f=>{ const value=values.get(f.properties.code)?.value; const active=state.department==='all'||f.properties.code===state.department;
-        return {color:active?'#63bed5':'#274158',weight:active?.9:.6,fillColor:state.kind==='observation'?'#0c1423':(state.kind==='risk_scenario'&&state.layer==='heat')?'#102a3b':colorFor(active?value:null,min,max),fillOpacity:active ? (state.kind==='observation'?.98:state.layer==='heat'?.68:.78) : .23}; },
+        return {color:active?'#63bed5':'#274158',weight:active?.9:.6,fillColor:state.kind==='observation'||model&&state.department!=='all'?'#0c1423':(state.kind==='risk_scenario'&&state.layer==='heat')?'#102a3b':model&&state.layer==='rain'?rainColor(active?value:null):colorFor(active?value:null,min,max),fillOpacity:active ? (state.kind==='observation'?.98:state.layer==='heat'?.68:.78) : .23}; },
       onEachFeature:(feature,layer)=>{
         const g=values.get(feature.properties.code);
         let detail=state.kind==='observation'?'No se distribuye el índice oceánico sobre departamentos.':state.kind==='forecast'?(g?`${fmt(g.value,1)} ${state.layer==='rain'?'% con mención de precipitación':'°C · promedio de localidades'}<br>${fmt(g.count)} localidades disponibles`:'Sin pronósticos en el periodo'):(g?`${fmt(g.high)} de ${fmt(g.total)} distritos clasificados en alto o muy alto (${fmt(g.value,1)}%)`:'Sin clasificación disponible');
+        if(model)detail=g?`${fmt(g.value,1)} ${state.layer==='rain'?'mm / 24 h':'°C'}<br>Promedio de ${fmt(g.count)} puntos de distrito; no promedio del área`:'Sin pronóstico de modelo para la selección';
         layer.bindTooltip(`<strong>${e(titleCase(feature.properties.name))}</strong><br>${detail}`,{sticky:true});
         layer.on('click',()=>selectTerritory(feature.properties.code));
       }
@@ -422,10 +486,17 @@ function renderMap() {
     $('map-overlay-note').textContent='CENEPRED · Escenario distrital, marco 2025–2027';
     $('map-footnote').textContent='Porcentaje derivado de distritos con riesgo alto o muy alto, entre distritos clasificados. La categoría oficial es distrital; este porcentaje no es probabilidad ni una categoría departamental. Sin evolución diaria publicada.';
   } else if (state.kind==='forecast') {
-    legend(state.layer==='rain'?'Mención de precipitación en pronósticos':`Temperatura ${state.layer==='tmin'?'mínima':'máxima'} media`,state.layer==='rain'?'0%':min+' °C',state.layer==='rain'?'100%':max+' °C','temperature');
-    $('map-overlay-note').textContent='SENAMHI · Pronóstico de localidades disponibles';
-    $('map-footnote').textContent=state.layer==='rain'?'Porcentaje de registros localidad/día cuyo texto menciona precipitación, dentro del periodo. No es probabilidad de lluvia, porcentaje del área ni milímetros. Consulte el texto oficial en el detalle.':'Promedio de temperaturas previstas para localidades y días disponibles en el periodo. No representa un promedio de superficie ni observaciones. Departamentos sin cobertura se muestran en gris.';
-    if (!state.forecastRows.length) showMapEmpty('Sin pronósticos disponibles o archivados para el periodo elegido.');
+    legend(state.layer==='rain'?(model?'Precipitación del modelo · mm / 24 h':'Mención de precipitación en pronósticos'):`Temperatura ${state.layer==='tmin'?'mínima':'máxima'} prevista`,state.layer==='rain'?'0'+(model?' mm':'%'):min+' °C',state.layer==='rain'?(model?'50+ mm':'100%'):max+' °C','temperature');
+    if(model&&state.layer==='rain')$('map-legend').innerHTML='<div class="legend-title">GFS · PRECIPITACIÓN EN 24 H</div>'+[[0,'0','#17374a'],[1,'>0–<2','#2e8ba3'],[2,'2–<10','#38bdf8'],[10,'10–<25','#6366f1'],[25,'25–<50','#a855f7'],[50,'50 o más','#ec4899']].map(([,label,color])=>`<div class="legend-step"><i style="background:${color}"></i><span>${label} mm</span></div>`).join('')+'<div class="legend-empty">Gris: sin dato · no es probabilidad</div>';
+    const first=weatherRows[0];
+    $('map-overlay-note').textContent=model?`NOAA GFS · ${first?'Emisión '+timestamp(first.issued_at):'sin cobertura'} · ${state.frameDate==='all'?'resumen del periodo':dateLabel(state.frameDate)+' · cierre de 24 h'}`:'SENAMHI · '+(state.frameDate==='all'?'Resumen del periodo':dateLabel(state.frameDate));
+    $('map-footnote').textContent=model?'Modelo GFS 0,25°: celda más próxima al punto interior de referencia de cada distrito. Ventanas de 24 horas con inicio y fin explícitos; la fecha selecciona el cierre local. Al elegir un departamento aparecen sus distritos; el color departamental es el promedio de puntos, sin ponderar por superficie. Gotas y pulsos son símbolos gráficos, no desplazamiento meteorológico.':state.layer==='rain'?'Porcentaje de registros localidad/día cuyo texto menciona precipitación. No es probabilidad de lluvia, porcentaje del área ni milímetros. Consulte el texto oficial.':'Promedio de temperaturas previstas para localidades y días disponibles. No es un promedio de superficie ni una observación. Sin cobertura: gris.';
+    if(model){
+      const points=weatherByDistrict(weatherRows,state.layer);addMapLayer(weatherMotionLayer(points,{metric:state.layer,enabled:state.weatherMotion}));
+      const selected=points.find(r=>r.ubigeo===state.district);
+      if(selected)addMapLayer(L.marker([selected.lat,selected.lon],{pane:'labels',interactive:false,keyboard:false,icon:L.divIcon({className:'forecast-point-pin',html:`<span>${fmt(selected.value,state.layer==='rain'?2:1)} ${state.layer==='rain'?'mm':'°C'}</span><i></i>`,iconSize:[100,48],iconAnchor:[50,45]})}));
+    }
+    if (!weatherRows.length) showMapEmpty('Sin pronósticos disponibles o archivados para esta fecha y selección.');
   } else {
     const sst=selectedOcean('noaa_ocean_sst'),currents=selectedOcean('noaa_ocean_currents');
     state.activeSst=sst;state.activeCurrents=currents;
@@ -459,6 +530,7 @@ function renderMap() {
   }
   renderDistrictMap();
   renderInspector();
+  renderWeatherCards();
   renderCoverage();
   renderInsights();
   renderRanking(groups);
@@ -480,14 +552,19 @@ function renderRanking(groups) {
     $('ranking-title').textContent=`${titleCase(district.district)} · escenario distrital`;
     $('ranking-subtitle').textContent=`${titleCase(district.province)}, ${titleCase(district.department)} · UBIGEO ${district.ubigeo}`;
     $('ranking').innerHTML=`<div class="district-ranking"><span class="kicker">${e(HAZARDS[state.hazard])}</span><h3>${e(district.risk_level??'Sin clasificación')}</h3><p>Categoría distrital oficial · marco 2025–2027</p></div>`;
-    $('executive-note').innerHTML='<span class="note-kicker">CONTEXTO DEL DISTRITO</span>La categoría corresponde al escenario CENEPRED y no a un evento actual. Los puntos se vinculan por coincidencia administrativa exacta. El pronóstico conserva su ámbito departamental.';return;
+    $('executive-note').innerHTML='<span class="note-kicker">CONTEXTO DEL DISTRITO</span>La categoría corresponde al escenario CENEPRED y no a un evento actual. Los puntos se vinculan por coincidencia administrativa exacta. El pronóstico de modelo conserva su celda y ventana de 24 horas.';return;
+  }
+  if(district&&state.kind==='forecast'&&modelWeather()){
+    const rows=mapForecastRows();$('ranking-title').textContent=`${titleCase(district.district)} · modelo GFS`;$('ranking-subtitle').textContent='Celda próxima al punto de referencia; fechas según la ventana seleccionada.';
+    $('ranking').innerHTML=[['Máxima prevista',mean(rows.map(r=>r.tmax_c)),'°C'],['Mínima prevista',mean(rows.map(r=>r.tmin_c)),'°C'],['Precipitación prevista',mean(rows.map(r=>r.precipitation_mm).filter(Number.isFinite)),'mm / 24 h']].map(([name,value,unit],i)=>rankRow(i,name,value,state.frameDate==='all'?'Promedio de ventanas':dateLabel(state.frameDate),unit,null)).join('');
+    $('executive-note').innerHTML='<span class="note-kicker">ALCANCE DISTRITAL</span>Valores del modelo GFS 0,25°, sin corrección altitudinal. No son una estación ni un promedio del área del distrito.';return;
   }
   const forecast=state.kind==='forecast';
   $('ranking-title').textContent=forecast?'Perspectiva por departamento':'Dónde concentrar la mirada';
-  $('ranking-subtitle').textContent=forecast?(state.layer==='rain'?'Mención de precipitación en registros de localidad y día. No es probabilidad.':'Departamentos ordenados por temperatura prevista media de localidades disponibles.'):`${HAZARDS[state.hazard]}: porcentaje de distritos clasificados en riesgo alto o muy alto.`;
+  $('ranking-subtitle').textContent=forecast?(modelWeather()?'Promedios de puntos distritales del modelo GFS; sin ponderación por superficie.':state.layer==='rain'?'Mención de precipitación en textos de localidad y día; no es probabilidad.':'Promedio de temperaturas de localidades disponibles.'):`${HAZARDS[state.hazard]}: porcentaje de distritos clasificados en riesgo alto o muy alto.`;
   const max=Math.max(1,...groups.map(g=>g.value??0));
-  $('ranking').innerHTML=groups.slice(0,5).map((g,i)=>rankRow(i,titleCase(g.name),g.value,forecast?`${fmt(g.count)} localidades`:`${fmt(g.high)} de ${fmt(g.total)} distritos clasificados`,forecast&&state.layer!=='rain'?'°C':'%',max)).join('')||'<p class="no-rank">Sin datos para la selección actual.</p>';
-  $('executive-note').innerHTML=forecast?'<span class="note-kicker">ALCANCE DEL PRONÓSTICO</span>La lluvia se conserva como descripción oficial. SENAMHI no publica milímetros ni probabilidades en esta tabla. La cobertura varía por departamento.':'<span class="note-kicker">CONTEXTO DEL ESCENARIO</span>El calendario no cambia las categorías de este servicio 2025–2027. Los puntos críticos son un inventario documentado; su densidad no mide emergencias actuales.';
+  $('ranking').innerHTML=groups.slice(0,5).map((g,i)=>rankRow(i,titleCase(g.name),g.value,forecast?`${fmt(g.count)} ${modelWeather()?'puntos distritales':'localidades'}`:`${fmt(g.high)} de ${fmt(g.total)} distritos clasificados`,forecast?(state.layer==='rain'?(modelWeather()?'mm / 24 h':'%'):'°C'):'%',max)).join('')||'<p class="no-rank">Sin datos para la selección actual.</p>';
+  $('executive-note').innerHTML=forecast&&modelWeather()?'<span class="note-kicker">MODELO NUMÉRICO</span>GFS 0,25°: celda próxima al punto interior de cada distrito. Temperatura a 2 m y precipitación acumulada en ventanas de 24 h. No es un pronóstico emitido por SENAMHI.':forecast?'<span class="note-kicker">ALCANCE DEL PRONÓSTICO</span>La lluvia se conserva como descripción oficial. SENAMHI no publica milímetros ni probabilidades en esta tabla. La cobertura varía por departamento.':'<span class="note-kicker">CONTEXTO DEL ESCENARIO</span>El calendario no cambia las categorías de este servicio 2025–2027. Los puntos críticos son un inventario documentado; su densidad no mide emergencias actuales.';
 }
 function rankRow(i,label,value,detail,unit,max) {
   const width=max&&value!=null?Math.max(0,Math.min(100,100*value/max)):0;
@@ -516,15 +593,16 @@ function renderCharts() {
 }
 
 function renderForecastTable() {
-  const search=normalize($('forecast-search').value);
-  const rows=state.forecastRows.filter(r=>normalize(r.locality+' '+r.department).includes(search));
+  const search=normalize($('forecast-search').value),model=modelWeather();
+  const rows=state.forecastRows.filter(r=>normalize([r.locality,r.department,r.province,r.ubigeo].join(' ')).includes(search));
   state.forecastPage=Math.min(state.forecastPage,Math.max(0,Math.ceil(rows.length/PAGE)-1));
   const start=state.forecastPage*PAGE;
-  $('forecast-body').innerHTML=rows.slice(start,start+PAGE).map(r=>`<tr><td>${e(titleCase(r.locality))}<span class="cell-sub">${e(titleCase(r.department))}</span></td><td>${dateLabel(r.valid_date)}<span class="cell-sub">Consultado: ${dateLabel(limaDate(r.collected_at))}</span></td><td class="temperature-max">${fmt(r.tmax_c,1)} °C</td><td class="temperature-min">${fmt(r.tmin_c,1)} °C</td><td>${e(r.description)}<span class="cell-sub">Cantidad (mm) y probabilidad: no publicadas</span></td><td><a class="text-link" href="${e(safeUrl(r.source_url))}" target="_blank" rel="noopener" aria-label="Ver pronóstico oficial de ${e(r.locality)}">SENAMHI ↗</a></td></tr>`).join('')||'<tr><td colspan="6" class="empty-row">Sin pronósticos disponibles o archivados para este filtro. No se extrapolan días sin publicación.</td></tr>';
+  $('forecast-place-heading').textContent=model?'Distrito / UBIGEO':'Localidad / departamento';
+  $('forecast-table-title').textContent=model?'Pronóstico de modelo por distrito':'Pronóstico SENAMHI por localidad';
+  $('forecast-body').innerHTML=rows.slice(start,start+PAGE).map(r=>`<tr><td>${e(titleCase(r.locality))}<span class="cell-sub">${model?e(r.ubigeo)+' · '+e(titleCase(r.province))+' · ':''}${e(titleCase(r.department))}</span></td><td>${dateLabel(r.valid_date)}<span class="cell-sub">${model?e(windowLabel(r)):'Consultado: '+dateLabel(limaDate(r.collected_at))}</span></td><td class="temperature-max">${fmt(r.tmax_c,1)} °C</td><td class="temperature-min">${fmt(r.tmin_c,1)} °C</td><td>${model?`<b>${fmt(r.precipitation_mm,2)} mm / 24 h</b><span class="cell-sub">GFS · celda ${fmt(r.grid_lat,2)}, ${fmt(r.grid_lon,2)} · emisión ${e(timestamp(r.issued_at))}<br>Acumulado del modelo; probabilidad no publicada</span>`:e(r.description)+'<span class="cell-sub">Cantidad (mm) y probabilidad: no publicadas</span>'}</td><td><a class="text-link" href="${e(safeUrl(r.source_url))}" target="_blank" rel="noopener" aria-label="Ver fuente de pronóstico de ${e(r.locality)}">${e(weatherProvider())} ↗</a></td></tr>`).join('')||'<tr><td colspan="6" class="empty-row">Sin pronóstico publicado o archivado para este filtro. Para consultar un distrito, selecciona NOAA GFS.</td></tr>';
   $('forecast-count').textContent=rows.length?`${fmt(start+1)}–${fmt(Math.min(start+PAGE,rows.length))} de ${fmt(rows.length)} registros`:'0 registros';
-  $('forecast-prev').disabled=state.forecastPage===0; $('forecast-next').disabled=start+PAGE>=rows.length;
-  const dates=[...new Set(state.forecastRows.map(r=>r.valid_date))].sort();
-  $('forecast-summary').textContent=(dates.length?`Validez disponible: ${dateLabel(dates[0])} a ${dateLabel(dates.at(-1))}. Lluvia cualitativa; temperaturas en °C.`:'La tabla conserva únicamente lo publicado y archivado; los periodos sin cobertura permanecen vacíos.')+(state.district!=='all'?' Ámbito departamental: estas localidades no se asignan al distrito seleccionado sin una correspondencia oficial.':'');
+  $('forecast-prev').disabled=state.forecastPage===0;$('forecast-next').disabled=start+PAGE>=rows.length;
+  $('forecast-summary').textContent=model?'Temperatura a 2 m y precipitación en ventanas de 24 h. La fecha filtra el cierre local; cada fila conserva inicio, fin, emisión y celda. No es un promedio de toda la superficie distrital.':'Pronóstico por localidad SENAMHI. Sin asignación distrital cuando no hay correspondencia verificable; lluvia cualitativa y temperatura en °C.';
   labelResponsiveTable('forecast-body');
 }
 
@@ -551,6 +629,7 @@ function labelResponsiveTable(id){
 }
 
 function sourceDataLabel(s){
+  if(s.id==='district_forecast'){const m=state.data.district_forecast?.meta;return m?.issued_at?`Emisión: ${timestamp(m.issued_at)} · ventanas hasta ${dateLabel(s.latest_date)}`:'Sin ciclo GFS validado';}
   if(s.id==='senamhi_forecast'){
     const dates=[...new Set((state.data.senamhi_forecast?.data??[]).map(r=>r.valid_date))].sort();
     return dates.length?`Validez: ${dateLabel(dates[0])} – ${dateLabel(dates.at(-1))}`:'Sin validez publicada disponible';
@@ -563,14 +642,23 @@ function sourceDataLabel(s){
   return s.latest_date?`${s.id==='noaa_monthly'?'Cierre mensual':'Último dato'}: ${dateLabel(s.latest_date)}`:'Fecha no informada por la fuente';
 }
 function renderSources() {
-  const providers=[{name:'ENFEN',ids:['enfen'],url:'https://enfen.imarpe.gob.pe/comunicados/'},{name:'SENAMHI',ids:['senamhi_forecast'],url:'https://www.senamhi.gob.pe/?p=pronostico-meteorologico'},{name:'NOAA',ids:['noaa_weekly','noaa_monthly','noaa_ocean_sst','noaa_ocean_currents'],url:'https://www.cpc.ncep.noaa.gov/data/indices/'},{name:'CENEPRED',ids:['cenepred_risk','cenepred_points','boundaries','district_boundaries'],url:'https://sigrid.cenepred.gob.pe/sigridv3/'}];
+  const providers=[{name:'ENFEN',ids:['enfen'],url:'https://enfen.imarpe.gob.pe/comunicados/'},{name:'SENAMHI',ids:['senamhi_forecast'],url:'https://www.senamhi.gob.pe/?p=pronostico-meteorologico'},{name:'NOAA',ids:['noaa_weekly','noaa_monthly','noaa_ocean_sst','noaa_ocean_currents','district_forecast'],url:'https://www.cpc.ncep.noaa.gov/data/indices/'},{name:'CENEPRED',ids:['cenepred_risk','cenepred_points','boundaries','district_boundaries'],url:'https://sigrid.cenepred.gob.pe/sigridv3/'}];
   const order={ok:0,stale:1,degraded:2,unavailable:3};
   $('source-cards').innerHTML=providers.map(p=>{
     const sources=p.ids.map(id=>state.manifest.sources.find(s=>s.id===id)).filter(Boolean);
     const status=sources.map(clientStatus).sort((a,b)=>order[b]-order[a])[0]??'unavailable';
     return `<article class="source-card"><div class="source-card-header"><h3>${p.name}</h3><span class="source-state ${status}">${STATUS[status]}</span></div>${sources.map(s=>`<div class="source-item" id="source-${e(s.id)}"><div class="source-title">${e(s.title)}</div><div class="source-meta">${s.last_success?fmt(s.records??0)+' registros':'Sin conjunto validado'} · ${STATUS[clientStatus(s)]}</div><dl class="source-dates"><div><dt>Dato / validez</dt><dd>${e(sourceDataLabel(s))}</dd></div><div><dt>Consulta válida</dt><dd>${e(timestamp(s.last_success))}</dd></div><div><dt>Último intento</dt><dd>${e(timestamp(s.checked_at))}</dd></div><div><dt>Cambio detectado aquí</dt><dd>${e(timestamp(s.data_updated_at))}</dd></div></dl><p class="source-meta">${e(s.cadence)}${s.id==='senamhi_forecast'?'<br>Hora de emisión: no publicada en esta tabla.':''}</p>${s.error?`<p class="source-error">Falló la última consulta.${s.last_success?' Se conserva la última descarga válida.':' No hay una descarga válida disponible.'}</p>`:''}${clientStatus(s)==='stale'?'<p class="source-error">Producto con rezago: comprobar su fecha antes de interpretarlo como situación actual.</p>':''}<details class="source-technical"><summary>Detalle de trazabilidad</summary><p>${s.data_sha256?'SHA-256: '+e(s.data_sha256):'Sin hash validado'}${s.error?'<br>Incidencia: '+e(s.error):''}</p></details><div class="source-links"><a class="text-link" href="${e(safeUrl(s.url,p.url))}" target="_blank" rel="noopener">Origen ↗</a>${s.last_success?`<a class="text-link" href="data/${e(s.file??s.id+'.json')}" target="_blank" rel="noopener">Datos y trazabilidad ↗</a>`:''}</div></div>`).join('')}<a href="${p.url}" target="_blank" rel="noopener">Referencia oficial ↗</a></article>`;
   }).join('');
-  $('data-freshness').innerHTML=[['enfen','ENFEN'],['noaa_weekly','NOAA CPC'],['noaa_ocean_sst','NOAA TSM'],['senamhi_forecast','SENAMHI'],['cenepred_risk','CENEPRED']].map(([id,label])=>{const s=state.manifest.sources.find(s=>s.id===id);return s?`<a href="#source-${id}" class="freshness-item ${clientStatus(s)}"><span>${label}<i>${STATUS[clientStatus(s)]}</i></span><b>${e(sourceDataLabel(s))}</b></a>`:'';}).join('');
+  $('data-freshness').innerHTML=[['district_forecast','NOAA GFS'],['enfen','ENFEN'],['noaa_weekly','NOAA CPC'],['noaa_ocean_sst','NOAA TSM'],['senamhi_forecast','SENAMHI'],['cenepred_risk','CENEPRED']].map(([id,label])=>{const s=state.manifest.sources.find(s=>s.id===id);return s?`<a href="#source-${id}" class="freshness-item ${clientStatus(s)}"><span>${label}<i>${STATUS[clientStatus(s)]}</i></span><b>${e(sourceDataLabel(s))}</b></a>`:'';}).join('');
+  renderDocuments();
+}
+
+function renderDocuments(){
+  $('official-documents').innerHTML=state.manifest.sources.filter(s=>s.category==='documents').map(s=>{
+    const docs=state.data[s.id]?.data??[],status=clientStatus(s),label=row=>row.published_date?'Publicación: '+dateLabel(row.published_date):row.reference_date?'Corte del informe: '+dateLabel(row.reference_date):row.period?'Periodo: '+row.period+' · emisión no expuesta':'Fecha de emisión no expuesta';
+    const item=row=>`<li><a href="${e(safeUrl(row.url,s.url))}" target="_blank" rel="noopener">${e(row.title)} ↗</a><span>${e(label(row))}</span>${row.status_original?`<small>Estado original NOAA: ${e(row.status_original)}</small><details><summary>Síntesis original (inglés)</summary><p lang="en">${e(row.summary_original)}</p></details>`:''}<small>${e(row.scope)}</small></li>`;
+    return `<article class="official-document-card" id="source-${e(s.id)}"><div class="source-card-header"><h3>${e(s.provider)}</h3><span class="source-state ${status}">${STATUS[status]}</span></div><h4>${e(s.title)}</h4><p>Consulta válida: ${e(timestamp(s.last_success))}<br>Último intento: ${e(timestamp(s.checked_at))}<br>${e(s.cadence)}</p>${s.error?'<p class="source-error">Falló la consulta. Se conserva el catálogo anterior cuando está disponible.</p>':''}<ul>${docs.slice(0,2).map(item).join('')}</ul>${docs.length>2?`<details><summary>Ver ${docs.length-2} documentos más</summary><ul>${docs.slice(2).map(item).join('')}</ul></details>`:''}<a class="text-link" href="${e(safeUrl(s.url))}" target="_blank" rel="noopener">Abrir fuente oficial ↗</a></article>`;
+  }).join('');
 }
 
 function renderInsights(){
@@ -593,8 +681,13 @@ function renderInsights(){
     {type:`ESCENARIO · ${HAZARDS[state.hazard].toUpperCase()}`,tone:'amber',title:district?`${titleCase(district.district)}: ${district.risk_level??'sin categoría'}`:classified.length?`${fmt(high.length)} distritos en alto / muy alto`:'Sin clasificación disponible',text:classified.length?`${fmt(classified.length)} distritos clasificados en ${riskScope}. Marco CENEPRED 2025–2027.${incident('cenepred_risk')}`:'Los territorios sin clasificación permanecen sin dato.',note:'Permite priorizar revisión distrital; no informa daños ni emergencias en curso.',url:'#zonas',action:'Revisar distritos y fichas'},
     {type:'PRONÓSTICO · TEMPERATURA',tone:'cyan',title:forecasts.max?`Mayor máxima: ${fmt(forecasts.max.tmax_c,1)} °C`:'Sin temperatura prevista',text:forecasts.max?`${titleCase(forecasts.max.locality)}, ${titleCase(forecasts.max.department)} · ${dateLabel(forecasts.max.valid_date)}.${forecasts.min?` Menor mínima: ${fmt(forecasts.min.tmin_c,1)} °C en ${titleCase(forecasts.min.locality)}, ${dateLabel(forecasts.min.valid_date)}.`:''}${incident('senamhi_forecast')}`:'No hay localidades con temperaturas publicadas para esta selección.',note:'Extremos entre registros disponibles; no promedio de todo el departamento.',url:'#meteo',action:'Ver localidades y fechas'},
     {type:'PRONÓSTICO · PRECIPITACIÓN',tone:'cyan',title:forecasts.records?`${fmt(forecasts.rainRecords)} registros mencionan precipitación`:'Sin texto de pronóstico',text:forecasts.records?`De ${fmt(forecasts.records)} registros localidad/día; ${fmt(forecasts.rainLocalities)} localidades con mención. Validez: ${range}.${incident('senamhi_forecast')}`:'No se genera un pronóstico a partir de la señal oceánica.',note:'El conteo de menciones no mide intensidad, milímetros ni probabilidad de lluvia.',url:'#meteo',action:'Consultar los textos oficiales'},
-    {type:'VIGENCIA Y COBERTURA',tone:'slate',title:issues.length?`${issues.length} conjuntos requieren revisión`:'Fuentes operativas al día',text:issues.length?issues.map(s=>`${s.title}: ${STATUS[clientStatus(s)].toLowerCase()}${s.latest_date?' (dato '+dateLabel(s.latest_date)+')':''}`).join('. ')+'.':'Sin incidencias de consulta ni rezago según los umbrales de cada producto.',note:'Una descarga reciente no convierte un dato antiguo en actual. Verifique fecha, cobertura y estado.',url:'#fuentes',action:'Revisar fechas y calidad'},
+    {type:'VIGENCIA Y COBERTURA',tone:'slate',title:issues.length?`${issues.length} ${issues.length===1?'conjunto requiere':'conjuntos requieren'} revisión`:'Fuentes operativas al día',text:issues.length?issues.map(s=>`${s.title}: ${STATUS[clientStatus(s)].toLowerCase()}${s.latest_date?' (dato '+dateLabel(s.latest_date)+')':''}`).join('. ')+'.':'Sin incidencias de consulta ni rezago según los umbrales de cada producto.',note:'Una descarga reciente no convierte un dato antiguo en actual. Verifique fecha, cobertura y estado.',url:'#fuentes',action:'Revisar fechas y calidad'},
   ];
+  if(modelWeather()){
+    cards[3].type='PRONÓSTICO · TEMPERATURA GFS';cards[3].note='Extremos entre celdas y ventanas del modelo disponibles; no observaciones ni promedio del departamento.';cards[3].text=forecasts.max?`${titleCase(forecasts.max.locality)} · UBIGEO ${forecasts.max.ubigeo} · cierre ${dateLabel(forecasts.max.valid_date)}. Emisión: ${timestamp(forecasts.max.issued_at)}.${incident('district_forecast')}`:'Sin pronóstico de modelo en esta selección.';
+    const wettest=[...state.forecastRows].filter(r=>Number.isFinite(r.precipitation_mm)).sort((a,b)=>b.precipitation_mm-a.precipitation_mm)[0];
+    cards[4]={type:'PRONÓSTICO · PRECIPITACIÓN GFS',tone:'cyan',title:wettest?`Mayor acumulado: ${fmt(wettest.precipitation_mm,1)} mm / 24 h`:'Sin acumulado disponible',text:wettest?`${titleCase(wettest.locality)} · UBIGEO ${wettest.ubigeo}. Ventana: ${windowLabel(wettest)}.${incident('district_forecast')}`:'No se genera lluvia a partir de la señal oceánica.',note:'Cantidad prevista por el modelo en una celda de 0,25°; no es probabilidad, observación ni promedio distrital.',url:'#meteo',action:'Ver emisión y ventanas'};
+  }
   $('insight-cards').innerHTML=cards.map(c=>`<article class="insight-card insight-${c.tone}"><span class="insight-type">${e(c.type)}</span><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></article>`).join('');
 }
 function renderGlossary(){
@@ -615,28 +708,31 @@ function openGlossaryTerm(){
 let rendering=0;
 async function applyFilters(fit=false) {
   if (!readFilters()) return;
+  stopPlayback();
   const turn=++rendering;
   state.forecastPage=0;state.zonePage=0;
-  await Promise.all([ensureForecastHistory(),ensureOceanHistory(),ensureDistrictBoundaries()]);
+  await Promise.all([ensureForecastHistory(),ensureGridHistory(),ensureOceanHistory(),ensureDistrictBoundaries()]);
   try {await ensurePoints();} catch (error) {$('filter-notice').textContent='No se pudo cargar el inventario geográfico. Las otras fuentes conservan su disponibilidad.';console.error(error);}
   if (turn!==rendering) return;
-  state.forecastRows=selectForecasts(state.versions,state);
+  refreshWeatherRows();
   $('filter-notice').textContent=`${dateLabel(state.from)} – ${dateLabel(state.to)}. El calendario filtra fechas de observación y validez de pronósticos. CENEPRED conserva su marco 2025–2027; ENFEN muestra el último comunicado verificado.`;
   renderKpis();renderMap();renderCharts();renderForecastTable();renderZones();
   if (fit) reframe();
 }
 
 function setKind(kind) {
+  stopPlayback();
   state.kind=kind;
   document.querySelectorAll('[data-kind]').forEach(b=>{b.classList.toggle('selected',b.dataset.kind===kind);b.setAttribute('aria-pressed',String(b.dataset.kind===kind));});
   const options=kind==='risk_scenario'?[['heat','Concentración · celdas de 30 km'],['risk','Distritos en riesgo alto o muy alto']]:kind==='forecast'?[['tmax','Temperatura máxima'],['tmin','Temperatura mínima'],['rain','Mención de precipitación']]:[['sst','Anomalía diaria · OISST']];
   $('map-layer').innerHTML=options.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
+  if(kind==='forecast'){options[2][1]=modelWeather()?'Precipitación · mm / 24 h':'Mención de precipitación';const dates=forecastDates(state.forecastRows);if(state.frameDate==='all')state.frameDate=dates.find(d=>d>=limaDate())??dates.at(-1)??'all';$('map-layer').innerHTML=options.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');}
   state.layer=options[0][0];$('hazard-wrap').hidden=kind!=='risk_scenario';
   state.oceanExtent='national';renderMap();reframe();
 }
 async function exportData() {
   let rows,fields;
-  if (state.kind==='forecast') {rows=state.forecastRows;fields=['locality_id','locality','department','valid_date','tmax_c','tmin_c','description','precipitation_mm','precipitation_probability','collected_at','source_url'];}
+  if (state.kind==='forecast') {rows=state.forecastRows;fields=['provider','ubigeo','locality_id','locality','province','department','valid_date','valid_start','valid_end','issued_at','lat','lon','grid_lat','grid_lon','tmax_c','tmin_c','description','precipitation_mm','precipitation_probability','collected_at','source_url'];}
   else if (state.kind==='observation') {rows=selectNoaa(state.data[state.frequency==='monthly'?'noaa_monthly':'noaa_weekly']?.data??[],state,state.frequency==='monthly');fields=['date','period_end','nino12_sst','nino12_anomaly','nino34_sst','nino34_anomaly'];}
   else if (state.layer==='heat') {
     const source=state.manifest.sources.find(s=>s.id==='cenepred_points');
@@ -648,6 +744,14 @@ async function exportData() {
   const link=document.createElement('a');link.href=url;link.download=`elnino_${state.kind}_${state.from}_${state.to}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function bindEvents() {
+  const changeWeatherSource=event=>{stopPlayback();state.forecastProvider=event.target.value;state.forecastPage=0;state.frameDate='all';refreshWeatherRows();if(state.kind==='forecast'){const dates=forecastDates(state.forecastRows);state.frameDate=dates.find(d=>d>=limaDate())??dates.at(-1)??'all';const rain=$('map-layer').querySelector('option[value="rain"]');if(rain)rain.textContent=modelWeather()?'Precipitación · mm / 24 h':'Mención de precipitación';}renderKpis();renderMap();renderCharts();renderForecastTable();};
+  $('forecast-provider').addEventListener('change',changeWeatherSource);$('weather-provider').addEventListener('change',changeWeatherSource);
+  $('forecast-frame').addEventListener('change',()=>{stopPlayback();state.frameDate=$('forecast-frame').value;renderMap();});
+  $('weather-metric').addEventListener('change',()=>{state.layer=$('weather-metric').value;$('map-layer').value=state.layer;renderMap();});
+  $('map-play').addEventListener('click',()=>state.playing?stopPlayback():startPlayback());
+  $('weather-motion').addEventListener('click',()=>{state.weatherMotion=!state.weatherMotion;renderMap();});
+  $('weather-days').addEventListener('click',event=>{const button=event.target.closest('[data-weather-date]');if(!button)return;stopPlayback();state.frameDate=button.dataset.weatherDate;if(state.kind!=='forecast')setKind('forecast');else renderMap();});
+  $('map-touch').addEventListener('click',()=>{const active=$('map-touch').getAttribute('aria-pressed')!=='true';$('map-touch').setAttribute('aria-pressed',String(active));$('map-touch').textContent=active?'Pausar gestos':'Activar gestos';$('map').classList.toggle('gestures-paused',!active);state.map.dragging[active?'enable':'disable']();state.map.touchZoom[active?'enable':'disable']();state.map.doubleClickZoom[active?'enable':'disable']();$('map-gesture-hint').textContent=active?'Arrastra para mover el mapa y pellizca con dos dedos para acercar. Pausa los gestos para desplazar la página desde el mapa.':'Gestos pausados: desliza sobre el mapa para desplazar la página. Activa los gestos para mover y ampliar el mapa.';});
   $('glossary-search').addEventListener('input',renderGlossary);$('glossary-category').addEventListener('change',renderGlossary);
   $('glossary-clear').addEventListener('click',()=>{$('glossary-search').value='';$('glossary-category').value='all';renderGlossary();$('glossary-search').focus();});
   window.addEventListener('hashchange',openGlossaryTerm);
