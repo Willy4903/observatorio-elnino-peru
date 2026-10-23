@@ -231,6 +231,8 @@ async function ensureDistrictBoundaries(){
 function districtFeaturesForDepartment(){return state.districtFeaturesByDepartment?.[state.department]?.data.features??state.data.district_boundaries?.data.features.filter(f=>f.properties.department_code===state.department)??[];}
 
 function renderKpis() {
+  const scope=selectedDistrict()?.district??state.data.boundaries?.data.features.find(f=>f.properties.code===state.department)?.properties.name;
+  $('summary-scope').textContent=`${scope?titleCase(scope):'Todo el Perú'} · ${dateLabel(state.from)} – ${dateLabel(state.to)}. Cada fuente conserva su fecha.`;
   const key=state.frequency==='monthly'?'noaa_monthly':'noaa_weekly',all=state.data[key]?.data??[];
   const rows=selectNoaa(all,state,state.frequency==='monthly'),last=rows.at(-1);
   const prior=last?all.filter(r=>r.date<last.date).at(-1):null;
