@@ -39,3 +39,6 @@ main,section,article,aside,.panel,.chart-wrap,.tactical-deck,.analytics-deck,.co
 @media(max-width:350px){#from-wrap,#to-wrap,#month-wrap{grid-column:1/-1;width:100%}.filter input[type=date],.filter input[type=month]{width:100%}}
 
 @media(max-width:1023px) and (max-height:520px){.map-panel.expanded .map-top{display:none}.map-panel.expanded .map-footnote{max-height:40px;font-size:9px}.map-panel.expanded .map-overlay-note{max-width:55%;left:auto}.map-panel.expanded .ocean-inset{top:10px;width:150px;min-height:0;padding:7px}.map-panel.expanded .ocean-inset small{display:none}.map-panel.expanded .ocean-inset b{font-size:20px}.map-panel.expanded .leaflet-top.leaflet-left{top:65px}.map-panel.expanded .map-legend{width:185px;font-size:8px;padding:7px}.map-panel.expanded .legend-empty{display:none}.map-panel.expanded .legend-step{font-size:8px;line-height:1.5}}
+
+/* Las fichas conservan su altura natural y no recortan el inspector. */
+.control-stack .kpi-grid{height:auto!important;flex:0 0 auto;align-content:start}.control-stack .inspector{height:auto;min-height:max-content;flex:0 0 auto;overflow:visible}.inspector>.relative{flex:0 0 auto}
