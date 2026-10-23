@@ -9,6 +9,8 @@ Dashboard: https://Willy4903.github.io/observatorio-elnino-peru/
 | Fuente | Producto | Consulta | Frecuencia del producto |
 |---|---|---|---|
 | NOAA CPC | SST y anomalías Niño 1+2 y Niño 3.4, OISST | Diaria | Semanal y mensual |
+| NOAA NCEI / CoastWatch | Campo de TSM y anomalías OISST v2.1 preliminar, rejilla 0.25° | Diaria | Análisis diario; fecha según disponibilidad |
+| NOAA NESDIS / CoastWatch | Corrientes geostróficas experimentales por altimetría | Diaria | Producto diario con posible rezago |
 | SENAMHI | Temperatura máxima/mínima y descripción de precipitación por localidad | Cada 6 h | Según publicación oficial; normalmente próximos 3 días |
 | ENFEN | Último comunicado, fecha, estado de alerta y PDF | Cada 12 h | Al emitirse un comunicado |
 | CENEPRED / SIGRID | Escenarios distritales por inundación y movimientos en masa; puntos críticos | Diaria | Según revisión del servicio |
@@ -23,6 +25,8 @@ Una página abierta comprueba la publicación cada 15 minutos y al volver a su p
 ## Lectura · Distingue observaciones, pronósticos y escenarios
 
 - Observaciones: se conservan las fechas y frecuencias oficiales. El filtro diario no interpola índices semanales. El mensual usa meses completos publicados. Niño 1+2 no es ICEN; Niño 3.4 no es ONI ni RONI. La alerta corresponde a ENFEN.
+- Campo oceánico: la vista principal replica el centro de control de referencia con el análisis diario OISST, direcciones de corrientes geostróficas, rejilla de coordenadas y marcadores costeros. El campo mantiene los valores de cada celda oficial y su máscara; no se generan manchas térmicas propias. Las fechas del campo, de los vectores y de los índices CPC son independientes y visibles. Las flechas indican dirección; su animación no predice la deriva. Los marcadores costeros expresan conteos de distritos CENEPRED, no anomalías locales ni eventos actuales.
+- Archivo oceánico: `ocean_history.json` registra las instantáneas obtenidas desde la primera adquisición. El filtro selecciona el último campo con fecha dentro del periodo. Si no hay una instantánea descargada para ese periodo, se informa la falta de cobertura. El rezago no desaparece al volver a descargar el mismo dato.
 - Pronósticos: el calendario filtra la fecha de validez. La tabla SENAMHI no publica hora de emisión; `fetched_at` es la consulta. El año se infiere por proximidad y se valida contra una ventana operativa. Los textos se conservan; mm y probabilidades permanecen `null`.
 - Archivo: empieza con la primera adquisición. Conserva versiones distintas y elige la última consulta anterior o igual al día de validez. No reconstruye pronósticos anteriores ni utiliza consultas posteriores a su día para rellenar el pasado.
 - Escenario CENEPRED: las categorías oficiales son distritales. La coropleta departamental deriva el porcentaje de distritos en alto o muy alto entre aquellos con clasificación. No es probabilidad ni categoría oficial departamental. El servicio identifica 2025–2027, pero no informa vigencia diaria ni fecha de emisión; el calendario no crea una serie temporal.
@@ -30,7 +34,7 @@ Una página abierta comprueba la publicación cada 15 minutos y al volver a su p
 - Temperatura departamental: promedio de localidades y días disponibles, sin ponderación por área; no representa toda la superficie del departamento.
 - Mención de precipitación: proporción de textos localidad/día con términos de lluvia, llovizna, chubascos o precipitación. No es probabilidad ni porcentaje del área. La interpretación conserva el texto oficial.
 
-Los campos ausentes quedan vacíos. No se generan datos ficticios, imputaciones, interpolaciones ni modelos propios de pronóstico.
+Los campos ausentes quedan vacíos. No se generan datos ficticios, imputaciones, campos interpolados propios ni modelos de pronóstico. OISST es un análisis interpolado producido por NOAA, identificado como tal. Los indicadores, el inspector, las tablas y los gráficos usan datos publicados. Las barras de índices muestran una escala explícita de −3 a +6 °C; no son probabilidades ni percentiles. La variación del indicador compara dos publicaciones consecutivas.
 
 ## Trazabilidad · Verifica antes de publicar
 
@@ -38,7 +42,7 @@ Los campos ausentes quedan vacíos. No se generan datos ficticios, imputaciones,
 
 `site/data/quality.json` registra resultados de cada adquisición. Se validan estructura, fechas futuras, duplicados, cobertura, temperaturas, mínima/máxima, UBIGEO, categorías, coordenadas y paginación ArcGIS contrastada con el conteo del servidor. Escritura atómica por fuente. Si falla una fuente se conserva su última versión válida y se informa el estado degradado. Una estructura corrupta o la ausencia total de datos válidos bloquea el despliegue.
 
-Los archivos grandes usan gzip determinista. El navegador utiliza `DecompressionStream`, disponible en navegadores modernos. La capa ligera de puntos se deriva de la descarga completa validada. El inventario detallado se descarga al abrir su tabla o exportarlo. La interfaz de centro de control incluye mapa ampliable, leyenda cuantitativa, indicadores y matriz de zonas críticas. Leaflet y Chart.js están incluidos; el fondo OpenStreetMap es externo y conserva su atribución. Los límites SIGRID siguen disponibles aunque no carguen las teselas.
+Los archivos grandes usan gzip determinista. El navegador utiliza `DecompressionStream`, disponible en navegadores modernos. La capa ligera de puntos se deriva de la descarga completa validada. El inventario detallado se descarga al abrir su tabla o exportarlo. La interfaz de centro de control incluye mapa ampliable, leyenda cuantitativa, indicadores y matriz de zonas críticas. Leaflet, Chart.js y los estilos Tailwind compilados están incluidos. El mapa usa geometría SIGRID y campos NOAA, sin teselas externas. Las tipografías del diseño se solicitan a Google Fonts; el navegador dispone de fuentes de sustitución.
 
 ## Desarrollo · Ejecuta y verifica
 
@@ -49,8 +53,11 @@ python pipeline/update.py --force
 python pipeline/build.py
 python -m unittest discover -s tests -v
 node --test tests/selectors.test.mjs
+node --check site/assets/ocean.mjs
 python -m http.server 8000 --directory dist
 ```
+
+El CSS de utilidades está precompilado. Si se cambian sus clases, regenerarlo con `npx --yes --package tailwindcss@3.4.17 tailwindcss -c design/tailwind.config.cjs -i design/input.css -o site/assets/vendor/tailwind.css --minify`.
 
 Abre `http://localhost:8000`. Para actualizar una fuente:
 
@@ -69,9 +76,11 @@ Pages y los runners estándar de Actions son gratuitos en repositorios públicos
 - [SENAMHI: pronóstico por localidad](https://www.senamhi.gob.pe/?p=pronostico-meteorologico)
 - [NOAA: índices semanales](https://www.cpc.ncep.noaa.gov/data/indices/wksst9120.for)
 - [NOAA: índices mensuales](https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices)
+- [NOAA NCEI: descripción del producto OISST](https://www.ncei.noaa.gov/products/optimum-interpolation-sst)
+- [NOAA CoastWatch: campo OISST preliminar](https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21NrtAgg.html)
+- [NOAA NESDIS: corrientes geostróficas experimentales](https://coastwatch.pfeg.noaa.gov/erddap/info/nesdisSSH1day/index.html)
 - [CENEPRED: ER lluvias PM 2025–2027](https://sig.cenepred.gob.pe/sigrid/rest/services/ER_LLUVIAS_PM_2025_2027/MapServer)
 - [CENEPRED: SIGRID](https://sigrid.cenepred.gob.pe/sigridv3/)
 - [GitHub: Pages con Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
-- [OpenStreetMap: política de teselas](https://operations.osmfoundation.org/policies/tiles/)
 
 Las licencias de bibliotecas están en `site/assets/vendor/`. Los datos conservan su atribución institucional; su utilización no implica aval institucional del dashboard.

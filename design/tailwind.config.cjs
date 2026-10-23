@@ -1,0 +1,1 @@
+module.exports={content:['./site/index.html','./site/assets/*.mjs'],darkMode:'class',theme:{extend:{colors:{obsidian:'#050811',panel:'#0B1120',panelLight:'#111A2E',cyanGlow:'#38BDF8',orangeAlert:'#F97316',redCritical:'#EF4444',emeraldSafe:'#10B981'},fontFamily:{sans:['Inter','sans-serif'],display:['Space Grotesk','sans-serif'],mono:['JetBrains Mono','monospace']}}}};

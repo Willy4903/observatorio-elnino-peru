@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import calendar
+import csv
+import io
 import concurrent.futures
 import datetime as dt
 import hashlib
@@ -23,7 +25,7 @@ import tempfile
 import time
 import unicodedata
 from urllib.error import HTTPError, URLError
-from urllib.parse import urlencode, urljoin, urlparse
+from urllib.parse import quote, urlencode, urljoin, urlparse
 from urllib.request import Request, urlopen
 from zoneinfo import ZoneInfo
 
@@ -42,7 +44,10 @@ MONTHS = {m: i + 1 for i, m in enumerate([
     "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
     "septiembre", "octubre", "noviembre", "diciembre"])}
 ENMONTHS = {m.upper(): i for i, m in enumerate(calendar.month_abbr) if m}
+ERDDAP = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/"
 SOURCES = {
+    "noaa_ocean_sst": {"provider": "NOAA NCEI · CoastWatch", "title": "Campo diario de TSM y anomalía OISST v2.1", "kind": "ocean_analysis", "url": ERDDAP + "ncdcOisst21NrtAgg.html", "hours": 24, "max_age_days": 5, "cadence": "Consulta diaria; análisis preliminar diario OISST"},
+    "noaa_ocean_currents": {"provider": "NOAA NESDIS · CoastWatch", "title": "Corrientes geostróficas por altimetría · experimental", "kind": "ocean_analysis", "url": ERDDAP + "nesdisSSH1day.html", "hours": 24, "max_age_days": 7, "cadence": "Consulta diaria; según disponibilidad de altimetría"},
     "noaa_weekly": {"provider": "NOAA CPC", "title": "Niño 1+2 y Niño 3.4 · semanal", "kind": "observation", "url": CPC + "wksst9120.for", "hours": 24, "max_age_days": 15, "cadence": "Revisión diaria; publicación semanal"},
     "noaa_monthly": {"provider": "NOAA CPC", "title": "Niño 1+2 y Niño 3.4 · mensual", "kind": "observation", "url": CPC + "sstoi.indices", "hours": 24, "max_age_days": 65, "cadence": "Revisión diaria; publicación mensual"},
     "senamhi_forecast": {"provider": "SENAMHI", "title": "Pronóstico por localidad", "kind": "forecast", "url": SEN, "hours": 6, "max_age_days": 2, "cadence": "Consulta cada 6 horas; según actualización oficial"},
@@ -51,7 +56,7 @@ SOURCES = {
     "cenepred_points": {"provider": "CENEPRED · SIGRID", "title": "Inventario de puntos y zonas críticas", "kind": "risk_inventory", "url": SIG, "hours": 24, "max_age_days": None, "cadence": "Consulta diaria; según revisión de SIGRID"},
     "boundaries": {"provider": "CENEPRED · SIGRID", "title": "Límites departamentales", "kind": "reference", "url": SIG + "/0", "hours": 720, "max_age_days": None, "cadence": "Consulta mensual"},
 }
-COMPRESSED = {"noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points"}
+COMPRESSED = {"noaa_ocean_sst", "noaa_ocean_currents", "noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points"}
 
 
 def source_path(source_id):
@@ -285,6 +290,67 @@ def collect_noaa(fetcher, monthly=False):
     return rows, {"latest_date": rows[-1].get("period_end", rows[-1]["date"]), "units": "°C", "notes": ["SST y anomalías OISST de NOAA CPC. El valor semanal se fecha por el centro de la semana.", "La anomalía Niño 1+2 no es el ICEN; la anomalía Niño 3.4 no es el ONI ni el RONI. No se declara un evento a partir de un umbral aislado."]}, []
 
 
+def parse_ocean_csv(text, currents=False, today=TODAY):
+    """Conserva celdas oficiales, máscaras NaN y fecha; no genera un campo propio."""
+    reader = csv.DictReader(io.StringIO(text))
+    fields = ("ugos", "vgos") if currents else ("sst", "anom")
+    required = {"time", "latitude", "longitude", *fields}
+    if not required.issubset(reader.fieldnames or []):
+        raise ValueError("Esquema ERDDAP inesperado")
+    rows, rejected, seen, dates = [], [], set(), set()
+    for i, raw in enumerate(reader):
+        if i == 0:  # ERDDAP publica una segunda fila de unidades.
+            expected = ["m s-1", "m s-1"] if currents else ["degree_C", "degree_C"]
+            if [raw[f] for f in fields] != expected:
+                raise ValueError("Unidades oceánicas inesperadas")
+            continue
+        date = dt.date.fromisoformat(raw["time"][:10])
+        if date > today:
+            raise ValueError("Fecha oceánica futura")
+        dates.add(date.isoformat())
+        lat, lon = float(raw["latitude"]), float(raw["longitude"])
+        if lon > 180: lon -= 360
+        if not (-25 <= lat <= 5 and -105 <= lon <= -65):
+            raise ValueError("Celda fuera del dominio solicitado")
+        key = (lat, lon)
+        if key in seen: raise ValueError("Celda oceánica duplicada")
+        seen.add(key)
+        values = [float(raw[f]) for f in fields]
+        if not all(math.isfinite(v) for v in values):
+            # Tierra o máscara oficial; se mantiene vacía en el mapa.
+            continue
+        valid = all(-5 <= v <= 5 for v in values) if currents else (-2 <= values[0] <= 40 and -10 <= values[1] <= 10)
+        if not valid:
+            rejected.append({"latitude": lat, "longitude": lon, "reason": "Rango físico"})
+            continue
+        item = {"lat": lat, "lon": lon, "date": date.isoformat()}
+        item.update(dict(zip(("u_ms", "v_ms") if currents else ("sst_c", "anomaly_c"), values)))
+        rows.append(item)
+    if len(dates) != 1: raise ValueError("La instantánea mezcla fechas")
+    if len(rows) < (30 if currents else 500): raise ValueError("Cobertura oceánica insuficiente")
+    if len(rejected) > max(1, len(seen) * .01): raise ValueError("Más de 1% de celdas con rango inválido")
+    return rows, rejected
+
+
+def collect_ocean(fetcher, currents=False):
+    dataset = "nesdisSSH1day" if currents else "ncdcOisst21NrtAgg"
+    base = ERDDAP + dataset
+    # El eje temporal evita asumir que 'hoy' ya está publicado.
+    times = list(csv.reader(io.StringIO(fetcher.text(base + ".csv?time"))))[2:]
+    available = sorted(r[0] for r in times if r and r[0][:10] <= TODAY.isoformat())
+    if not available: raise ValueError("No hay fecha oceánica publicada")
+    stamp = available[-1]
+    slab = f"[({stamp})]" + ("" if currents else "[(0.0)]")
+    slab += "[(-24.875):4:(4.875)][(-104.875):4:(-65.125)]" if currents else "[(-24.875):1:(4.875)][(255.125):1:(294.875)]"
+    fields = ["ugos", "vgos"] if currents else ["sst", "anom"]
+    url = base + ".csv?" + quote(",".join(f + slab for f in fields), safe=",():")
+    rows, rejected = parse_ocean_csv(fetcher.text(url), currents)
+    details = {"latest_date": stamp[:10], "valid_at": stamp, "resolution_degrees": 1.0 if currents else .25, "dataset_id": dataset,
+      "units": "m/s" if currents else "°C", "experimental": currents,
+      "notes": ["Análisis geostrófico experimental derivado de altimetría; no es una medición de corriente en costa ni un pronóstico. La fecha publicada puede tener rezago. No se extrapolan vectores sobre celdas sin dato."] if currents else ["Análisis preliminar NOAA OISST v2.1, rejilla nativa 0.25°. La interpolación pertenece al producto oficial; el dashboard no genera campos térmicos ni rellena celdas.", "La fecha diaria del campo y la fecha semanal/mensual de los índices CPC son independientes. No se asignan anomalías oceánicas a ciudades."]}
+    return rows, details, rejected
+
+
 def collect_forecast(fetcher):
     rows, rejected = parse_forecasts(fetcher.text(SEN))
     if len({r["locality_id"] for r in rows}) < 20:
@@ -384,7 +450,7 @@ def collect_boundaries(fetcher):
     return {"type": "FeatureCollection", "features": rows}, {"latest_date": None, "units": "EPSG:4326", "notes": ["Límites de referencia publicados por SIGRID; geometría simplificada para visualización."]}, []
 
 
-COLLECTORS = {"noaa_weekly": lambda f: collect_noaa(f), "noaa_monthly": lambda f: collect_noaa(f, True), "senamhi_forecast": collect_forecast, "enfen": collect_enfen, "cenepred_risk": collect_risk, "cenepred_points": collect_points, "boundaries": collect_boundaries}
+COLLECTORS = {"noaa_ocean_sst": lambda f: collect_ocean(f), "noaa_ocean_currents": lambda f: collect_ocean(f, True), "noaa_weekly": lambda f: collect_noaa(f), "noaa_monthly": lambda f: collect_noaa(f, True), "senamhi_forecast": collect_forecast, "enfen": collect_enfen, "cenepred_risk": collect_risk, "cenepred_points": collect_points, "boundaries": collect_boundaries}
 
 
 def source_due(state, hours, force=False):
@@ -420,6 +486,19 @@ def archive_forecast(envelope):
         index["versions"].append({"path": rel, "collected_at": NOW, "valid_from": min(r["valid_date"] for r in envelope["data"]), "valid_to": max(r["valid_date"] for r in envelope["data"]), "sha256": envelope["meta"]["data_sha256"]})
     index["versions"].sort(key=lambda v: v["collected_at"])
     write_atomic(DATA / "forecast_history.json", index)
+
+
+def archive_ocean(envelope):
+    source_id = envelope["meta"]["source_id"]
+    date = envelope["meta"]["latest_date"]
+    path = DATA / "history" / "ocean" / (source_id + "-" + date + "-" + envelope["meta"]["data_sha256"][:12] + ".json.gz")
+    if not path.exists(): write_atomic(path, envelope)
+    index = load(DATA / "ocean_history.json", {"versions": []})
+    relative = str(path.relative_to(DATA))
+    if not any(v["path"] == relative for v in index["versions"]):
+        index["versions"].append({"source_id": source_id, "date": date, "collected_at": envelope["meta"]["fetched_at"], "path": relative, "sha256": envelope["meta"]["data_sha256"]})
+    index["versions"].sort(key=lambda v: (v["date"], v["collected_at"]))
+    write_atomic(DATA / "ocean_history.json", index)
 
 
 def update_source(source_id, previous):
@@ -494,6 +573,9 @@ def main():
             states[key] = state
             checks.append(quality)
             print(key, state["status"], state.get("records", 0), state.get("error") or "", flush=True)
+    for key in ("noaa_ocean_sst", "noaa_ocean_currents"):
+        if states.get(key, {}).get("last_success"):
+            archive_ocean(load(source_path(key)))
     for key, spec in SOURCES.items():
         if key not in states:
             states[key] = {"id": key, **{k: v for k, v in spec.items() if k != "hours"}, "last_success": None, "error": "Fuente aún no adquirida"}
@@ -507,7 +589,7 @@ def main():
         if key not in previous_checks:
             previous_checks[key] = {"source_id": key, "result": "passed" if state.get("last_success") and not state.get("error") else "failed", "checked_at": state.get("checked_at"), "records": state.get("records", 0), "sha256": state.get("data_sha256"), "rejected_records": state.get("rejected_records", 0), "error": state.get("error")}
     all_checks = [previous_checks[key] for key in SOURCES]
-    quality = {"generated_at": NOW, "checks": all_checks, "failure_count": sum(c["result"] == "failed" for c in all_checks), "policy": "Última versión válida conservada; sin imputación, interpolación ni datos simulados"}
+    quality = {"generated_at": NOW, "checks": all_checks, "failure_count": sum(c["result"] == "failed" for c in all_checks), "policy": "Última versión válida conservada; sin imputación ni simulación propia. La interpolación OISST corresponde al producto oficial NOAA."}
     write_atomic(DATA / "quality.json", quality)
     validate_files()
     summary = os.environ.get("GITHUB_STEP_SUMMARY")

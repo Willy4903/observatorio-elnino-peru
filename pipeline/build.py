@@ -21,6 +21,8 @@ def build():
     shutil.copytree(source, target)
     selectors_hash = hashlib.sha256((source / "assets/selectors.mjs").read_bytes()).hexdigest()[:12]
     entry = (source / "assets/app.mjs").read_text().replace("'./selectors.mjs'", f"'./selectors.mjs?v={selectors_hash}'")
+    ocean_hash = hashlib.sha256((source / 'assets/ocean.mjs').read_bytes()).hexdigest()[:12]
+    entry = entry.replace("'./ocean.mjs'", f"'./ocean.mjs?v={ocean_hash}'")
     entry_hash = hashlib.sha256(entry.encode()).hexdigest()[:12]
     entry_name = f"app-{entry_hash}.mjs"
     (target / "assets" / entry_name).write_text(entry)
