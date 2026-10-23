@@ -490,7 +490,16 @@ COLLECTORS = {"noaa_ocean_sst": lambda f: collect_ocean(f), "noaa_ocean_currents
 
 
 def source_due(state, hours, force=False):
-    if force or not state or not state.get("last_success") or state.get("error"):
+    if force or not state:
+        return True
+    if state.get("error"):
+        # Evita repetir descargas fallidas en cada cambio visual del sitio.
+        checked = state.get("checked_at")
+        if checked:
+            elapsed = (dt.datetime.fromisoformat(NOW) - dt.datetime.fromisoformat(checked)).total_seconds()
+            return elapsed >= 15 * 60
+        return True
+    if not state.get("last_success"):
         return True
     # Ventanas UTC evitan saltarse una ejecución por segundos de diferencia del runner.
     window = hours * 3600

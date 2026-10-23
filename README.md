@@ -21,6 +21,8 @@ El workflow se ejecuta a las 00:27, 06:27, 12:27 y 18:27 UTC: 19:27 del día ant
 
 GitHub puede retrasar ejecuciones programadas. No es streaming ni una garantía de tiempo real. La fecha del dato, la consulta y la actualización del contenido se conservan por separado. Los cambios reales se detectan mediante SHA-256; una consulta reciente no convierte un dato antiguo en vigente.
 
+Una fuente fallida con datos previos aplica una pausa de 15 minutos entre ejecuciones antes de otro intento, para evitar repetir descargas durante cambios visuales consecutivos. La actualización forzada omite esa pausa. El guardado automático de datos incorpora cambios nuevos de la rama mediante rebase y nunca sobrescribe el historial por fuerza.
+
 Una página abierta comprueba la publicación cada 15 minutos y al volver a su pestaña. Si hay una versión nueva, actualiza los datos conservando los filtros. Los recursos del sitio se versionan por su hash para evitar utilizar código anterior desde la caché.
 
 ## Lectura · Distingue observaciones, pronósticos y escenarios

@@ -95,6 +95,14 @@ class AcquisitionIntegrity(unittest.TestCase):
     def test_failed_source_retries_even_in_the_same_window(self):
         self.assertTrue(u.source_due({"last_success": u.NOW, "error": "Connection timeout"}, 12))
 
+    def test_recent_failed_source_has_backoff_and_force_can_bypass_it(self):
+        state = {"last_success": "2026-10-22T20:00:00+00:00", "checked_at": "2026-10-23T02:00:00+00:00", "error": "Connection timeout"}
+        with patch.object(u, "NOW", "2026-10-23T02:05:00+00:00"):
+            self.assertFalse(u.source_due(state, 12))
+            self.assertTrue(u.source_due(state, 12, force=True))
+        with patch.object(u, "NOW", "2026-10-23T02:15:00+00:00"):
+            self.assertTrue(u.source_due(state, 12))
+
     def test_sha_detects_changed_data(self):
         self.assertNotEqual(u.digest([{"value": 1}]), u.digest([{"value": 2}]))
 

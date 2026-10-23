@@ -346,7 +346,7 @@ function reframe() {
   const feature=state.data.boundaries?.data.features.find(f=>f.properties.code===state.department);
   if (feature) state.map.fitBounds(L.geoJSON(feature).getBounds(),{padding:[30,30],maxZoom:9});
   else if(state.kind==='observation'&&state.oceanExtent!=='national')state.map.fitBounds(state.oceanExtent==='pacific'?[[-22,-174],[7,-66]]:[[-19.5,-99],[1,-69]],{padding:[20,35]});
-  else if(state.data.boundaries?.data)state.map.fitBounds(L.geoJSON(state.data.boundaries.data).getBounds(),{paddingTopLeft:[35,65],paddingBottomRight:[35,100]});
+  else if(state.data.boundaries?.data){const short=state.map.getSize().y<400;state.map.fitBounds(L.geoJSON(state.data.boundaries.data).getBounds(),{paddingTopLeft:[25,short?45:65],paddingBottomRight:[25,short?20:100]});}
   else state.map.fitBounds([[-18.5,-82.5],[0.3,-68.4]],{padding:[35,65]});
 }
 const DISTRICT_COLORS={Bajo:'#22b8cf',Medio:'#facc15',Alto:'#fb923c','Muy alto':'#f43f5e'};
