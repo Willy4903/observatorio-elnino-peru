@@ -15,7 +15,8 @@ const HAZARDS = {inundacion:'Inundación',movimientos_masa:'Movimientos en masa'
 const STATUS = {ok:'Disponible',stale:'Desactualizado',degraded:'Consulta fallida',unavailable:'Sin datos'};
 const state = {kind:'observation',layer:'sst',vectors:true,oceanExtent:'national',inspectorDepartment:'all',inspectorDistrict:null,district:'all',hazard:'inundacion',frequency:'weekly',table:'districts',forecastPage:0,zonePage:0,from:'',to:'',department:'all',data:{},versions:[],forecastRows:[],zoneRows:[],history:[],map:null,mapLayers:[],territoryMarkers:[],polygons:null,noaaChart:null,forecastChart:null};
 const networkCache = new Map();
-const PAGE = window.matchMedia('(max-width:600px)').matches?6:12;
+const compactScreen=()=>window.matchMedia('(max-width:767px), (max-width:1023px) and (max-height:600px)').matches;
+const PAGE = compactScreen()?6:12;
 
 async function getJson(path) {
   if (!networkCache.has(path)) networkCache.set(path, fetch(path, {cache:'no-cache'}).then(async r => {
@@ -494,7 +495,7 @@ function rankRow(i,label,value,detail,unit,max) {
 }
 
 function chartConfig(labels,datasets) {
-  const small=window.matchMedia('(max-width:600px)').matches;
+  const small=compactScreen();
   return {type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'bottom',align:'start',labels:{usePointStyle:true,pointStyle:'circle',boxWidth:6,boxHeight:6,padding:small?12:18,font:{size:small?11:10},color:'#9db7d3'}},tooltip:{backgroundColor:'#12273d',padding:10,titleFont:{size:small?12:10},bodyFont:{size:small?12:10}}},scales:{x:{grid:{display:false},ticks:{maxTicksLimit:small?3:6,color:'#88a6c5',font:{size:small?11:9}},border:{display:false}},y:{grid:{color:'#26394d'},ticks:{color:'#88a6c5',font:{size:small?11:9},padding:8},border:{display:false},title:{display:true,text:'°C',font:{size:small?11:9},color:'#88a6c5'}}}}};
 }
 function renderCharts() {
