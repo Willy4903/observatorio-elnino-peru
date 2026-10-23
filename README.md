@@ -58,7 +58,7 @@ En celulares se utiliza una columna, navegación inferior, controles de al menos
 
 ## Desarrollo · Ejecuta y verifica
 
-Requisitos: Python 3.11+, Node.js para pruebas y `pdftotext` de Poppler para el comunicado ENFEN. El lector GRIB2 GFS requiere ecCodes y NumPy, fijados en `pipeline/requirements.txt`; los demás colectores usan la biblioteca estándar.
+Requisitos: Python 3.12+ (requerido por NumPy 2.5.4), Node.js para pruebas y `pdftotext` de Poppler para el comunicado ENFEN. El lector GRIB2 GFS requiere ecCodes y NumPy, fijados en `pipeline/requirements.txt`; los demás colectores usan la biblioteca estándar.
 
 ```bash
 python -m pip install -r pipeline/requirements.txt
