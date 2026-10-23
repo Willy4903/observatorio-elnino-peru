@@ -48,6 +48,12 @@ export function forecastByDate(rows) {
   const dates = [...new Set(rows.map(r => r.valid_date))].sort();
   return dates.map(date => { const data = rows.filter(r => r.valid_date === date); return {date, tmax: mean(data.map(r => r.tmax_c)), tmin: mean(data.map(r => r.tmin_c)), count: data.length}; });
 }
+// La geometría oficial define el universo territorial; una fuente ausente no elimina un territorio.
+export function territorialCoverage(features, risks, forecasts, hazard) {
+  const risk = new Map(riskByDepartment(risks, hazard).map(row => [row.code, row]));
+  const weather = new Map(forecastByDepartment(forecasts).map(row => [row.code, row]));
+  return features.map(({properties:{code,name}}) => ({code, name, risk: risk.get(code) ?? null, localities: weather.get(code)?.count ?? 0})).sort((a,b) => a.name.localeCompare(b.name,'es'));
+}
 export function csv(rows, fields) {
   const escape = value => {
     let s = value == null ? '' : String(value);

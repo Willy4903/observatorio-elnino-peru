@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {selectNoaa, selectForecasts, riskByDepartment, normalize, csv} from '../site/assets/selectors.mjs';
+import {selectNoaa, selectForecasts, riskByDepartment, territorialCoverage, normalize, csv} from '../site/assets/selectors.mjs';
 
 test('el día no interpola índices semanales',()=>{
   assert.equal(selectNoaa([{date:'2026-10-14'}],{from:'2026-10-15',to:'2026-10-15'}).length,0);
@@ -38,6 +38,29 @@ import {readFileSync} from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 import {hexbinPoints} from '../site/assets/selectors.mjs';
 const inventory=JSON.parse(gunzipSync(readFileSync(new URL('../site/data/map_points.json.gz',import.meta.url)))).data;
+
+const readOfficial=id=>{const file=new URL(`../site/data/${id}`,import.meta.url),bytes=readFileSync(file);return JSON.parse(id.endsWith('.gz')?gunzipSync(bytes):bytes).data;};
+test('la cobertura conserva los 24 departamentos y Callao aunque falte un pronóstico',()=>{
+  const boundaries=readOfficial('boundaries.json').features,risks=readOfficial('cenepred_risk.json.gz'),forecast=readOfficial('senamhi_forecast.json.gz');
+  const rows=territorialCoverage(boundaries,risks,forecast,'inundacion');
+  assert.equal(rows.length,25);assert.equal(new Set(rows.map(r=>r.code)).size,25);
+  assert.equal(rows.filter(r=>r.risk?.total).length,25);
+  for(const row of rows){
+    const published=risks.filter(r=>r.department_code===row.code&&r.hazard==='inundacion'&&r.risk_level);
+    assert.equal(row.risk.total,published.length);
+    assert.equal(row.risk.high,published.filter(r=>['Alto','Muy alto'].includes(r.risk_level)).length);
+    assert.equal(row.localities,new Set(forecast.filter(r=>r.department_code===row.code).map(r=>r.locality_id)).size);
+  }
+  const withoutForecast=territorialCoverage(boundaries,risks,[],'inundacion');
+  assert.equal(withoutForecast.length,25);assert.ok(withoutForecast.every(r=>r.localities===0));
+});
+test('un cambio de peligro conserva territorios y no sustituye la ausencia de clasificación por cero',()=>{
+  const boundaries=readOfficial('boundaries.json').features,risks=readOfficial('cenepred_risk.json.gz');
+  const rows=territorialCoverage(boundaries,risks,[],'movimientos_masa');
+  assert.equal(rows.length,25);
+  for(const row of rows)assert.equal(row.risk?.high??0,risks.filter(r=>r.department_code===row.code&&r.hazard==='movimientos_masa'&&['Alto','Muy alto'].includes(r.risk_level)).length);
+  assert.ok(territorialCoverage(boundaries,[],[],'inundacion').every(r=>r.risk===null));
+});
 
 test('la malla conserva cada punto oficial una sola vez, sin depender del orden',()=>{
   const points=inventory.filter(p=>p.hazard==='inundacion');
