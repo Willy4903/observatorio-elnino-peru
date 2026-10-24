@@ -1,0 +1,33 @@
+name: Sondeo de conectividad
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Probar fuentes desde GitHub
+        run: |
+          for u in \
+            https://www.senamhi.gob.pe/ \
+            https://www.senamhi.gob.pe/?p=pronostico-meteorologico \
+            https://enfen.imarpe.gob.pe/comunicados/ \
+            https://enfen.imarpe.gob.pe/ \
+            https://www.imarpe.gob.pe/ \
+            https://repositorio.imarpe.gob.pe/ \
+            https://biblioimarpe.imarpe.gob.pe/ \
+            https://www.gob.pe/institucion/enfen/informes-publicaciones \
+            https://www.gob.pe/institucion/senamhi/noticias \
+            https://www.gob.pe/institucion/imarpe/noticias \
+            https://sinia.minam.gob.pe/ \
+            https://repositorio.igp.gob.pe/ \
+            https://www.igp.gob.pe/ \
+            https://sig.cenepred.gob.pe/ \
+            https://www.indeci.gob.pe/ ; do
+            host=$(echo "$u" | awk -F/ '{print $3}')
+            dns=$(getent hosts "$host" | awk '{print $1}' | head -1)
+            code=$(curl -sS -m 25 -o /dev/null -w "%{http_code} %{time_total}s" -A "Mozilla/5.0" "$u" 2>&1 | tail -1)
+            echo "PROBE $u | dns=${dns:-FALLO} | $code"
+          done
