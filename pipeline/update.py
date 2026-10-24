@@ -47,9 +47,11 @@ MONTHS = {m: i + 1 for i, m in enumerate([
     "septiembre", "octubre", "noviembre", "diciembre"])}
 ENMONTHS = {m.upper(): i for i, m in enumerate(calendar.month_abbr) if m}
 ERDDAP = "https://coastwatch.pfeg.noaa.gov/erddap/griddap/"
+CW = "https://coastwatch.noaa.gov/erddap/"
+CW_PFEG = "https://coastwatch.pfeg.noaa.gov/erddap/"
 SOURCES = {
     "noaa_ocean_sst": {"provider": "NOAA NCEI · CoastWatch", "title": "Campo diario de TSM y anomalía OISST v2.1", "kind": "ocean_analysis", "url": ERDDAP + "ncdcOisst21NrtAgg.html", "hours": 24, "max_age_days": 5, "cadence": "Consulta diaria; análisis preliminar diario OISST"},
-    "noaa_ocean_currents": {"provider": "NOAA NESDIS · CoastWatch", "title": "Corrientes geostróficas por altimetría · experimental", "kind": "ocean_analysis", "url": ERDDAP + "nesdisSSH1day.html", "hours": 24, "max_age_days": 7, "cadence": "Consulta diaria; según disponibilidad de altimetría"},
+    "noaa_ocean_currents": {"provider": "NOAA NESDIS · CoastWatch", "title": "Corrientes geostróficas por altimetría · experimental", "kind": "ocean_analysis", "url": CW + "griddap/noaacwBLENDEDNRTcurrentsDaily.html", "hours": 24, "max_age_days": 7, "cadence": "Consulta diaria; según disponibilidad de altimetría"},
     "noaa_weekly": {"provider": "NOAA CPC", "title": "Niño 1+2 y Niño 3.4 · semanal", "kind": "observation", "url": CPC + "wksst9120.for", "hours": 24, "max_age_days": 15, "cadence": "Revisión diaria; publicación semanal"},
     "noaa_monthly": {"provider": "NOAA CPC", "title": "Niño 1+2 y Niño 3.4 · mensual", "kind": "observation", "url": CPC + "sstoi.indices", "hours": 24, "max_age_days": 65, "cadence": "Revisión diaria; publicación mensual"},
     "senamhi_forecast": {"provider": "SENAMHI", "title": "Pronóstico por localidad", "kind": "forecast", "url": SEN, "hours": 6, "max_age_days": 2, "cadence": "Consulta cada 6 horas; según actualización oficial"},
@@ -295,10 +297,10 @@ def collect_noaa(fetcher, monthly=False):
     return rows, {"latest_date": rows[-1].get("period_end", rows[-1]["date"]), "units": "°C", "notes": ["SST y anomalías OISST de NOAA CPC. El valor semanal se fecha por el centro de la semana.", "La anomalía Niño 1+2 no es el ICEN; la anomalía Niño 3.4 no es el ONI ni el RONI. No se declara un evento a partir de un umbral aislado."]}, []
 
 
-def parse_ocean_csv(text, currents=False, today=TODAY):
+def parse_ocean_csv(text, currents=False, today=TODAY, vfields=None):
     """Conserva celdas oficiales, máscaras NaN y fecha; no genera un campo propio."""
     reader = csv.DictReader(io.StringIO(text))
-    fields = ("ugos", "vgos") if currents else ("sst", "anom")
+    fields = tuple(vfields or (("ugos", "vgos") if currents else ("sst", "anom")))
     required = {"time", "latitude", "longitude", *fields}
     if not required.issubset(reader.fieldnames or []):
         raise ValueError("Esquema ERDDAP inesperado")
@@ -306,7 +308,7 @@ def parse_ocean_csv(text, currents=False, today=TODAY):
     for i, raw in enumerate(reader):
         if i == 0:  # ERDDAP publica una segunda fila de unidades.
             expected = ["m s-1", "m s-1"] if currents else ["degree_C", "degree_C"]
-            if [raw[f] for f in fields] != expected:
+            if [raw[f].replace("m/s", "m s-1") for f in fields] != expected:
                 raise ValueError("Unidades oceánicas inesperadas")
             continue
         date = dt.date.fromisoformat(raw["time"][:10])
@@ -337,22 +339,52 @@ def parse_ocean_csv(text, currents=False, today=TODAY):
     return rows, rejected
 
 
-def collect_ocean(fetcher, currents=False):
-    dataset = "nesdisSSH1day" if currents else "ncdcOisst21NrtAgg"
-    base = ERDDAP + dataset
+CURRENT_DATASETS = (
+    # (servidor, dataset, variables u/v); el primero es el producto diario operativo vigente.
+    (CW, "noaacwBLENDEDNRTcurrentsDaily", ("u_current", "v_current")),
+    (CW_PFEG, "nesdisSSH1day", ("ugos", "vgos")),
+)
+
+
+def ocean_dims(fetcher, server, dataset):
+    """Dimensiones reales del dataset, para no asumir un eje 'altitude' que puede no existir."""
+    rows = csv.DictReader(io.StringIO(fetcher.text(server + f"info/{dataset}/index.csv")))
+    return [r["Variable Name"] for r in rows if r.get("Row Type") == "dimension"]
+
+
+def collect_ocean_one(fetcher, server, dataset, vfields, currents):
+    base = server + "griddap/" + dataset
     # El eje temporal evita asumir que 'hoy' ya está publicado.
     times = list(csv.reader(io.StringIO(fetcher.text(base + ".csv?time"))))[2:]
     available = sorted(r[0] for r in times if r and r[0][:10] <= TODAY.isoformat())
     if not available: raise ValueError("No hay fecha oceánica publicada")
     stamp = available[-1]
-    slab = f"[({stamp})]" + ("" if currents else "[(0.0)]")
+    dims = ocean_dims(fetcher, server, dataset) if currents else ["time", "zlev", "latitude", "longitude"]
+    slab = f"[({stamp})]" + ("[(0.0)]" if "zlev" in dims or "altitude" in dims else "")
     slab += "[(-24.875):4:(4.875)][(-104.875):4:(-65.125)]" if currents else "[(-24.875):1:(4.875)][(255.125):1:(294.875)]"
-    fields = ["ugos", "vgos"] if currents else ["sst", "anom"]
-    url = base + ".csv?" + quote(",".join(f + slab for f in fields), safe=",():")
-    rows, rejected = parse_ocean_csv(fetcher.text(url), currents)
+    url = base + ".csv?" + quote(",".join(f + slab for f in vfields), safe=",():")
+    rows, rejected = parse_ocean_csv(fetcher.text(url), currents, vfields=vfields)
+    return rows, rejected, stamp
+
+
+def collect_ocean(fetcher, currents=False):
+    if currents:
+        last = None
+        for server, dataset, vfields in CURRENT_DATASETS:
+            try:
+                rows, rejected, stamp = collect_ocean_one(fetcher, server, dataset, vfields, True)
+            except Exception as exc:  # se prueba el siguiente producto oficial
+                last = exc
+                continue
+            break
+        else:
+            raise last
+    else:
+        dataset = "ncdcOisst21NrtAgg"
+        rows, rejected, stamp = collect_ocean_one(fetcher, CW_PFEG, dataset, ("sst", "anom"), False)
     details = {"latest_date": stamp[:10], "valid_at": stamp, "resolution_degrees": 1.0 if currents else .25, "dataset_id": dataset,
       "units": "m/s" if currents else "°C", "experimental": currents,
-      "notes": ["Análisis geostrófico experimental derivado de altimetría; no es una medición de corriente en costa ni un pronóstico. La fecha publicada puede tener rezago. No se extrapolan vectores sobre celdas sin dato."] if currents else ["Análisis preliminar NOAA OISST v2.1, rejilla nativa 0.25°. La interpolación pertenece al producto oficial; el dashboard no genera campos térmicos ni rellena celdas.", "La fecha diaria del campo y la fecha semanal/mensual de los índices CPC son independientes. No se asignan anomalías oceánicas a ciudades."]}
+      "notes": ["Análisis geostrófico derivado de altimetría satelital (NOAA CoastWatch); no es una medición de corriente en costa ni un pronóstico. La fecha publicada puede tener rezago. No se extrapolan vectores sobre celdas sin dato."] if currents else ["Análisis preliminar NOAA OISST v2.1, rejilla nativa 0.25°. La interpolación pertenece al producto oficial; el dashboard no genera campos térmicos ni rellena celdas.", "La fecha diaria del campo y la fecha semanal/mensual de los índices CPC son independientes. No se asignan anomalías oceánicas a ciudades."]}
     return rows, details, rejected
 
 
@@ -641,7 +673,7 @@ def main():
         if key not in states:
             states[key] = {"id": key, **{k: v for k, v in spec.items() if k != "hours"}, "last_success": None, "error": "Fuente aún no adquirida"}
         states[key]["status"] = freshness(states[key], spec)
-    manifest = {"schema_version": 1, "generated_at": NOW, "timezone": "America/Lima", "schedule": "Cada 6 horas (UTC 00:27, 06:27, 12:27 y 18:27); cada fuente aplica su propia frecuencia de consulta", "sources": [states[k] for k in SOURCES], "history_start": load(DATA / "forecast_history.json", {"versions": []}).get("versions", [{}])[0].get("collected_at") if load(DATA / "forecast_history.json", {"versions": []}).get("versions") else None}
+    manifest = {"schema_version": 1, "generated_at": NOW, "timezone": "America/Lima", "schedule": "Diaria a las 08:00 de Lima (13:00 UTC); cada fuente aplica su propia frecuencia de consulta", "sources": [states[k] for k in SOURCES], "history_start": load(DATA / "forecast_history.json", {"versions": []}).get("versions", [{}])[0].get("collected_at") if load(DATA / "forecast_history.json", {"versions": []}).get("versions") else None}
     write_atomic(DATA / "manifest.json", manifest)
     previous_checks = {c["source_id"]: c for c in load(DATA / "quality.json", {"checks": []})["checks"]}
     for c in checks:
