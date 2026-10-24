@@ -10,7 +10,7 @@ Dashboard: https://Willy4903.github.io/observatorio-elnino-peru/
 |---|---|---|---|
 | NOAA CPC | SST y anomalías Niño 1+2 y Niño 3.4, OISST | Diaria | Semanal y mensual |
 | NOAA NCEI / CoastWatch | Campo de TSM y anomalías OISST v2.1 preliminar, rejilla 0.25° | Diaria | Análisis diario; fecha según disponibilidad |
-| NOAA NESDIS / CoastWatch | Corrientes geostróficas experimentales por altimetría | Diaria | Producto diario con posible rezago |
+| NOAA CoastWatch | Corrientes geostróficas diarias por altimetría (noaacwBLENDEDNRTcurrentsDaily; respaldo nesdisSSH1day) | Diaria | Producto diario con posible rezago |
 | SENAMHI | Temperatura máxima/mínima y descripción de precipitación por localidad | Cada 6 h | Según publicación oficial; normalmente próximos 3 días |
 | ENFEN | Último comunicado, fecha, estado de alerta y PDF | Cada 12 h | Al emitirse un comunicado |
 | CENEPRED / SIGRID | Escenarios distritales por inundación y movimientos en masa; puntos críticos | Diaria | Según revisión del servicio |
@@ -19,7 +19,7 @@ Dashboard: https://Willy4903.github.io/observatorio-elnino-peru/
 | SENAMHI / ENFEN / IMARPE / NOAA / COEN-INDECI | Catálogos oficiales, diagnóstico ENSO, informes técnicos y noticias | Cada 6, 12 o 24 h, según el portal | Se conservan publicación, corte o periodo explícitos; no se infieren emergencias |
 | CENEPRED / SIGRID | Cartografía distrital del escenario (carga al elegir departamento) | Mensual | Según revisión del servicio |
 
-El workflow se ejecuta a las 00:27, 06:27, 12:27 y 18:27 UTC: 19:27 del día anterior, 01:27, 07:27 y 13:27 de Lima. Cada fuente respeta su intervalo en ventanas UTC. También se ejecuta al cambiar código o manualmente en Actions → Actualizar y publicar observatorio → Run workflow.
+El workflow se ejecuta una vez al día a las 08:00 de Lima (13:00 UTC). Cada fuente respeta su intervalo en ventanas UTC. También se ejecuta al cambiar código o manualmente en Actions → Actualizar y publicar observatorio → Run workflow.
 
 GitHub puede retrasar ejecuciones programadas. No es streaming ni una garantía de tiempo real. La fecha del dato, la consulta y la actualización del contenido se conservan por separado. Los cambios reales se detectan mediante SHA-256; una consulta reciente no convierte un dato antiguo en vigente.
 
@@ -92,7 +92,7 @@ Pages y los runners estándar de Actions son gratuitos en repositorios públicos
 - [NOAA: índices mensuales](https://www.cpc.ncep.noaa.gov/data/indices/sstoi.indices)
 - [NOAA NCEI: descripción del producto OISST](https://www.ncei.noaa.gov/products/optimum-interpolation-sst)
 - [NOAA CoastWatch: campo OISST preliminar](https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21NrtAgg.html)
-- [NOAA NESDIS: corrientes geostróficas experimentales](https://coastwatch.pfeg.noaa.gov/erddap/info/nesdisSSH1day/index.html)
+- [NOAA CoastWatch: corrientes geostróficas experimentales](https://coastwatch.noaa.gov/erddap/griddap/noaacwBLENDEDNRTcurrentsDaily.html)
 - [CENEPRED: ER lluvias PM 2025–2027](https://sig.cenepred.gob.pe/sigrid/rest/services/ER_LLUVIAS_PM_2025_2027/MapServer)
 - [CENEPRED: SIGRID](https://sigrid.cenepred.gob.pe/sigridv3/)
 - [GitHub: Pages con Actions](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)
