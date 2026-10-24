@@ -8,23 +8,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Explorar gob.pe y repositorios alcanzables
+      - name: Explorar SINIA
         run: |
           fetch() { curl -sS -m 30 -L -A "Mozilla/5.0" "$1" 2>&1; }
-          for u in \
-            https://www.gob.pe/institucion/imarpe/noticias \
-            https://www.gob.pe/institucion/senamhi/noticias \
-            https://www.gob.pe/institucion/imarpe/informes-publicaciones \
-            https://www.gob.pe/institucion/senamhi/informes-publicaciones \
-            "https://www.gob.pe/busquedas?term=comunicado+oficial+enfen" \
-            https://www.gob.pe/institucion/senamhi/campañas \
-            https://www.gob.pe/senamhi ; do
-            echo "=== $u"
-            fetch "$u" > page.html
-            echo "bytes=$(wc -c < page.html) title=$(grep -o '<title>[^<]*' page.html | head -1)"
-            grep -oE 'href="[^"]*"[^>]*>[^<]{0,140}' page.html | grep -iE 'enfen|comunicado|pron[oó]stico|ni[nñ]o|informe' | head -12
-          done
-          echo "=== IGP"
-          fetch "https://repositorio.igp.gob.pe/discover?query=comunicado+oficial+enfen" > igp.html
-          echo "bytes=$(wc -c < igp.html)"
-          grep -oE 'href="/handle/[^"]*"[^>]*>[^<]{0,120}' igp.html | head -8
+          echo "=== registro 326992"
+          fetch https://sinia.minam.gob.pe/metadatos/326992 > r.html
+          echo "bytes=$(wc -c < r.html)"
+          python3 - <<'PY'
+          import re,html
+          t=open('r.html',errors='replace').read()
+          t=re.sub(r'<(script|style)[^>]*>.*?</\1>','',t,flags=re.S)
+          t=html.unescape(re.sub(r'<[^>]+>','\n',t))
+          t=re.sub(r'\n\s*\n+','\n',t)
+          print(t[:3500])
+          PY
+          grep -oE 'href="[^"]*(pdf|download|bitstream|documentos)[^"]*"' r.html | head -5
+          echo "=== busqueda"
+          fetch "https://sinia.minam.gob.pe/buscar?search_api_fulltext=comunicado+oficial+enfen" > s.html
+          echo "bytes=$(wc -c < s.html)"
+          grep -oE 'href="/(metadatos|documentos)/[^"]*"[^>]*>[^<]{0,120}' s.html | head -10
