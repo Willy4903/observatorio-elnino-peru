@@ -63,6 +63,8 @@ SOURCES = {
     "district_forecast": {"provider": "NOAA NCEP · GFS", "title": "Pronóstico de modelo por distrito · GFS 0,25°", "kind": "forecast", "url": gfs.NOMADS + "gribfilter.php?ds=gfs_0p25", "hours": 6, "max_age_days": 3, "cadence": "Consulta cada 6 horas; ciclo GFS completo disponible, con emisión y ventanas de 24 h explícitas"},
 }
 SOURCES.update({key: {"provider": p, "title": t, "url": url, "hours": hours, "kind": "reference", "category": "documents", "max_age_days": None, "cadence": f"Consulta cada {hours} horas; según publicación oficial"} for key, (p, t, url, hours) in documents.SPECS.items()})
+# Portales que no responden desde los servidores de GitHub (EE. UU.); se actualizan con un runner en Perú.
+PERU_SOURCES = {"senamhi_forecast", "senamhi_monitor", "senamhi_bulletins", "enfen", "enfen_technical"}
 COMPRESSED = {"noaa_ocean_sst", "noaa_ocean_currents", "noaa_weekly", "senamhi_forecast", "cenepred_risk", "cenepred_points", "district_boundaries", "district_forecast"}
 
 
@@ -652,6 +654,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--force", action="store_true")
     parser.add_argument("--only", nargs="+", choices=list(SOURCES))
+    parser.add_argument("--exclude", nargs="+", choices=list(SOURCES), default=[])
+    parser.add_argument("--peru-only", action="store_true", help="solo portales peruanos (runner con salida desde Perú)")
+    parser.add_argument("--exclude-peru", action="store_true", help="omite los portales peruanos (los actualiza el runner de Perú)")
     parser.add_argument("--validate-only", action="store_true")
     args = parser.parse_args()
     if args.validate_only:
@@ -661,6 +666,10 @@ def main():
     old = load(DATA / "manifest.json", {"sources": []})
     states = {s["id"]: s for s in old["sources"]}
     selected = args.only or list(SOURCES)
+    if args.peru_only:
+        selected = [k for k in selected if k in PERU_SOURCES]
+    excluded = set(args.exclude) | (PERU_SOURCES if args.exclude_peru else set())
+    selected = [k for k in selected if k not in excluded]
     jobs = [key for key in selected if source_due(states.get(key), SOURCES[key]["hours"], args.force) or not source_path(key).exists()]
     checks = []
     with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
