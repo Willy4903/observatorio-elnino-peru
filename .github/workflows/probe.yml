@@ -8,26 +8,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Probar fuentes desde GitHub
+      - name: Explorar gob.pe y repositorios alcanzables
         run: |
+          fetch() { curl -sS -m 30 -L -A "Mozilla/5.0" "$1" 2>&1; }
           for u in \
-            https://www.senamhi.gob.pe/ \
-            https://www.senamhi.gob.pe/?p=pronostico-meteorologico \
-            https://enfen.imarpe.gob.pe/comunicados/ \
-            https://enfen.imarpe.gob.pe/ \
-            https://www.imarpe.gob.pe/ \
-            https://repositorio.imarpe.gob.pe/ \
-            https://biblioimarpe.imarpe.gob.pe/ \
-            https://www.gob.pe/institucion/enfen/informes-publicaciones \
-            https://www.gob.pe/institucion/senamhi/noticias \
             https://www.gob.pe/institucion/imarpe/noticias \
-            https://sinia.minam.gob.pe/ \
-            https://repositorio.igp.gob.pe/ \
-            https://www.igp.gob.pe/ \
-            https://sig.cenepred.gob.pe/ \
-            https://www.indeci.gob.pe/ ; do
-            host=$(echo "$u" | awk -F/ '{print $3}')
-            dns=$(getent hosts "$host" | awk '{print $1}' | head -1)
-            code=$(curl -sS -m 25 -o /dev/null -w "%{http_code} %{time_total}s" -A "Mozilla/5.0" "$u" 2>&1 | tail -1)
-            echo "PROBE $u | dns=${dns:-FALLO} | $code"
+            https://www.gob.pe/institucion/senamhi/noticias \
+            https://www.gob.pe/institucion/imarpe/informes-publicaciones \
+            https://www.gob.pe/institucion/senamhi/informes-publicaciones \
+            "https://www.gob.pe/busquedas?term=comunicado+oficial+enfen" \
+            https://www.gob.pe/institucion/senamhi/campañas \
+            https://www.gob.pe/senamhi ; do
+            echo "=== $u"
+            fetch "$u" > page.html
+            echo "bytes=$(wc -c < page.html) title=$(grep -o '<title>[^<]*' page.html | head -1)"
+            grep -oE 'href="[^"]*"[^>]*>[^<]{0,140}' page.html | grep -iE 'enfen|comunicado|pron[oó]stico|ni[nñ]o|informe' | head -12
           done
+          echo "=== IGP"
+          fetch "https://repositorio.igp.gob.pe/discover?query=comunicado+oficial+enfen" > igp.html
+          echo "bytes=$(wc -c < igp.html)"
+          grep -oE 'href="/handle/[^"]*"[^>]*>[^<]{0,120}' igp.html | head -8
