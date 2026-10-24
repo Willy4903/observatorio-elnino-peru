@@ -13,7 +13,7 @@ function safeUrl(url, fallback = 'https://sigrid.cenepred.gob.pe/sigridv3/') {
   try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? u.href : fallback; } catch { return fallback; }
 }
 const HAZARDS = {inundacion:'Inundación',movimientos_masa:'Movimientos en masa'};
-const STATUS = {ok:'Disponible',stale:'Dato antiguo',degraded:'Falló la revisión',unavailable:'Sin datos'};
+const STATUS = {ok:'Disponible',stale:'Dato antiguo',degraded:'Falló la revisión',retained:'Vigente · revisión pendiente',unavailable:'Sin datos'};
 const anomalyWords=(value,digits=1)=>value==null?'Sin dato para estas fechas':value===0?'Igual a lo habitual':`${fmt(Math.abs(value),digits)} °C más ${value>0?'caliente':'frío'} de lo habitual`;
 const state = {kind:'observation',layer:'sst',vectors:true,oceanExtent:'national',inspectorDepartment:'all',inspectorDistrict:null,district:'all',hazard:'inundacion',frequency:'weekly',table:'districts',forecastPage:0,zonePage:0,from:'',to:'',department:'all',data:{},versions:[],forecastRows:[],zoneRows:[],history:[],map:null,mapLayers:[],territoryMarkers:[],polygons:null,noaaChart:null,forecastChart:null};
 const networkCache = new Map();
@@ -42,11 +42,12 @@ async function getJson(path) {
 
 function clientStatus(source) {
   if (!source.last_success) return 'unavailable';
-  if (source.error) return 'degraded';
   const age = (Date.now() - new Date(source.last_success)) / 3600000;
   const maxHours = source.kind === 'reference' ? 1440 : 72;
   if (age > maxHours) return 'stale';
   if (source.latest_date && source.max_age_days != null && (new Date(limaDate())-new Date(source.latest_date))/86400000 > source.max_age_days) return 'stale';
+  // La última consulta falló pero el dato conservado sigue dentro de su vigencia: no es información desfasada.
+  if (source.error) return source.status === 'stale' ? 'stale' : (age <= 48 ? 'retained' : 'degraded');
   return source.status;
 }
 
@@ -110,7 +111,9 @@ async function loadData() {
   try{state.gridHistory=(await getJson('./data/district_forecast_history.json')).versions;}catch{state.gridHistory=[];}
   try { state.history=(await getJson('./data/forecast_history.json')).versions; } catch {state.history=[];}
   const bulletin=state.data.enfen?.data;
-  if (bulletin) {
+  const enfenSource=state.manifest.sources.find(s=>s.id==='enfen'),enfenOutdated=!enfenSource||['stale','unavailable'].includes(clientStatus(enfenSource));
+  $('alert-strip').hidden=true;
+  if (bulletin && !enfenOutdated) {
     $('alert-strip').hidden=false; $('enfen-state').textContent=bulletin.alert;
     $('enfen-date').textContent=`${dateLabel(bulletin.published_date)} · último comunicado verificado`;
     $('enfen-link').href=safeUrl(bulletin.document_url,'https://enfen.imarpe.gob.pe/comunicados/');
@@ -123,7 +126,7 @@ async function loadData() {
 
 function renderHealth() {
   const operational=state.manifest.sources.filter(s=>s.kind!=='reference');
-  const ok=operational.filter(s=>clientStatus(s)==='ok').length;
+  const ok=operational.filter(s=>['ok','retained'].includes(clientStatus(s))).length;
   $('global-status').innerHTML=`<i></i>${ok} de ${operational.length} fuentes al día`;
   $('global-status').classList.toggle('degraded',ok!==operational.length);
 }
@@ -681,9 +684,9 @@ function renderInsights(){
   const key=state.frequency==='monthly'?'noaa_monthly':'noaa_weekly',all=state.data[key]?.data??[],index=selectNoaa(all,state,state.frequency==='monthly').at(-1);
   const risks=selectedRisks(),classified=risks.filter(r=>r.risk_level),high=classified.filter(r=>highRisk(r.risk_level));
   const forecasts=forecastSummary(state.forecastRows);
-  const issues=state.manifest.sources.filter(s=>s.kind!=='reference'&&clientStatus(s)!=='ok');
+  const issues=state.manifest.sources.filter(s=>s.kind!=='reference'&&!['ok','retained'].includes(clientStatus(s)));
   const source=id=>state.manifest.sources.find(s=>s.id===id);
-  const incident=id=>{const s=source(id);return s&&clientStatus(s)!=='ok'?` Atención: ${STATUS[clientStatus(s)].toLowerCase()}. Consulta la fecha de esta fuente.`:'';};
+  const incident=id=>{const s=source(id);return s&&!['ok','retained'].includes(clientStatus(s))?` Atención: ${STATUS[clientStatus(s)].toLowerCase()}. Consulta la fecha de esta fuente.`:'';};
   const range=forecasts.dates.length?`${dateLabel(forecasts.dates[0])} – ${dateLabel(forecasts.dates.at(-1))}`:'Sin fechas disponibles';
   const cards=[
     {type:'QUÉ DICE ENFEN · ESTADO OFICIAL',tone:'red',title:bulletin?.alert??'Sin comunicado disponible',text:bulletin?`Es el estado que ENFEN comunicó el ${dateLabel(bulletin.published_date)}. Puedes abrir el documento para conocer su explicación y lo que espera para los próximos meses.${incident('enfen')}`:'No hay un comunicado verificado disponible en esta página.',note:'La fecha del comunicado es importante. Cambiar los filtros no cambia la alerta oficial.',url:bulletin?safeUrl(bulletin.document_url):'#fuentes',action:'Leer el comunicado de ENFEN',external:Boolean(bulletin)},
@@ -698,7 +701,11 @@ function renderInsights(){
     const wettest=[...state.forecastRows].filter(r=>Number.isFinite(r.precipitation_mm)).sort((a,b)=>b.precipitation_mm-a.precipitation_mm)[0];
     cards[4]={type:'CUÁNTA LLUVIA SE ESPERA · NOAA GFS',tone:'cyan',title:wettest?`${fmt(wettest.precipitation_mm,1)} mm en 24 horas en ${titleCase(wettest.locality)}`:'Sin cantidad de lluvia estimada',text:wettest?`Es la mayor cantidad prevista entre los puntos y fechas de tu selección. Periodo: ${windowLabel(wettest)}.${incident('district_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'1 mm equivale a 1 litro de agua por metro cuadrado. Es una estimación para un punto del distrito, no una medición de lluvia ocurrida.',url:'#meteo',action:'Ver el pronóstico y sus horas'};
   }
-  $('insight-cards').innerHTML=cards.map(c=>`<article class="insight-card insight-${c.tone}"><span class="insight-type">${e(c.type)}</span><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></article>`).join('');
+  const cardSources=['enfen',key,'cenepred_risk',modelWeather()?'district_forecast':'senamhi_forecast',modelWeather()?'district_forecast':'senamhi_forecast',null];
+  const outdated=i=>{const src=source(cardSources[i]);return !!src&&['stale','degraded','unavailable'].includes(clientStatus(src));};
+  cards.forEach((c,i)=>{c.outdated=outdated(i);if(c.outdated)c.type='DATO DESFASADO · '+c.type;});
+  cards.sort((a,b)=>(a.outdated?1:0)-(b.outdated?1:0));
+  $('insight-cards').innerHTML=cards.map(c=>`<article class="insight-card insight-${c.tone}${c.outdated?' insight-outdated':''}"><span class="insight-type">${e(c.type)}</span><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></article>`).join('');
 }
 function renderGlossary(){
   const search=normalize($('glossary-search').value),category=$('glossary-category').value;

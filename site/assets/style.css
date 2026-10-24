@@ -68,3 +68,5 @@ main,section,article,aside,.panel,.chart-wrap,.tactical-deck,.analytics-deck,.co
 }
 @media(max-width:350px){.kpi-number{font-size:29px}.kpi-top{font-size:12px}.kpi-detail{font-size:11px}.kpi-footer{font-size:8px}.kpi-meaning{font-size:12px}.kpi-more>summary{font-size:11px}.plain-intro h2{font-size:19px}}
 .tactical-deck .control-stack{align-items:stretch}.control-stack>.summary-heading{grid-column:1/-1}.control-stack>.kpi-grid{width:100%}
+
+.source-state.retained{color:#6ee7b7;background:#10b98114;border-color:#10b98133}.freshness-item.retained{opacity:1}.insight-card.insight-outdated{opacity:.55;filter:grayscale(.6)}

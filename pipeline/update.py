@@ -113,9 +113,13 @@ class Fetcher:
         host = urlparse(url).hostname or ""
         if not any(host == suffix or host.endswith("." + suffix) for suffix in allowed):
             raise ValueError("Dominio no autorizado para adquisición oficial")
-        for attempt in range(3):
+        for attempt in range(4):
             try:
-                req = Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
+                headers = {"User-Agent": UA, "Accept": "*/*"}
+                if host.endswith(("senamhi.gob.pe", "imarpe.gob.pe", "gob.pe")):
+                    # Portales peruanos: algunos descartan clientes sin cabeceras de navegador.
+                    headers = {"User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 " + UA, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8", "Accept-Language": "es-PE,es;q=0.9"}
+                req = Request(url, headers=headers)
                 with urlopen(req, timeout=60) as response:
                     final_host = urlparse(response.url).hostname or ""
                     if not any(final_host == s or final_host.endswith("." + s) for s in allowed):
@@ -128,7 +132,7 @@ class Fetcher:
             except (HTTPError, URLError, TimeoutError, ConnectionError) as exc:
                 if isinstance(exc, HTTPError) and exc.code not in (408, 429, 500, 502, 503, 504):
                     raise
-                if attempt == 2:
+                if attempt == 3:
                     raise
                 time.sleep(5 * (2 ** attempt))
         raise RuntimeError("Adquisición incompleta")
