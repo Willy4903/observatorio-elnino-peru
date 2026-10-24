@@ -1,0 +1,41 @@
+name: Actualizar fuentes peruanas
+# Requiere un runner autohospedado con salida desde Perú y las etiquetas: self-hosted, peru.
+# Cuando exista, define la variable de repositorio PERU_RUNNER=true para que el workflow en la nube omita estas fuentes.
+on:
+  schedule:
+    - cron: '30 12 * * *'   # 07:30 de Lima, antes de la publicación diaria de las 08:00
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: observatorio-peru
+  cancel-in-progress: false
+jobs:
+  refresh-peru:
+    name: Consultar SENAMHI y ENFEN desde Perú
+    runs-on: [self-hosted, peru]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+      - name: Verificar lector de comunicados PDF
+        run: command -v pdftotext >/dev/null || { echo "Falta pdftotext (poppler-utils)"; exit 1; }
+      - name: Consultar portales peruanos
+        run: |
+          python3 pipeline/update.py --force --peru-only
+          python3 pipeline/update.py --validate-only
+      - name: Conservar datos
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/data
+          if ! git diff --cached --quiet; then
+            git commit -m "data: actualizar SENAMHI y ENFEN desde Perú"
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then break; fi
+              if [ "$attempt" = 3 ]; then exit 1; fi
+            done
+          fi

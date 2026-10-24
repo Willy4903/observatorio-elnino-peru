@@ -55,10 +55,12 @@ jobs:
         env:
           FORCE_REFRESH: ${{ inputs.force || 'false' }}
         run: |
+          EXTRA=""
+          if [ "${{ vars.PERU_RUNNER }}" = "true" ]; then EXTRA="--exclude-peru"; fi
           if [ "$FORCE_REFRESH" = "true" ]; then
-            python pipeline/update.py --force
+            python pipeline/update.py --force $EXTRA
           else
-            python pipeline/update.py
+            python pipeline/update.py $EXTRA
           fi
       - name: Verificar integridad y preparar mapas
         run: |
