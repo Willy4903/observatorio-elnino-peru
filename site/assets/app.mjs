@@ -1,5 +1,6 @@
 import {oceanScalarLayer, oceanVectorLayer} from './ocean.mjs';
 import {GLOSSARY,GLOSSARY_CATEGORIES} from './glossary.mjs';
+import {buildLatest} from './latest.mjs';
 import {forecastDates,frameRows,weatherByDistrict,rainColor,weatherMotionLayer} from './weather.mjs';
 import {normalize, inRange, highRisk, mean, limaDate, selectNoaa, selectForecasts, riskByDepartment, forecastByDepartment, forecastByDate, territorialCoverage, forecastSummary, districtOptions, pointMatchesDistrict, csv, hexbinPoints} from './selectors.mjs';
 
@@ -180,7 +181,7 @@ async function refreshPublication() {
       state.versions=[];state.pointLite=null;delete state.data.cenepred_points;
       await loadData();
       await applyFilters();
-    } else {renderHealth();renderSources();renderInsights();}
+    } else {renderHealth();renderSources();renderInsights();renderLatest();}
   } catch {
     renderSources();
     $('global-status').classList.add('degraded');
@@ -546,6 +547,7 @@ function renderMap() {
   renderWeatherCards();
   renderCoverage();
   renderInsights();
+  renderLatest();
   renderRanking(groups);
 }
 function showMapEmpty(text) { const el=document.createElement('div');el.className='map-no-data';el.textContent=text;$('map').parentNode.append(el); }
@@ -706,6 +708,14 @@ function renderInsights(){
   cards.forEach((c,i)=>{c.outdated=outdated(i);if(c.outdated)c.type='DATO DESFASADO · '+c.type;});
   cards.sort((a,b)=>(a.outdated?1:0)-(b.outdated?1:0));
   $('insight-cards').innerHTML=cards.map(c=>`<article class="insight-card insight-${c.tone}${c.outdated?' insight-outdated':''}"><span class="insight-type">${e(c.type)}</span><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></article>`).join('');
+}
+const FRESH_LABEL={fresh:'Al día',check:'Revisar',old:'Desfasado'};
+function renderLatest(){
+  if(!state.manifest||!$('latest-cards'))return;
+  const today=limaDate(),status=Object.fromEntries(state.manifest.sources.map(s=>[s.id,clientStatus(s)]));
+  const items=buildLatest({today,sea:state.data.noaa_ocean_sst?.data??[],forecast:state.data.district_forecast?.data??[],news:state.data.indeci_news?.data??[],status,fmt,dateLabel,titleCase});
+  $('latest-updated').textContent=`Revisado por última vez el ${timestamp(state.manifest.generated_at)}. Se actualiza solo.`;
+  $('latest-cards').innerHTML=items.length?items.map((c,i)=>`<article class="latest-card latest-${c.tone} latest-${c.fresh}"><div class="latest-top"><span class="insight-type">${e(c.tag)}</span><span class="latest-badge latest-badge-${c.fresh}">${FRESH_LABEL[c.fresh]}</span></div><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><div class="latest-foot"><span>${e(c.source)}</span><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></div></article>`).join(''):'<p class="empty-row">Aún no hay información reciente disponible. Vuelve a intentarlo en unas horas.</p>';
 }
 function renderGlossary(){
   const search=normalize($('glossary-search').value),category=$('glossary-category').value;
