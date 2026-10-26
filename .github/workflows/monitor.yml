@@ -4,7 +4,10 @@ on:
     branches: [main]
     paths-ignore: ['site/data/**', 'docs/**', 'README.md']
   schedule:
-    - cron: '0 13 * * *'
+    # Meta: publicar hacia las 8:00 a. m. de Lima. GitHub retrasa las ejecuciones programadas,
+    # por eso hay dos horarios tempranos a minutos fuera de hora (6:47 y 7:37 a. m. de Lima).
+    - cron: '47 11 * * *'
+    - cron: '37 12 * * *'
   workflow_dispatch:
     inputs:
       force:

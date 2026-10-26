@@ -19,7 +19,7 @@ Dashboard: https://Willy4903.github.io/observatorio-elnino-peru/
 | SENAMHI / ENFEN / IMARPE / NOAA / COEN-INDECI | Catálogos oficiales, diagnóstico ENSO, informes técnicos y noticias | Cada 6, 12 o 24 h, según el portal | Se conservan publicación, corte o periodo explícitos; no se infieren emergencias |
 | CENEPRED / SIGRID | Cartografía distrital del escenario (carga al elegir departamento) | Mensual | Según revisión del servicio |
 
-El workflow se ejecuta una vez al día a las 08:00 de Lima (13:00 UTC). Cada fuente respeta su intervalo en ventanas UTC. También se ejecuta al cambiar código o manualmente en Actions → Actualizar y publicar observatorio → Run workflow.
+El workflow se ejecuta cada día con meta de publicar hacia las 08:00 de Lima; se programa a las 06:47 y 07:37 de Lima (11:47 y 12:37 UTC) porque GitHub retrasa las ejecuciones. Cada fuente respeta su intervalo en ventanas UTC. También se ejecuta al cambiar código o manualmente en Actions → Actualizar y publicar observatorio → Run workflow.
 
 GitHub puede retrasar ejecuciones programadas. No es streaming ni una garantía de tiempo real. La fecha del dato, la consulta y la actualización del contenido se conservan por separado. Los cambios reales se detectan mediante SHA-256; una consulta reciente no convierte un dato antiguo en vigente.
 

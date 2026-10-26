@@ -686,7 +686,7 @@ def main():
         if key not in states:
             states[key] = {"id": key, **{k: v for k, v in spec.items() if k != "hours"}, "last_success": None, "error": "Fuente aún no adquirida"}
         states[key]["status"] = freshness(states[key], spec)
-    manifest = {"schema_version": 1, "generated_at": NOW, "timezone": "America/Lima", "schedule": "Diaria a las 08:00 de Lima (13:00 UTC); cada fuente aplica su propia frecuencia de consulta", "sources": [states[k] for k in SOURCES], "history_start": load(DATA / "forecast_history.json", {"versions": []}).get("versions", [{}])[0].get("collected_at") if load(DATA / "forecast_history.json", {"versions": []}).get("versions") else None}
+    manifest = {"schema_version": 1, "generated_at": NOW, "timezone": "America/Lima", "schedule": "Diaria, con meta de publicar hacia las 08:00 de Lima; cada fuente aplica su propia frecuencia de consulta", "sources": [states[k] for k in SOURCES], "history_start": load(DATA / "forecast_history.json", {"versions": []}).get("versions", [{}])[0].get("collected_at") if load(DATA / "forecast_history.json", {"versions": []}).get("versions") else None}
     write_atomic(DATA / "manifest.json", manifest)
     previous_checks = {c["source_id"]: c for c in load(DATA / "quality.json", {"checks": []})["checks"]}
     for c in checks:
