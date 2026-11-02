@@ -18,6 +18,12 @@ test('los filtros complejos conservan sus identificadores y se muestran bajo dem
   assert.equal((html.match(/<details\b/g)||[]).length,(html.match(/<\/details>/g)||[]).length);
   assert.equal((html.match(/<section\b/g)||[]).length,(html.match(/<\/section>/g)||[]).length);
   assert.ok(html.includes('assets/simple.css'));
+  assert.ok(html.includes('assets/visual.css'));
+  assert.ok(html.includes('class="radar-stage visual-ocean"'));
+  for (const file of ['visual-ocean.svg','visual-enfen.svg','visual-district.svg','visual-risk.svg']) {
+    assert.ok(readFileSync(new URL('../site/assets/'+file,import.meta.url),'utf8').includes('<svg'));
+  }
+
   assert.ok(css.includes('@media(max-width:800px)'));
 });
 test('se programan exactamente dos ventanas de actualización en hora de Lima',()=>{
