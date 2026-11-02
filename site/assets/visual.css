@@ -1,0 +1,53 @@
+/* Observatorio El Niño — portada oceánica y tarjetas ilustradas.
+   Conserva todos los indicadores reales, fuentes, mapas y fechas originales. */
+.radar-header{background:#fff;border-bottom:1px solid #e7edf3;box-shadow:0 4px 25px #071c3322}
+.radar-brand{color:#173047}
+.radar-brand b{color:#0b6996;font-weight:800}
+.radar-brand svg{stroke:#126ca4}
+.radar-header .header-source-link{color:#364b61}
+.radar-header .radar-menu-button{background:#f2f6fa;border-color:#d2dce8;color:#1f3b56}
+.radar-header .radar-menu-button svg{stroke:#1f3b56}
+.radar-stage.visual-ocean{min-height:465px;position:relative;isolation:isolate;overflow:hidden;text-align:left;border-radius:20px;padding:48px clamp(22px,5vw,75px) 30px;background:#0c3d67 url("visual-ocean.svg") center/cover no-repeat;box-shadow:0 18px 55px -28px #000b}
+.radar-stage.visual-ocean:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,#0b1935ef 0%,#182b4cda 38%,#15395069 71%,#113d4d1c)}
+.radar-stage.visual-ocean .radar-sphere{display:none}
+.radar-stage.visual-ocean .radar-stage-content{max-width:760px;margin:0;position:relative;z-index:2}
+.radar-stage.visual-ocean .radar-badge{font-size:.68rem;letter-spacing:.1em;margin:0 0 17px;background:#12385a87;border-color:#b1e6ff85;color:#e2f6ff;box-shadow:none}
+.radar-stage.visual-ocean h1{font:800 clamp(2.35rem,5vw,4.45rem)/1.1 Inter,sans-serif;letter-spacing:-.05em;background:none;color:#fff;-webkit-text-fill-color:#fff;filter:none;max-width:17ch;text-wrap:balance}
+.radar-stage.visual-ocean .radar-tagline{max-width:36ch;margin:18px 0 10px;font-size:clamp(1.1rem,2.1vw,1.6rem);line-height:1.35;color:#f1f6fc;font-weight:700;text-shadow:none}
+.radar-stage.visual-ocean .radar-intro{max-width:58ch;margin:0;font-size:.98rem;color:#e4edf7;line-height:1.7}
+.radar-stage.visual-ocean .radar-cta{justify-content:flex-start;gap:11px;margin-top:24px}
+.radar-stage.visual-ocean .radar-button{border-radius:50px}
+.radar-stage.visual-ocean .radar-button.primary{background:#fff;color:#0f3855;border-color:#fff;box-shadow:0 10px 22px #05152545}
+.radar-stage.visual-ocean .radar-button.ghost{background:#0b2d4d9c;color:#fff;border-color:#b8e4f380}
+.radar-stage.visual-ocean .radar-status{justify-content:flex-start;color:#ddeef8;font-size:.75rem}
+.radar-stage.visual-ocean .radar-status #updated,.radar-stage.visual-ocean .radar-status #clockPET{color:#d6e9ff}
+.radar-stage.visual-ocean .radar-official{max-width:500px!important;margin:23px 0 0;padding:13px 17px;border-radius:13px;background:#091c35e9;border-color:#77d1eaa1;box-shadow:0 10px 30px #06132440;backdrop-filter:blur(8px)}
+.radar-stage.visual-ocean .official-heading{font-size:.73rem}
+.radar-stage.visual-ocean .official-main #enfen-state{font-size:1rem}
+.radar-stage.visual-ocean .stage-motion{position:absolute;bottom:12px;right:16px;z-index:2;font-size:.66rem;opacity:.9}
+.simple-guide{background:transparent;border:0;box-shadow:none;margin:19px 0 32px;padding:5px 0}
+.simple-guide-head{max-width:800px}
+.simple-guide-head .kicker{color:#8fdcf0}
+.simple-guide-head h2{font-size:clamp(1.55rem,2.8vw,2.15rem);font-weight:800;letter-spacing:-.04em}
+.simple-guide-grid{gap:16px}
+.simple-guide-card{position:relative;isolation:isolate;overflow:hidden;min-height:265px;border:0;border-radius:20px;padding:23px 20px;color:#14273b;box-shadow:0 12px 34px -20px #0009;background:#e7f9fd;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.simple-guide-card:after{content:"";position:absolute;right:0;bottom:0;z-index:-1;width:68%;height:48%;background-size:contain;background-position:right bottom;background-repeat:no-repeat;opacity:.85}
+.simple-guide-card:nth-child(1){background:linear-gradient(135deg,#fff3f0,#fad9da)}
+.simple-guide-card:nth-child(2){background:linear-gradient(135deg,#effaff,#c4e5f7)}
+.simple-guide-card:nth-child(3){background:linear-gradient(135deg,#e8fff4,#b9e8d3)}
+.simple-guide-card:nth-child(1):after{background-image:url("visual-enfen.svg")}
+.simple-guide-card:nth-child(2):after{background-image:url("visual-district.svg")}
+.simple-guide-card:nth-child(3):after{background-image:url("visual-risk.svg")}
+.simple-guide-card .simple-step{color:#a32731;font-weight:850;letter-spacing:.07em}
+.simple-guide-card:nth-child(2) .simple-step{color:#0e618d}
+.simple-guide-card:nth-child(3) .simple-step{color:#047054}
+.simple-guide-card h3{color:#182a3c;font-size:clamp(1.1rem,1.8vw,1.55rem);letter-spacing:-.035em;line-height:1.19;max-width:18ch}
+.simple-guide-card p{color:#385064;max-width:26ch;font-size:.87rem;line-height:1.6;margin:0}
+.simple-guide-card .simple-action{margin-top:auto;display:inline-flex;align-items:center;border-radius:40px;padding:9px 15px;font-size:.83rem;font-weight:800;color:#a32731;background:#fff;box-shadow:0 4px 15px #0011}
+.simple-guide-card:nth-child(2) .simple-action{color:#0f5d93}
+.simple-guide-card:nth-child(3) .simple-action{color:#006d4a}
+.simple-guide-disclaimer{color:#b9c8d9;font-size:.82rem;margin-top:16px}
+#guia-inicio,#ultimo,#insights,#panorama,#consulta{scroll-margin-top:90px}
+@media(max-width:900px){.radar-stage.visual-ocean{min-height:460px;padding:32px 24px 28px}.simple-guide-grid{grid-template-columns:1fr 1fr}.simple-guide-card:nth-child(3){grid-column:1/-1}}
+@media(max-width:650px){.radar-stage.visual-ocean{min-height:480px;padding:27px 17px 34px;background-position:64% center;border-radius:15px}.radar-stage.visual-ocean:before{background:linear-gradient(90deg,#0c1b37ee,#102b48d0 62%,#174c6570)}.radar-stage.visual-ocean h1{font-size:clamp(2.05rem,8.7vw,3rem)}.radar-stage.visual-ocean .radar-tagline{font-size:1.16rem}.radar-stage.visual-ocean .radar-intro{font-size:.85rem;line-height:1.55}.radar-stage.visual-ocean .radar-cta{margin-top:16px}.radar-stage.visual-ocean .radar-button{padding:10px 12px;font-size:.82rem}.radar-stage.visual-ocean .radar-status{margin-top:13px;gap:4px 12px}.radar-stage.visual-ocean .radar-official{padding:11px 13px;margin-top:13px}.radar-stage.visual-ocean .stage-motion{display:none}.simple-guide{margin:15px 0 25px}.simple-guide-head h2{font-size:1.45rem}.simple-guide-grid{grid-template-columns:1fr;gap:11px}.simple-guide-card,.simple-guide-card:nth-child(3){grid-column:auto;min-height:215px;padding:17px}.simple-guide-card:after{width:53%;height:50%}.simple-guide-card h3{font-size:1.28rem}.simple-guide-card p{font-size:.81rem;max-width:28ch}}
+@media(prefers-reduced-motion:reduce){.simple-guide-card{transition:none}.simple-guide-card:hover{transform:none}}
