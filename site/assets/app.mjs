@@ -14,7 +14,10 @@ function safeUrl(url, fallback = 'https://sigrid.cenepred.gob.pe/sigridv3/') {
   try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? u.href : fallback; } catch { return fallback; }
 }
 const HAZARDS = {inundacion:'Inundación',movimientos_masa:'Movimientos en masa'};
-const STATUS = {ok:'Disponible',stale:'Dato antiguo',degraded:'Falló la revisión',retained:'Vigente · revisión pendiente',unavailable:'Sin datos'};
+const STATUS = {ok:'Disponible',stale:'Dato antiguo',degraded:'Revisión pendiente',retained:'Último dato conservado',unavailable:'Sin datos'};
+// Referencia editorial contrastada con el portal oficial de ENFEN el 03/11/2026.
+// NO sustituye el ETL ni simula una descarga: expira antes del siguiente comunicado anunciado.
+const ENFEN_VERIFICADO = {title:'Comunicado Oficial ENFEN N.º 19-2026',published_date:'2026-10-30',alert:'Alerta de El Niño Costero',document_url:'https://enfen.imarpe.gob.pe/download/comunicado-oficial-enfen-n-19-2026/',consulted_at:'2026-11-03',expires_at:'2026-11-12'};
 const anomalyWords=(value,digits=1)=>value==null?'Sin dato para estas fechas':value===0?'Igual a lo habitual':`${fmt(Math.abs(value),digits)} °C más ${value>0?'caliente':'frío'} de lo habitual`;
 const state = {kind:'observation',layer:'sst',vectors:true,oceanExtent:'national',inspectorDepartment:'all',inspectorDistrict:null,district:'all',hazard:'inundacion',frequency:'weekly',table:'districts',forecastPage:0,zonePage:0,from:'',to:'',department:'all',data:{},versions:[],forecastRows:[],zoneRows:[],history:[],map:null,mapLayers:[],territoryMarkers:[],polygons:null,noaaChart:null,forecastChart:null};
 const networkCache = new Map();
@@ -43,6 +46,9 @@ async function getJson(path) {
 
 function clientStatus(source) {
   if (!source.last_success) return 'unavailable';
+  // Un escenario de planificación sin fecha de vencimiento diario no caduca a las 72 horas.
+  // Si falla la descarga se advierte la revisión pendiente, no se declara vencido el escenario.
+  if (['risk_scenario','risk_inventory'].includes(source.kind) && source.max_age_days == null) return source.error ? 'degraded' : source.status === 'stale' ? 'stale' : 'ok';
   const age = (Date.now() - new Date(source.last_success)) / 3600000;
   const maxHours = source.kind === 'reference' ? 1440 : 72;
   if (age > maxHours) return 'stale';
@@ -52,6 +58,31 @@ function clientStatus(source) {
   return source.status;
 }
 
+
+function officialBulletin() {
+  const automatico=state.data.enfen?.data ?? null;
+  if (limaDate() <= ENFEN_VERIFICADO.expires_at &&
+      (!automatico?.published_date || automatico.published_date < ENFEN_VERIFICADO.published_date)) {
+    return {...ENFEN_VERIFICADO, editorialFallback:true};
+  }
+  return automatico;
+}
+function renderOfficial() {
+  const bulletin=officialBulletin();
+  const s=state.manifest?.sources.find(x=>x.id==='enfen');
+  const date=bulletin?.published_date ? dateLabel(bulletin.published_date) : null;
+  const verify=bulletin?.editorialFallback;
+  $('enfen-publicado').textContent=bulletin?.alert ?? 'No hay un comunicado cargado';
+  $('enfen-resumen').textContent=bulletin
+    ? `${bulletin.title || 'Comunicado oficial'} · ${date}. Es la alerta declarada por ENFEN, no una noticia de inundación en tu distrito.`
+    : 'No hemos podido recuperar el comunicado. Abre el portal ENFEN para conocer su estado oficial.';
+  $('enfen-control').textContent=verify
+    ? 'Referencia contrastada en la página oficial el 3 de noviembre de 2026. La descarga automática aún conserva un comunicado anterior. Verifica el enlace para comprobar si hay cambios.'
+    : !s || ['stale','degraded','unavailable'].includes(clientStatus(s))
+      ? 'La actualización automática está pendiente. El documento mostrado puede no ser el más reciente; comprueba la página oficial.'
+      : 'Comunicado obtenido mediante la actualización automática. Comprueba su fecha antes de tomar decisiones.';
+  $('enfen-documento').href=safeUrl(bulletin?.document_url,'https://enfen.imarpe.gob.pe/comunicados/');
+}
 function setDefaults() {
   const today = limaDate();
   const start = new Date(today+'T12:00:00Z'); start.setUTCDate(start.getUTCDate()-210);
@@ -111,14 +142,9 @@ async function loadData() {
   state.gridVersions=state.data.district_forecast?[state.data.district_forecast]:[];
   try{state.gridHistory=(await getJson('./data/district_forecast_history.json')).versions;}catch{state.gridHistory=[];}
   try { state.history=(await getJson('./data/forecast_history.json')).versions; } catch {state.history=[];}
-  const bulletin=state.data.enfen?.data;
-  const enfenSource=state.manifest.sources.find(s=>s.id==='enfen'),enfenOutdated=!enfenSource||['stale','unavailable'].includes(clientStatus(enfenSource));
+  // La ficha ciudadana sustituye la franja duplicada y enseña el estado y la fecha sin ambigüedad.
   $('alert-strip').hidden=true;
-  if (bulletin && !enfenOutdated) {
-    $('alert-strip').hidden=false; $('enfen-state').textContent=bulletin.alert;
-    $('enfen-date').textContent=`${dateLabel(bulletin.published_date)} · último comunicado verificado`;
-    $('enfen-link').href=safeUrl(bulletin.document_url,'https://enfen.imarpe.gob.pe/comunicados/');
-  }
+  renderOfficial();
   $('updated').textContent=`Última ejecución: ${timestamp(manifest.generated_at)}`;
   renderHealth();
   $('history-note').textContent=manifest.history_start?`Guardamos pronósticos desde el ${dateLabel(limaDate(manifest.history_start))}. Solo puedes consultar pronósticos anteriores si quedaron guardados. Los datos del mar tienen series oficiales desde 1981/1982.`:'Aún no hay archivo histórico de pronósticos.';
@@ -128,7 +154,7 @@ async function loadData() {
 function renderHealth() {
   const operational=state.manifest.sources.filter(s=>s.kind!=='reference');
   const ok=operational.filter(s=>['ok','retained'].includes(clientStatus(s))).length;
-  $('global-status').innerHTML=`<i></i>${ok} de ${operational.length} fuentes al día`;
+  $('global-status').innerHTML=`<i></i>${ok} fuentes disponibles · ${operational.length-ok} por revisar`;
   $('global-status').classList.toggle('degraded',ok!==operational.length);
 }
 
@@ -682,30 +708,38 @@ function renderInsights(){
   const scope=state.department==='all'?'Todo el Perú':titleCase(state.data.boundaries?.data.features.find(f=>f.properties.code===state.department)?.properties.name??state.department);
   const district=selectedDistrict(),riskScope=district?`${titleCase(district.district)}, ${titleCase(district.province)}, ${scope}`:scope;
   $('insight-scope').textContent=riskScope;
-  const bulletin=state.data.enfen?.data;
+  const bulletin=officialBulletin();
   const key=state.frequency==='monthly'?'noaa_monthly':'noaa_weekly',all=state.data[key]?.data??[],index=selectNoaa(all,state,state.frequency==='monthly').at(-1);
   const risks=selectedRisks(),classified=risks.filter(r=>r.risk_level),high=classified.filter(r=>highRisk(r.risk_level));
-  const forecasts=forecastSummary(state.forecastRows);
+  // La lectura principal muestra solamente pronósticos de hoy en adelante.
+  // Una selección exclusivamente anterior a hoy se presenta como archivo histórico, nunca como previsión actual.
+  const pastSelection=state.to<limaDate();
+  const relevantForecasts=pastSelection?state.forecastRows:state.forecastRows.filter(r=>r.valid_date>=limaDate());
+  const forecasts=forecastSummary(relevantForecasts);
   const issues=state.manifest.sources.filter(s=>s.kind!=='reference'&&!['ok','retained'].includes(clientStatus(s)));
   const source=id=>state.manifest.sources.find(s=>s.id===id);
   const incident=id=>{const s=source(id);return s&&!['ok','retained'].includes(clientStatus(s))?` Atención: ${STATUS[clientStatus(s)].toLowerCase()}. Consulta la fecha de esta fuente.`:'';};
   const range=forecasts.dates.length?`${dateLabel(forecasts.dates[0])} – ${dateLabel(forecasts.dates.at(-1))}`:'Sin fechas disponibles';
   const cards=[
-    {type:'QUÉ DICE ENFEN · ESTADO OFICIAL',tone:'red',title:bulletin?.alert??'Sin comunicado disponible',text:bulletin?`Es el estado que ENFEN comunicó el ${dateLabel(bulletin.published_date)}. Puedes abrir el documento para conocer su explicación y lo que espera para los próximos meses.${incident('enfen')}`:'No hay un comunicado verificado disponible en esta página.',note:'ENFEN es el comité oficial de Perú que vigila El Niño. Su alerta no cambia con los filtros.',url:bulletin?safeUrl(bulletin.document_url):'#fuentes',action:'Leer el comunicado de ENFEN',external:Boolean(bulletin)},
+    {type:'QUÉ DICE ENFEN · ALERTA OFICIAL',tone:'red',title:bulletin?.alert??'No hay un comunicado disponible',text:bulletin?`ENFEN publicó esta alerta el ${dateLabel(bulletin.published_date)}. ${bulletin.editorialFallback?'Se comprobó el documento en su página oficial, pero la descarga automática sigue pendiente.':incident('enfen')}`:'No se ha podido consultar el documento. Revisa directamente el portal de ENFEN.',note:'Una alerta pide informarse y prepararse; no confirma una emergencia ni lluvia en todos los distritos.',url:bulletin?safeUrl(bulletin.document_url):'#estado-enfen',action:'Entender y leer el comunicado',external:Boolean(bulletin)},
     {type:'CÓMO ESTÁ EL MAR · DATO REGISTRADO',tone:'orange',title:index?`Cerca de Perú: ${anomalyWords(index.nino12_anomaly,state.frequency==='monthly'?2:1)}`:'Sin dato del mar para estas fechas',text:index?`En el Pacífico central está ${anomalyWords(index.nino34_anomaly,state.frequency==='monthly'?2:1).toLocaleLowerCase('es')}. Dato ${state.frequency==='monthly'?'mensual':'semanal'} del ${dateLabel(index.date)}.${incident(key)}`:'Prueba otro periodo para consultar los datos semanales o mensuales disponibles.',note:'Compara la temperatura del mar con lo habitual para esa época. No es la temperatura del aire en tu ciudad.',url:'#series',action:'Ver cómo ha cambiado el mar'},
     {type:'DÓNDE PREPARARSE · RIESGO POSIBLE',tone:'amber',title:district?`${titleCase(district.district)}: riesgo ${district.risk_level?.toLocaleLowerCase('es')??'sin clasificar'}`:classified.length?`${fmt(high.length)} distritos con riesgo alto o muy alto`:'Sin datos de riesgo para esta zona',text:classified.length?`De ${fmt(classified.length)} distritos evaluados en ${riskScope}, según CENEPRED para 2025–2027. Peligro: ${HAZARDS[state.hazard].toLocaleLowerCase('es')}.${incident('cenepred_risk')}`:'La falta de datos no significa que no exista riesgo.',note:'Sirve para identificar dónde prepararse. No es un conteo de distritos afectados hoy.',url:'#zonas',action:'Ver los distritos y sus fichas'},
-    {type:'CUÁNTO CALOR SE ESPERA · PRONÓSTICO',tone:'cyan',title:forecasts.max?`Hasta ${fmt(forecasts.max.tmax_c,1)} °C en ${titleCase(forecasts.max.locality)}`:'Sin temperatura prevista para estas fechas',text:forecasts.max?`${titleCase(forecasts.max.department)} · ${dateLabel(forecasts.max.valid_date)}.${forecasts.min?` El valor más frío de la selección es ${fmt(forecasts.min.tmin_c,1)} °C en ${titleCase(forecasts.min.locality)}, para el ${dateLabel(forecasts.min.valid_date)}.`:''}${incident(modelWeather()?'district_forecast':'senamhi_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'Son los valores más altos y más bajos entre los pronósticos disponibles. Pueden cambiar.',url:'#meteo',action:'Consultar el pronóstico de mi zona'},
-    {type:'QUÉ SE ESPERA DE LA LLUVIA · PRONÓSTICO',tone:'cyan',title:forecasts.records?`${fmt(forecasts.rainLocalities)} localidades con mención de lluvia`:'Sin descripción de la lluvia disponible',text:forecasts.records?`SENAMHI menciona lluvia en ${fmt(forecasts.rainRecords)} de ${fmt(forecasts.records)} pronósticos de localidad y día. Fechas: ${range}.${incident('senamhi_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'Este conteo no dice cuánto lloverá ni la probabilidad de que llueva. Lee la descripción de tu localidad.',url:'#meteo',action:'Leer lo que dice SENAMHI'},
+    {type:pastSelection?'PRONÓSTICO ARCHIVADO · TEMPERATURA':'TEMPERATURA PARA LOS PRÓXIMOS DÍAS',tone:'cyan',title:forecasts.max?`Hasta ${fmt(forecasts.max.tmax_c,1)} °C en ${titleCase(forecasts.max.locality)}`:'Sin temperatura prevista para estas fechas',text:forecasts.max?`${titleCase(forecasts.max.department)} · ${dateLabel(forecasts.max.valid_date)}.${forecasts.min?` El valor más frío de la selección es ${fmt(forecasts.min.tmin_c,1)} °C en ${titleCase(forecasts.min.locality)}, para el ${dateLabel(forecasts.min.valid_date)}.`:''}${incident(modelWeather()?'district_forecast':'senamhi_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'Son los valores más altos y más bajos entre los pronósticos disponibles. Pueden cambiar.',url:'#meteo',action:'Consultar el pronóstico de mi zona'},
+    {type:pastSelection?'PRONÓSTICO ARCHIVADO · LLUVIA':'LLUVIAS PARA LOS PRÓXIMOS DÍAS',tone:'cyan',title:forecasts.records?`${fmt(forecasts.rainLocalities)} localidades con mención de lluvia`:'Sin descripción de la lluvia disponible',text:forecasts.records?`SENAMHI menciona lluvia en ${fmt(forecasts.rainRecords)} de ${fmt(forecasts.records)} pronósticos de localidad y día. Fechas: ${range}.${incident('senamhi_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'Este conteo no dice cuánto lloverá ni la probabilidad de que llueva. Lee la descripción de tu localidad.',url:'#meteo',action:'Leer lo que dice SENAMHI'},
     {type:'QUÉ TAN RECIENTES SON LOS DATOS',tone:'slate',title:issues.length?`${issues.length} ${issues.length===1?'fuente necesita':'fuentes necesitan'} revisión`:'Las fuentes están al día',text:issues.length?'Alguna fuente tiene datos antiguos, falló en la última descarga o todavía no está disponible. Puedes ver cuál es y de qué fecha es su información.':'Las fuentes disponibles pasaron los controles de descarga y de fecha definidos para cada producto.',note:'Revisa la fecha del dato antes de usarlo para conocer la situación actual.',url:'#fuentes',action:'Ver las fuentes y sus fechas'},
   ];
   if(modelWeather()){
-    cards[3].type='CUÁNTO CALOR SE ESPERA · NOAA GFS';cards[3].note='Estimación para un punto del distrito en un periodo de 24 horas. El tiempo puede variar dentro del distrito.';
-    const wettest=[...state.forecastRows].filter(r=>Number.isFinite(r.precipitation_mm)).sort((a,b)=>b.precipitation_mm-a.precipitation_mm)[0];
-    cards[4]={type:'CUÁNTA LLUVIA SE ESPERA · NOAA GFS',tone:'cyan',title:wettest?`${fmt(wettest.precipitation_mm,1)} mm en 24 horas en ${titleCase(wettest.locality)}`:'Sin cantidad de lluvia estimada',text:wettest?`Es la mayor cantidad prevista entre los puntos y fechas de tu selección. Periodo: ${windowLabel(wettest)}.${incident('district_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'1 mm equivale a 1 litro de agua por metro cuadrado. Es una estimación para un punto del distrito, no una medición de lluvia ocurrida.',url:'#meteo',action:'Ver el pronóstico y sus horas'};
+    cards[3].type=pastSelection?'PRONÓSTICO ARCHIVADO · TEMPERATURA':'TEMPERATURA PREVISTA · NOAA GFS';
+    cards[3].note='Estimación para un punto dentro de cada distrito, no para toda su superficie. No es temperatura observada.';
+    const wettest=[...relevantForecasts].filter(r=>Number.isFinite(r.precipitation_mm)).sort((a,b)=>b.precipitation_mm-a.precipitation_mm)[0];
+    cards[4]={type:pastSelection?'PRONÓSTICO ARCHIVADO · LLUVIA':'LLUVIA PREVISTA · NOAA GFS',tone:'cyan',title:wettest?`${fmt(wettest.precipitation_mm,1)} mm en 24 horas en ${titleCase(wettest.locality)}`:'Sin cantidad de lluvia estimada',text:wettest?`Es la mayor cantidad prevista entre los puntos y fechas de tu selección. Periodo: ${windowLabel(wettest)}.${incident('district_forecast')}`:'Prueba otras fechas o consulta la otra fuente de pronóstico.',note:'1 mm equivale a 1 litro de agua por metro cuadrado. Es una estimación para un punto del distrito, no una medición de lluvia ocurrida.',url:'#meteo',action:'Ver el pronóstico y sus horas'};
+  }
+  if(pastSelection){
+    [cards[3],cards[4]].forEach(card=>{card.text='Pronóstico archivado, no una condición actual. '+card.text;card.note+=' Este pronóstico ya terminó; no indica lo que está ocurriendo hoy.';});
   }
   const cardSources=['enfen',key,'cenepred_risk',modelWeather()?'district_forecast':'senamhi_forecast',modelWeather()?'district_forecast':'senamhi_forecast',null];
-  const outdated=i=>{const src=source(cardSources[i]);return !!src&&['stale','degraded','unavailable'].includes(clientStatus(src));};
-  cards.forEach((c,i)=>{c.outdated=outdated(i);if(c.outdated)c.type='DATO DESFASADO · '+c.type;});
+  const sourceState=i=>{if(i===0&&bulletin?.editorialFallback)return 'ok';const src=source(cardSources[i]);return src?clientStatus(src):'ok';};
+  cards.forEach((c,i)=>{const status=sourceState(i);c.outdated=['stale','degraded','unavailable'].includes(status);if(status==='degraded')c.type='REVISIÓN PENDIENTE · '+c.type;else if(['stale','unavailable'].includes(status))c.type='DATO NO VIGENTE · '+c.type;});
   cards.sort((a,b)=>(a.outdated?1:0)-(b.outdated?1:0));
   $('insight-cards').innerHTML=cards.map(c=>`<article class="insight-card insight-${c.tone}${c.outdated?' insight-outdated':''}"><span class="insight-type">${e(c.type)}</span><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></article>`).join('');
 }
