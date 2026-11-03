@@ -1,0 +1,220 @@
+/* Observatorio El Niño Perú — portada visual 2026-11-03
+   Cuatro imágenes locales: hero-ola.jpg y card-{enfen,distrito,riesgo}.jpg.
+   Imágenes ilustrativas: los mapas y comunicados oficiales se consultan en sus módulos.
+   Mantiene intactos el procesamiento de datos, los mapas y la actualización programada. */
+html{scroll-padding-top:78px}
+body{overflow-x:clip}
+.radar-header{
+  position:sticky;top:0;z-index:1250;
+  background:#fff!important;border-bottom:1px solid #e3e9f0!important;
+  box-shadow:0 4px 24px rgba(5,19,40,.07)!important;
+  color:#0b182a!important;backdrop-filter:none
+}
+.radar-header-inner{
+  width:100%;max-width:1440px!important;height:72px!important;
+  padding:0 clamp(15px,3vw,45px)!important;gap:15px
+}
+.radar-brand{gap:10px!important;color:#0b182a!important;text-decoration:none;flex:0 0 auto}
+.radar-brand svg{width:44px!important;height:44px!important;fill:none!important;stroke:none!important}
+.radar-brand .brand-lines{display:flex;flex-direction:column;gap:0;line-height:1.04;letter-spacing:-.045em}
+.radar-brand .brand-lines strong{font-size:clamp(.96rem,1.45vw,1.32rem);font-weight:850;color:#0c1523}
+.radar-top-nav{display:flex;align-items:center;justify-content:flex-end;gap:5px;margin-left:auto}
+.radar-top-nav a{min-height:44px;display:inline-flex;align-items:center;padding:9px clamp(9px,1vw,17px);border-radius:999px;text-decoration:none;color:#111827;font-size:.83rem;line-height:1.2;font-weight:750;white-space:nowrap}
+.radar-top-nav a.current{background:#ffe0e2;color:#b52639}
+.radar-top-nav a:hover{background:#f0f4fa;color:#074f8c}
+.radar-header-actions{gap:10px!important;flex:0 0 auto}
+.radar-header-search{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;color:#131d30}
+.radar-header-search svg{width:22px;height:22px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.radar-header-search:hover{background:#f1f5f9}
+.radar-header .radar-menu-button{
+  width:44px;height:44px;min-height:44px;padding:9px;display:grid;place-items:center;
+  background:transparent!important;color:#111827!important;border:0!important;
+  border-radius:12px!important;box-shadow:none!important
+}
+.radar-header .radar-menu-button svg{width:24px;height:24px;stroke:#111827!important;stroke-width:2.2}
+.radar-header .radar-menu-button span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.radar-header .radar-menu-button:hover{background:#edf3f8!important}
+#main{max-width:none!important;width:100%!important;padding:0 0 55px!important;gap:0!important}
+#main>:not(.visual-wave):not(.visual-guide):not(.visual-alert-holder){
+  width:calc(100% - 36px);max-width:1260px;margin-left:auto;margin-right:auto
+}
+#main .visual-wave{
+  position:relative;isolation:isolate;overflow:hidden;text-align:left;
+  width:100%;min-height:460px;margin:0;border:0;border-radius:0;
+  padding:76px max(26px,calc((100vw - 1270px)/2)) 114px;
+  background-color:#0b2942;
+  background-image:linear-gradient(90deg,rgba(6,21,40,.56) 0%,rgba(7,21,39,.32) 37%,rgba(9,39,60,.04) 75%),url("hero-ola.jpg");
+  background-repeat:no-repeat;background-size:cover,cover;background-position:center,center;
+  box-shadow:none;color:white
+}
+#main .visual-wave:before{content:none!important}
+#main .visual-wave .radar-sphere,
+#main .visual-wave .stage-motion{display:none!important}
+#main .visual-wave .radar-stage-content{
+  margin:0!important;max-width:770px!important;z-index:2;
+  display:flex;flex-direction:column;align-items:flex-start
+}
+#main .visual-wave .radar-badge{display:none!important}
+#main .visual-wave #hero-title{
+  max-width:16ch;margin:0!important;text-align:left!important;
+  font:850 clamp(2.5rem,5.1vw,5rem)/1.08 Inter,system-ui,sans-serif!important;
+  letter-spacing:-.055em!important;color:#fff!important;background:none!important;
+  -webkit-text-fill-color:#fff!important;text-shadow:0 2px 16px #001b2d2c;
+  filter:none!important;text-wrap:balance
+}
+#main .visual-wave #hero-title span{display:block;color:#fff}
+#main .visual-wave .radar-tagline{
+  max-width:42ch;margin:17px 0 0!important;color:#f6faff!important;
+  font:550 clamp(1rem,1.9vw,1.4rem)/1.46 Inter,system-ui,sans-serif!important;
+  text-align:left!important;text-shadow:0 2px 7px #061b3048
+}
+#main .visual-wave .radar-intro,
+#main .visual-wave .radar-cta{display:none!important}
+#main .visual-wave .radar-status{
+  display:inline-flex;align-self:flex-start;align-items:center;justify-content:flex-start;
+  margin:22px 0 0!important;padding:9px 15px;min-height:44px;
+  max-width:100%;border:1px solid #cfe9ff85;border-radius:99px;
+  background:rgba(5,24,42,.63);backdrop-filter:blur(7px);
+  color:#fff!important;font-size:.84rem;line-height:1.4
+}
+#main .visual-wave #updated{color:#fff!important;font:550 .84rem/1.4 Inter,sans-serif!important}
+#main .visual-wave #updated:before{
+  content:"";display:inline-block;width:14px;height:14px;border:2px solid #fff;
+  border-radius:50%;margin-right:9px;vertical-align:-2px;
+  background:linear-gradient(0deg,transparent 47%,#fff 47%,#fff 54%,transparent 54%) center/60% 60% no-repeat
+}
+#main .visual-wave #global-status,
+#main .visual-wave #clockPET{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+#main .visual-guide{
+  position:relative;z-index:6;width:calc(100% - 28px);max-width:1370px;
+  margin:-48px auto 24px!important;padding:17px 18px 13px!important;
+  border:0!important;border-radius:30px;
+  background:#fff!important;box-shadow:0 16px 48px -27px rgba(1,25,46,.35)!important
+}
+#main .visual-guide .simple-guide-head{
+  position:absolute;width:1px;height:1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap
+}
+#main .visual-guide .simple-guide-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px
+}
+#main .visual-guide .simple-guide-card{
+  min-width:0;min-height:347px;position:relative;isolation:isolate;overflow:hidden;
+  border:0!important;border-radius:20px;padding:0!important;
+  box-shadow:none!important;display:flex!important;flex-direction:column!important;
+  align-items:stretch!important;gap:0!important;transform:none;
+  transition:box-shadow .18s ease,translate .18s ease;
+  text-decoration:none!important
+}
+#main .visual-guide .simple-guide-card:hover{
+  box-shadow:0 12px 24px -14px rgba(0,34,65,.45)!important;
+  translate:0 -2px
+}
+#main .visual-guide .simple-guide-card:focus-visible{outline:3px solid #136ca7;outline-offset:3px}
+#main .visual-guide .simple-guide-card:after{content:none!important}
+#main .visual-guide .guide-enfen{background:#be2535!important}
+#main .visual-guide .guide-district{background:#0066b7!important}
+#main .visual-guide .guide-risk{background:#087d58!important}
+#main .visual-guide .guide-copy{
+  position:relative;z-index:2;min-height:182px;display:flex;flex-direction:column;
+  align-items:flex-start;padding:21px 22px 10px;
+  color:#fff
+}
+#main .visual-guide .guide-enfen .guide-copy{background:linear-gradient(120deg,#ae1b2d,#e15258)}
+#main .visual-guide .guide-district .guide-copy{background:linear-gradient(120deg,#0657aa,#138fdf)}
+#main .visual-guide .guide-risk .guide-copy{background:linear-gradient(120deg,#006e4f,#0f9266)}
+#main .visual-guide .guide-title{display:flex;align-items:flex-start;gap:12px;margin:0 0 9px}
+#main .visual-guide .guide-icon{display:grid;place-items:center;flex:0 0 37px;width:37px;height:39px;color:#fff}
+#main .visual-guide .guide-icon svg{display:block;width:34px;height:34px;max-width:100%;max-height:100%}
+#main .visual-guide .simple-guide-card h3{
+  margin:0!important;padding:0;color:#fff!important;
+  font:800 clamp(1.15rem,1.8vw,1.65rem)/1.16 Inter,system-ui,sans-serif!important;
+  letter-spacing:-.04em!important;max-width:23ch
+}
+#main .visual-guide .simple-guide-card .guide-copy p{
+  margin:0 0 12px!important;max-width:29ch;color:#fff!important;
+  font:500 clamp(.8rem,1.05vw,.98rem)/1.45 Inter,system-ui,sans-serif!important
+}
+#main .visual-guide .simple-guide-card .simple-action{
+  display:inline-flex;align-items:center;gap:10px;
+  margin:auto 0 0!important;min-height:39px;border-radius:999px;
+  padding:8px 15px;background:#fff;color:#9e1830!important;
+  font:800 .82rem/1.25 Inter,system-ui,sans-serif;
+  box-shadow:0 5px 15px #071c2a2c;white-space:nowrap
+}
+#main .visual-guide .guide-district .simple-action{color:#075ca4!important}
+#main .visual-guide .guide-risk .simple-action{color:#056846!important}
+#main .visual-guide .guide-art{
+  display:block;position:relative;z-index:1;width:100%;height:165px;
+  object-fit:cover;object-position:center 49%;max-width:none;
+  flex:1;min-height:150px;pointer-events:none
+}
+#main .visual-guide .simple-guide-disclaimer{
+  margin:10px 6px 2px!important;color:#5f6e7d!important;
+  font:500 .73rem/1.5 Inter,sans-serif
+}
+#main .visual-alert-holder{max-width:1250px;width:calc(100% - 36px);margin:8px auto 25px}
+#main .visual-alert-holder .radar-official{
+  margin:0!important;max-width:none!important;background:#0e233e!important;
+  border:1px solid #2f608b!important
+}
+#main .visual-alert-holder #alert-strip[hidden]{display:none!important}
+#main .visual-alert-holder .official-heading{font-size:.74rem}
+#main section[id],#main aside[id]{scroll-margin-top:85px}
+@media(max-width:1020px){
+ .radar-top-nav{gap:0}
+ .radar-top-nav a{padding:8px 9px;font-size:.75rem}
+ #main .visual-wave{min-height:410px;padding:58px 24px 94px}
+ #main .visual-guide{width:calc(100% - 20px);margin-top:-32px!important;padding:12px!important;border-radius:22px}
+ #main .visual-guide .simple-guide-grid{gap:10px}
+ #main .visual-guide .guide-copy{min-height:200px;padding:16px 14px 9px}
+ #main .visual-guide .guide-title{gap:7px}
+ #main .visual-guide .guide-icon{width:26px;flex-basis:26px}
+ #main .visual-guide .guide-icon svg{width:25px;height:25px}
+ #main .visual-guide .simple-guide-card h3{font-size:clamp(.94rem,1.7vw,1.16rem)!important}
+ #main .visual-guide .simple-guide-card .guide-copy p{font-size:clamp(.72rem,1.25vw,.89rem)!important}
+ #main .visual-guide .simple-guide-card .simple-action{font-size:.75rem;padding:7px 11px}
+ #main .visual-guide .guide-art{height:125px;min-height:125px}
+}
+@media(max-width:760px){
+ .radar-header-inner{height:62px!important;padding:0 15px!important}
+ .radar-brand svg{width:36px!important;height:36px!important}
+ .radar-brand .brand-lines strong{font-size:.95rem}
+ .radar-top-nav{display:none}
+ .radar-header-actions{margin-left:auto}
+ #main .visual-wave{min-height:390px;padding:45px 22px 83px;background-position:center,60% center}
+ #main .visual-wave #hero-title{font-size:clamp(2.2rem,6.7vw,3.2rem)!important}
+ #main .visual-wave .radar-tagline{font-size:1rem!important;max-width:34ch}
+ #main .visual-guide .simple-guide-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ #main .visual-guide .guide-copy{min-height:190px;padding:12px 10px}
+ #main .visual-guide .guide-title{flex-direction:column;gap:5px}
+ #main .visual-guide .guide-icon{height:25px}
+ #main .visual-guide .simple-guide-card h3{font-size:clamp(.86rem,2.25vw,1.07rem)!important}
+ #main .visual-guide .simple-guide-card .guide-copy p{font-size:.73rem!important;line-height:1.38!important}
+ #main .visual-guide .simple-guide-card .simple-action{font-size:.65rem;white-space:normal}
+ #main .visual-guide .guide-art{min-height:125px;height:125px}
+}
+@media(max-width:620px){
+ #main .visual-wave{min-height:395px;padding:40px 18px 75px;background-position:center,62% center}
+ #main .visual-wave #hero-title{font-size:clamp(2.02rem,8vw,2.6rem)!important;max-width:17ch}
+ #main .visual-wave .radar-tagline{font-size:.91rem!important}
+ #main .visual-wave .radar-status{max-width:100%;margin-top:18px!important;padding:8px 11px}
+ #main .visual-wave #updated{font-size:.71rem!important;overflow-wrap:anywhere}
+ #main .visual-guide{width:calc(100% - 20px);margin-top:-24px!important;padding:10px!important;border-radius:18px}
+ #main .visual-guide .simple-guide-grid{grid-template-columns:1fr;gap:11px}
+ #main .visual-guide .simple-guide-card{min-height:295px;max-height:none;border-radius:14px}
+ #main .visual-guide .guide-copy{min-height:155px;padding:18px 17px 11px}
+ #main .visual-guide .guide-title{flex-direction:row;gap:10px}
+ #main .visual-guide .guide-icon{height:32px;width:32px;flex-basis:32px}
+ #main .visual-guide .guide-icon svg{height:31px;width:31px}
+ #main .visual-guide .simple-guide-card h3{font-size:1.38rem!important;max-width:25ch}
+ #main .visual-guide .simple-guide-card .guide-copy p{font-size:.86rem!important;max-width:40ch}
+ #main .visual-guide .simple-guide-card .simple-action{font-size:.79rem;white-space:nowrap}
+ #main .visual-guide .guide-art{height:145px;min-height:145px}
+ #main .visual-guide .simple-guide-disclaimer{font-size:.69rem!important}
+ #main>:not(.visual-wave):not(.visual-guide):not(.visual-alert-holder){width:calc(100% - 22px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .radar-header *,.visual-guide .simple-guide-card{transition:none!important}
+ .visual-guide .simple-guide-card:hover{translate:none!important}
+}
