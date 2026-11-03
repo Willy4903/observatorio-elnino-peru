@@ -154,7 +154,7 @@ async function loadData() {
 function renderHealth() {
   const operational=state.manifest.sources.filter(s=>s.kind!=='reference');
   const ok=operational.filter(s=>['ok','retained'].includes(clientStatus(s))).length;
-  $('global-status').innerHTML=`<i></i>${ok} fuentes disponibles · ${operational.length-ok} por revisar`;
+  $('global-status').innerHTML=`<i></i>${ok} fuentes verificadas · ${operational.length-ok} pendientes`;
   $('global-status').classList.toggle('degraded',ok!==operational.length);
 }
 
@@ -751,7 +751,7 @@ function renderLatest(){
   if(!state.manifest||!$('latest-cards'))return;
   const today=limaDate(),status=Object.fromEntries(state.manifest.sources.map(s=>[s.id,clientStatus(s)]));
   const items=buildLatest({today,sea:state.data.noaa_ocean_sst?.data??[],forecast:state.data.district_forecast?.data??[],news:state.data.indeci_news?.data??[],status,fmt,dateLabel,titleCase});
-  $('latest-updated').textContent=`Actualizado el ${timestamp(state.manifest.generated_at)}`;
+  $('latest-updated').textContent=`Página revisada: ${timestamp(state.manifest.generated_at)}. Cada noticia, medición y pronóstico tiene su propia fecha; revisa la indicada en cada tarjeta.`;
   $('latest-cards').innerHTML=items.length?items.map((c,i)=>`<article class="latest-card latest-${c.tone} latest-${c.fresh}"><div class="latest-top"><span class="insight-type">${e(c.tag)}</span><span class="latest-badge latest-badge-${c.fresh}">${FRESH_LABEL[c.fresh]}</span></div><h3>${e(c.title)}</h3><p>${e(c.text)}</p><div class="insight-reading">${e(c.note)}</div><div class="latest-foot"><span><a class="latest-src" href="#term-${e(c.term)}">${e(c.source)}</a>, ${e(c.about)} · ${e(dateLabel(c.date))}</span><a href="${e(c.url)}"${c.external?' target="_blank" rel="noopener"':''}>${e(c.action)} ↗</a></div></article>`).join(''):'<p class="empty-row">Aún no hay información reciente disponible. Vuelve a intentarlo en unas horas.</p>';
 }
 function renderGlossary(){
