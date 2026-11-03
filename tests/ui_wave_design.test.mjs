@@ -17,7 +17,7 @@ test('cabecera clara con menú real y navegación hacia secciones existentes',()
   }
   assert.equal(count(html,'id="open-navigation"'),1);
   assert.equal(count(html,'id="navigation-dialog"'),1);
-  assert.equal(count(html,'assets/visual.css?v=3'),1);
+  assert.equal(count(html,'assets/visual.css?v=4'),1);
 });
 
 test('ola panorámica local y texto editable',()=>{
@@ -41,6 +41,7 @@ test('tres tarjetas ilustradas y fuentes oficiales separadas',()=>{
     assert.ok(html.includes('src="assets/'+asset+'"'),asset);
   }
   assert.equal(count(html,'class="simple-guide-card '),3);
+  assert.ok(html.includes('assets/guide3d.mjs?v=1'),'Falta la experiencia de tarjetas interactivas');
   assert.equal(count(html,'class="guide-art"'),3);
   assert.ok(html.includes('¿Qué dice ENFEN?'));
   assert.ok(html.includes('¿Qué se espera en mi distrito?'));
