@@ -1,0 +1,141 @@
+/* Accesos explicativos: centrado consistente con #detalle-tecnico, 2026-11-03. */
+#main > nav.radar-pathways{
+  box-sizing:border-box;
+  width:calc(100% - 36px) !important;
+  max-width:1260px !important;
+  margin:18px auto 26px !important;
+  padding:0;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  justify-content:stretch;
+  align-items:stretch;
+  gap:14px;
+}
+#main > nav.radar-pathways > a{
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:168px;
+  padding:18px 18px 16px !important;
+  border-radius:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:6px;
+  text-decoration:none;
+  position:relative;
+  overflow:hidden;
+}
+#main > nav.radar-pathways > a::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:2px;
+  background:linear-gradient(90deg,#70ddf0,#b69aff);
+  opacity:0;
+  transition:opacity .2s ease;
+}
+#main > nav.radar-pathways > a:is(:hover,:focus-visible,:focus-within)::before{opacity:1}
+#main > nav.radar-pathways .pathway-icon{
+  width:44px !important;
+  height:44px !important;
+  flex:none;
+  margin:0 0 2px;
+}
+#main > nav.radar-pathways .pathway-icon svg{width:44px;height:44px}
+#main > nav.radar-pathways > a > b{
+  font-size:clamp(14px,1.15vw,16px);
+  line-height:1.25;
+  letter-spacing:-.025em;
+}
+#main > nav.radar-pathways > a > span:not(.pathway-icon):not(.pathway-concept){
+  font-size:12px;
+  line-height:1.45;
+}
+#main > nav.radar-pathways > a > i{top:14px;right:15px}
+#main > nav.radar-pathways .pathway-concept{
+  display:block;
+  flex:none;
+  width:100%;
+  box-sizing:border-box;
+  max-height:0;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  opacity:0;
+  border-top:1px solid transparent;
+  font-size:12px;
+  line-height:1.55;
+  color:#d7ebf4 !important;
+  transition:max-height .24s ease,opacity .24s ease,margin .24s ease,padding .24s ease,border-color .24s ease;
+}
+#main > nav.radar-pathways .pathway-concept-name{
+  display:block;
+  margin-bottom:3px;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#8becf9;
+}
+#main > nav.radar-pathways .pathway-concept-copy{display:block;color:#d7ebf4}
+#main > nav.radar-pathways > a:is(:hover,:focus-visible,:focus-within) .pathway-concept{
+  max-height:180px;
+  margin-top:8px;
+  padding-top:11px;
+  opacity:1;
+  border-color:#3a7183;
+}
+#main > nav.radar-pathways > a:focus-visible{
+  outline:3px solid #80eaf8;
+  outline-offset:3px;
+}
+@media(max-width:960px){
+  #main > nav.radar-pathways{
+    grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+    gap:12px;
+  }
+}
+@media(max-width:760px){
+  #main > nav.radar-pathways{
+    width:calc(100% - 22px) !important;
+    margin:12px auto 20px !important;
+  }
+  #main > nav.radar-pathways > a{
+    min-height:150px;
+    padding:14px !important;
+  }
+}
+@media(max-width:520px){
+  #main > nav.radar-pathways{
+    grid-template-columns:minmax(0,1fr) !important;
+    gap:10px;
+  }
+  #main > nav.radar-pathways > a{
+    min-height:0;
+    display:grid;
+    grid-template-columns:44px minmax(0,1fr);
+    align-content:start;
+    column-gap:13px;
+    row-gap:4px;
+  }
+  #main > nav.radar-pathways .pathway-icon{grid-row:1 / span 2}
+  #main > nav.radar-pathways > a > b{grid-column:2}
+  #main > nav.radar-pathways > a > span:not(.pathway-icon):not(.pathway-concept){grid-column:2}
+  #main > nav.radar-pathways .pathway-concept{grid-column:1 / -1}
+}
+@media(hover:none){
+  #main > nav.radar-pathways .pathway-concept{
+    max-height:none;
+    opacity:1;
+    overflow:visible;
+    padding-top:10px;
+    margin-top:6px;
+    border-color:#3a7183;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #main > nav.radar-pathways .pathway-concept,
+  #main > nav.radar-pathways > a::before{transition:none}
+}
