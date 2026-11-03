@@ -41,7 +41,7 @@ body{overflow-x:clip}
 #main .visual-wave{
   position:relative;isolation:isolate;overflow:hidden;text-align:left;
   width:100%;min-height:460px;margin:0;border:0;border-radius:0;
-  padding:76px max(26px,calc((100vw - 1270px)/2)) 114px;
+  padding:76px max(26px,calc((100vw - 1270px)/2)) 114px!important;
   background-color:#0b2942;
   background-image:linear-gradient(90deg,rgba(6,21,40,.56) 0%,rgba(7,21,39,.32) 37%,rgba(9,39,60,.04) 75%),url("hero-ola.jpg");
   background-repeat:no-repeat;background-size:cover,cover;background-position:center,center;
@@ -164,7 +164,7 @@ body{overflow-x:clip}
 @media(max-width:1020px){
  .radar-top-nav{gap:0}
  .radar-top-nav a{padding:8px 9px;font-size:.75rem}
- #main .visual-wave{min-height:410px;padding:58px 24px 94px}
+ #main .visual-wave{min-height:410px;padding:58px 24px 94px!important}
  #main .visual-guide{width:calc(100% - 20px);margin-top:-32px!important;padding:12px!important;border-radius:22px}
  #main .visual-guide .simple-guide-grid{gap:10px}
  #main .visual-guide .guide-copy{min-height:200px;padding:16px 14px 9px}
@@ -182,7 +182,7 @@ body{overflow-x:clip}
  .radar-brand .brand-lines strong{font-size:.95rem}
  .radar-top-nav{display:none}
  .radar-header-actions{margin-left:auto}
- #main .visual-wave{min-height:390px;padding:45px 22px 83px;background-position:center,60% center}
+ #main .visual-wave{min-height:390px;padding:45px 22px 83px!important;background-position:center,60% center}
  #main .visual-wave #hero-title{font-size:clamp(2.2rem,6.7vw,3.2rem)!important}
  #main .visual-wave .radar-tagline{font-size:1rem!important;max-width:34ch}
  #main .visual-guide .simple-guide-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
@@ -195,7 +195,7 @@ body{overflow-x:clip}
  #main .visual-guide .guide-art{min-height:125px;height:125px}
 }
 @media(max-width:620px){
- #main .visual-wave{min-height:395px;padding:40px 18px 75px;background-position:center,62% center}
+ #main .visual-wave{min-height:395px;padding:40px 18px 75px!important;background-position:center,62% center}
  #main .visual-wave #hero-title{font-size:clamp(2.02rem,8vw,2.6rem)!important;max-width:17ch}
  #main .visual-wave .radar-tagline{font-size:.91rem!important}
  #main .visual-wave .radar-status{max-width:100%;margin-top:18px!important;padding:8px 11px}
