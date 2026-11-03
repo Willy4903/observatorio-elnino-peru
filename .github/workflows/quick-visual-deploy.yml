@@ -1,12 +1,6 @@
 name: Publicar cambios visuales del observatorio
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'site/index.html'
-      - 'site/assets/**'
-      - 'tests/ui_wave_design.test.mjs'
-      - '.github/workflows/quick-visual-deploy.yml'
+  # Publicación manual rápida; el push a main se despliega únicamente desde monitor.yml.
   workflow_dispatch:
 
 permissions:
@@ -15,7 +9,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: observatorio-visual-pages
+  group: observatorio-pages
   cancel-in-progress: true
 
 jobs:
