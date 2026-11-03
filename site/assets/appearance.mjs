@@ -59,3 +59,23 @@ if(canvas&&motion){
     size();sync();
   }else motion.hidden=true;
 }
+
+
+// Los apartados de análisis se abren automáticamente cuando una persona sigue un enlace.
+// Así, la vista sencilla no impide acceder a glosario, indicadores ni enlaces compartidos.
+function revelarAncla(hash=location.hash){
+  let id;
+  try{id=decodeURIComponent(String(hash).replace(/^#/,''));}catch{return;}
+  if(!id)return;
+  const target=document.getElementById(id);
+  if(!target)return;
+  for(let ancestor=target.parentElement;ancestor;ancestor=ancestor.parentElement){
+    if(ancestor.tagName==='DETAILS'&&!ancestor.open)ancestor.open=true;
+  }
+}
+revelarAncla();
+addEventListener('hashchange',()=>revelarAncla());
+document.addEventListener('click',event=>{
+  const link=event.target.closest('a[href^="#"]');
+  if(link)revelarAncla(link.getAttribute('href'));
+});
