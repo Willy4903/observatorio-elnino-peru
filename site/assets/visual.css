@@ -428,3 +428,13 @@ html{scroll-padding-top:88px}
 .citizen-questions a{color:#075f91;font-weight:800;text-decoration:underline;text-underline-offset:2px}
 @media(max-width:1080px){.radar-top-nav{display:none!important}}
 @media(max-width:760px){#main .citizen-questions{width:calc(100% - 22px);margin-bottom:17px}}
+
+
+/* Los indicadores conservan su tema oscuro dentro del panel avanzado. */
+#main .citizen-depth-content{
+  background:#0a1627;color:#e6f2ff;border-radius:0 0 18px 18px;
+}
+#main .citizen-depth-content .section-heading h2,
+#main .citizen-depth-content .overview-heading h2{color:#f8fbff}
+#main .citizen-depth-content .section-heading p,
+#main .citizen-depth-content .overview-heading p{color:#b5cadf}
