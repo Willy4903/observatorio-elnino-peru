@@ -6,6 +6,7 @@ on:
       - 'site/assets/**'
       - 'tests/ui_wave_design.test.mjs'
       - 'tests/ui_simplicity.test.mjs'
+      - 'tests/lectura_ciudadana.test.mjs'
       - '.github/workflows/validate-visual.yml'
   push:
     branches: [main]
@@ -26,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Comprobar estructura, fuentes, recursos y actualización
-        run: node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs
+        run: node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs tests/lectura_ciudadana.test.mjs
       - name: Comprobar módulos y scripts
         run: |
           node --check site/assets/app.mjs
