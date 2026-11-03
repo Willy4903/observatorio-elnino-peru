@@ -28,7 +28,7 @@ jobs:
           python-version: '3.12'
       - name: Validar diseño y rutas
         run: |
-          node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs
+          node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs tests/lectura_ciudadana.test.mjs
           node --check site/assets/app.mjs
           node --check site/assets/appearance.mjs
       - name: Comprobar integridad de datos sin consultar redes
