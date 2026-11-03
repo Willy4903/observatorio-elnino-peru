@@ -218,3 +218,63 @@ body{overflow-x:clip}
  .radar-header *,.visual-guide .simple-guide-card{transition:none!important}
  .visual-guide .simple-guide-card:hover{translate:none!important}
 }
+
+/* Lectura ciudadana: una alerta oficial comprensible antes de mapas y datos técnicos. */
+html{scroll-padding-top:88px}
+#estado-enfen,#ultimo,#consulta,#zonas{scroll-margin-top:92px}
+#main .visual-wave .radar-cta{
+  display:flex!important;flex-wrap:wrap;gap:11px;margin-top:24px!important
+}
+#main .visual-wave .radar-cta .radar-button{
+  display:inline-flex;align-items:center;min-height:46px;padding:11px 19px;
+  border-radius:12px;text-align:center;text-decoration:none;font-weight:750
+}
+#main .visual-wave .radar-cta .primary{background:#fff!important;color:#0b2942!important;border-color:#fff!important}
+#main .visual-wave .radar-cta .ghost{background:#06283bbb!important;color:#fff!important;border:1px solid #f0f8ff80!important}
+#main .visual-wave #global-status{
+  position:static!important;width:auto!important;height:auto!important;
+  clip:auto!important;overflow:visible!important;white-space:normal!important;
+  display:inline-flex!important;align-items:center;gap:7px;
+  color:#fefefe!important;font-size:.79rem;font-weight:700;text-decoration:underline;text-underline-offset:3px
+}
+#main .visual-wave .radar-status{display:flex!important;flex-wrap:wrap;gap:8px 14px;border-radius:14px!important}
+#main #estado-enfen{
+  display:block;margin-top:28px;margin-bottom:28px;
+  padding:27px 30px;border:1px solid #dae4ef;border-radius:22px;
+  background:#fff;color:#15243b;box-shadow:0 8px 30px -24px #0a244660
+}
+#estado-enfen .citizen-enfen-heading{max-width:900px;margin-bottom:18px}
+#estado-enfen .kicker{font-size:.71rem;letter-spacing:.1em;font-weight:800;color:#ae2840}
+#estado-enfen h2{margin:7px 0 7px;font:800 clamp(1.5rem,2.7vw,2.05rem)/1.2 Inter,system-ui,sans-serif;color:#14243c;letter-spacing:-.025em}
+#estado-enfen .citizen-enfen-heading p{margin:0;line-height:1.6;color:#4c5d72}
+#estado-enfen .citizen-enfen-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);gap:17px}
+#estado-enfen .citizen-enfen-main{
+  padding:22px 23px;border:1px solid #f1b9bf;border-left:5px solid #be2742;
+  border-radius:15px;background:#fff6f6
+}
+#estado-enfen .citizen-enfen-label{display:block;font-size:.69rem;font-weight:800;letter-spacing:.08em;color:#9b233b}
+#estado-enfen .citizen-enfen-main h3{font:800 clamp(1.35rem,2.5vw,1.85rem)/1.2 Inter,system-ui,sans-serif;color:#812239;margin:9px 0}
+#estado-enfen .citizen-enfen-main p{color:#4b5565;line-height:1.62;margin:8px 0}
+#estado-enfen .citizen-enfen-control{padding:11px 13px;background:#fff;border:1px solid #eacdd0;border-radius:10px;font-size:.86rem;line-height:1.55}
+#estado-enfen .citizen-enfen-button{display:inline-flex;justify-content:center;align-items:center;min-height:45px;margin-top:10px;padding:10px 16px;border-radius:10px;background:#a81f39;color:#fff;font-weight:750;text-decoration:none}
+#estado-enfen .citizen-enfen-button:hover{background:#831932}
+#estado-enfen .citizen-enfen-explain{
+  padding:22px;border:1px solid #cde4f4;border-radius:15px;background:#f1f9ff
+}
+#estado-enfen .citizen-enfen-explain h3{font:800 1.12rem/1.25 Inter,system-ui,sans-serif;color:#0d527e;margin:0 0 11px}
+#estado-enfen .citizen-enfen-explain p{color:#314960;line-height:1.65;margin:0 0 12px}
+#estado-enfen .citizen-enfen-explain p:last-child{margin:0}
+#estado-enfen .citizen-enfen-explain a{color:#075e91;font-weight:800;text-decoration:underline;text-underline-offset:2px}
+#main #ultimo .section-heading h2,#main #insights .section-heading h2{letter-spacing:-.025em}
+@media(max-width:760px){
+  #main #estado-enfen{padding:20px 16px;border-radius:16px;margin-top:18px;margin-bottom:22px}
+  #estado-enfen .citizen-enfen-body{grid-template-columns:minmax(0,1fr);gap:12px}
+  #estado-enfen .citizen-enfen-main,#estado-enfen .citizen-enfen-explain{padding:17px}
+  #estado-enfen .citizen-enfen-button{width:100%}
+  #main .visual-wave .radar-cta{gap:9px;margin-top:16px!important}
+  #main .visual-wave .radar-cta .radar-button{font-size:.82rem;min-height:44px;padding:9px 13px}
+}
+@media(max-width:430px){
+  #main .visual-wave .radar-status{align-items:flex-start}
+  #main .visual-wave #updated{font-size:.71rem!important}
+}

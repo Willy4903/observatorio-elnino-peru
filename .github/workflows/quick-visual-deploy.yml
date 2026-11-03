@@ -1,12 +1,6 @@
 name: Publicar cambios visuales del observatorio
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'site/index.html'
-      - 'site/assets/**'
-      - 'tests/ui_wave_design.test.mjs'
-      - '.github/workflows/quick-visual-deploy.yml'
+  # Publicación manual rápida; el push a main se despliega únicamente desde monitor.yml.
   workflow_dispatch:
 
 permissions:
@@ -15,7 +9,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: observatorio-visual-pages
+  group: observatorio-pages
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +28,7 @@ jobs:
           python-version: '3.12'
       - name: Validar diseño y rutas
         run: |
-          node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs
+          node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs tests/lectura_ciudadana.test.mjs
           node --check site/assets/app.mjs
           node --check site/assets/appearance.mjs
       - name: Comprobar integridad de datos sin consultar redes

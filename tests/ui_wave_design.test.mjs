@@ -9,10 +9,10 @@ test('cabecera clara con menú real y navegación hacia secciones existentes',()
   for(const label of ['Observatorio','El Niño Perú','Inicio','ENFEN','Mapas y riesgos','Mi distrito','Recursos']){
     assert.ok(html.includes(label),'Falta '+label);
   }
-  for(const id of ['top','ultimo','panorama','consulta','zonas','fuentes','glosario']){
+  for(const id of ['top','estado-enfen','ultimo','panorama','consulta','zonas','fuentes','glosario']){
     assert.match(html,new RegExp('id="'+id+'"'));
   }
-  for(const route of ['#top','#ultimo','#panorama','#consulta','#fuentes','#zonas']){
+  for(const route of ['#top','#estado-enfen','#ultimo','#panorama','#consulta','#fuentes','#zonas']){
     assert.ok(html.includes('href="'+route+'"'),'Ruta '+route);
   }
   assert.equal(count(html,'id="open-navigation"'),1);
@@ -27,7 +27,7 @@ test('ola panorámica local y texto editable',()=>{
   assert.deepEqual([...bytes.subarray(-2)],[255,217]);
   assert.ok(css.includes('url("hero-ola.jpg")'));
   assert.match(html,/<h1 id="hero-title">El Niño en el Perú:/);
-  assert.ok(html.includes('¿qué sabemos hoy?'));
+  assert.ok(html.includes('lo que debes saber'));
   assert.equal(count(html,'id="updated"'),1);
   assert.ok(!html.includes('2025, 14:50 (Lima)'),'No incrustar fecha de maqueta');
 });

@@ -8,8 +8,8 @@ const workflow=readFileSync(new URL('../.github/workflows/monitor.yml',import.me
 const pipeline=readFileSync(new URL('../pipeline/update.py',import.meta.url),'utf8');
 
 test('la portada muestra tres preguntas comprensibles y las fuentes',()=>{
-  for(const phrase of ['¿Qué sabemos hoy?','¿Qué se espera en mi distrito?','¿Dónde existe mayor riesgo?','El estado oficial de El Niño lo comunica ENFEN'])assert.ok(html.includes(phrase),phrase);
-  for(const id of ['ultimo','consulta','zonas','fuentes','insights'])assert.match(html,new RegExp('id="'+id+'"'));
+  for(const phrase of ['lo que debes saber','¿Qué se espera en mi distrito?','¿Dónde existe mayor riesgo?','El estado oficial de El Niño lo comunica ENFEN'])assert.ok(html.includes(phrase),phrase);
+  for(const id of ['estado-enfen','ultimo','consulta','zonas','fuentes','insights'])assert.match(html,new RegExp('id="'+id+'"'));
 });
 test('los filtros complejos conservan sus identificadores y se muestran bajo demanda',()=>{
   assert.match(html,/<details class="simple-advanced-filters">[\s\S]*?<form id="filters"[\s\S]*?<\/form><\/details>/);
