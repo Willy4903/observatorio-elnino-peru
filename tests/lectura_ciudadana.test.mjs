@@ -32,6 +32,7 @@ test('los pronósticos de hoy no reutilizan fechas ya pasadas',()=>{
   assert.match(app,/state\.forecastRows\.filter\(r=>r\.valid_date>=limaDate\(\)\)/);
   assert.match(app,/PRONÓSTICO ARCHIVADO/);
   assert.match(app,/relevantForecasts\]\.filter/);
+  assert.match(app,/state\.to>=limaDate\(\)\?chosen\.filter\(r=>r\.valid_date>=limaDate\(\)\):chosen/);
 });
 
 test('la lluvia se explica como cobertura de puntos, no como probabilidad',()=>{
