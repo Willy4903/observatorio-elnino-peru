@@ -1,0 +1,437 @@
+/* Sistema visual OCEANO · identidad unificada del observatorio
+   Presentación exclusivamente: no modifica datos, capas o fuentes. */
+:root{
+  color-scheme:dark;
+  --oceano-bg:#061522;
+  --oceano-base:#0a2032;
+  --oceano-raised:#0e2b42;
+  --oceano-hover:#143a53;
+  --oceano-line:#2b5166;
+  --oceano-line-soft:#1e4054;
+  --oceano-text:#eef8ff;
+  --oceano-muted:#b2cfdf;
+  --oceano-cyan:#63e8f2;
+  --oceano-coral:#ff8e79;
+  --oceano-teal:#64e5bb;
+  --oceano-amber:#f6c87c;
+  --oceano-shadow:0 20px 50px -38px rgba(0,0,0,.9);
+}
+body{
+  background:radial-gradient(ellipse 62vw 65vw at 4% 30%,#0b2b4138,transparent 78%),
+    radial-gradient(ellipse 50vw 45vw at 96% 71%,#0a586038,transparent 78%),
+    var(--oceano-bg)!important;
+  color:var(--oceano-text);
+}
+.radar-header{
+  background:rgba(6,22,36,.94)!important;
+  color:var(--oceano-text)!important;
+  border-bottom:1px solid #386071a6!important;
+  box-shadow:0 12px 40px -28px #000!important;
+  backdrop-filter:blur(16px)!important;
+}
+.radar-brand,
+.radar-brand .brand-lines strong{color:#f3fbff!important}
+.radar-top-nav a{color:#d7ebf5!important;transition:background-color .2s,color .2s}
+.radar-top-nav a.current{
+  color:#ffb4a2!important;background:rgba(248,119,99,.14)!important;
+  border:1px solid #f9847145
+}
+.radar-top-nav a:hover{background:#19425a!important;color:#fff!important}
+.radar-header-search{color:#bce5f0!important}
+.radar-header-search:hover,.radar-header .radar-menu-button:hover{background:#1b4055!important}
+.radar-header .radar-menu-button{color:#effaff!important}
+.radar-header .radar-menu-button svg{stroke:#e8f8ff!important}
+.navigation-dialog{background:#081d2f!important;color:#ebf8ff!important;border:1px solid #40687a!important;box-shadow:0 26px 75px #0009!important}
+.navigation-dialog .navigation-top,.navigation-dialog .navigation-caption{color:#e7f7ff!important}
+.navigation-dialog .nav-link{color:#d8e9f5!important}
+.navigation-dialog .nav-link:hover{color:#74eff6!important;background:#15384c}
+#main .visual-wave{
+  background-color:#071d2e!important;
+  background-image:linear-gradient(90deg,rgba(4,17,31,.74) 0%,rgba(7,27,47,.58) 43%,rgba(8,40,58,.13) 83%),
+    url("hero-ola.jpg")!important;
+  border-bottom:1px solid #236178
+}
+#main .visual-wave #hero-title span{
+  color:#e9fbff!important;-webkit-text-fill-color:#e9fbff!important
+}
+#main .visual-wave .radar-status{
+  border-color:#6bd5ec78;background:rgba(3,25,40,.78);
+  box-shadow:inset 0 1px #ffffff1f,0 12px 30px -22px #000
+}
+#main .visual-wave .radar-cta .primary{
+  color:#061f32!important;background:#82e8f1!important;border-color:#82e8f1!important
+}
+#main .visual-wave .radar-cta .primary:hover{background:#b2f8ff!important}
+#main .visual-wave .radar-cta .ghost{
+  background:#0b2943da!important;color:#f5fdff!important;border-color:#9ee9f480!important
+}
+#main .visual-wave .radar-cta .ghost:hover{background:#15445ddb!important}
+#main .visual-guide{
+  background:linear-gradient(150deg,#102b3e,#091f30)!important;
+  border:1px solid #3c6c7a!important;
+  box-shadow:0 32px 70px -49px #000f,0 0 35px -28px #45dcef!important
+}
+#main .visual-guide .guide-instruction,
+#main .visual-guide .simple-guide-disclaimer{
+  color:#bad4e0!important
+}
+#main .visual-guide .guide-flip-inner{box-shadow:0 15px 42px -23px #000e}
+#main .visual-guide .guide-flip:hover .guide-flip-inner{
+  box-shadow:0 18px 47px -20px #000,0 0 0 1px #90d8e052
+}
+#main .visual-guide .guide-enfen .guide-copy{background:linear-gradient(115deg,#922840,#d4505c)}
+#main .visual-guide .guide-district .guide-copy{background:linear-gradient(115deg,#07518c,#0c88bf)}
+#main .visual-guide .guide-risk .guide-copy{background:linear-gradient(115deg,#075848,#0a9279)}
+#main .visual-guide .guide-enfen .guide-back{background:linear-gradient(150deg,#552038,#a52e4d)}
+#main .visual-guide .guide-district .guide-back{background:linear-gradient(150deg,#103750,#096f9b)}
+#main .visual-guide .guide-risk .guide-back{background:linear-gradient(150deg,#0b423c,#097965)}
+#main .visual-guide .guide-back-tag{background:#fff2;border-color:#ffffff7e}
+#main .visual-guide .guide-back-actions a{
+  color:#09283b!important;background:#e9fbff!important
+}
+#main .visual-guide .guide-back-actions a:hover{background:#c3f3fb!important}
+#main #guia-contenido,
+#main #que-es,
+#main #preparacion,
+#main #estado-enfen,
+#main .citizen-questions,
+#main #detalle-tecnico{
+  background:linear-gradient(148deg,#102b40,#081e30 72%)!important;
+  border:1px solid var(--oceano-line)!important;
+  color:var(--oceano-text)!important;
+  box-shadow:var(--oceano-shadow)!important;
+}
+.citizen-kicker,
+#estado-enfen .kicker{color:var(--oceano-coral)!important}
+#main #que-es h2,
+#main #preparacion h2,
+#main #guia-contenido h2,
+#main #estado-enfen h2{
+  color:#f4fbff!important;
+  text-shadow:0 1px 17px #92f0ff09
+}
+.citizen-primer-intro>p,
+.citizen-preparation-heading p,
+.guide-dossier-head p,
+#estado-enfen .citizen-enfen-heading>p{
+  color:var(--oceano-muted)!important
+}
+#main #que-es{position:relative;isolation:isolate;overflow:hidden}
+#main #que-es::before{
+  content:"";position:absolute;right:-130px;top:-150px;width:410px;height:410px;
+  border-radius:50%;background:radial-gradient(circle,#3dd2df16,transparent 69%);
+  z-index:-1;pointer-events:none
+}
+.citizen-link,
+.citizen-primer-steps a,
+.citizen-actions a,
+.citizen-questions a,
+#estado-enfen .citizen-enfen-explain a{
+  color:#8beffc!important;text-decoration:underline;text-underline-offset:3px
+}
+.citizen-primer-steps li,
+.citizen-actions li{
+  background:linear-gradient(150deg,#15354a,#0a2639)!important;
+  border:1px solid #335b6e!important;
+  box-shadow:0 12px 25px -25px #000d;
+  transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease;
+}
+.citizen-primer-steps li:hover,
+.citizen-actions li:hover{
+  transform:translateY(-4px);border-color:#69d6e680!important;
+  box-shadow:0 18px 35px -24px #000d,0 0 27px -27px #42e9f2
+}
+.citizen-primer-steps h3,
+.citizen-actions h3{color:#f3fbff!important}
+.citizen-primer-steps p,
+.citizen-actions p{color:#c4dce7!important}
+.citizen-step-num{
+  color:#8eeefd;background:linear-gradient(135deg,#12536a,#0e354d);
+  border:1px solid #3e8194
+}
+.citizen-action-index{
+  color:#062034;background:linear-gradient(145deg,#92f4f6,#2cb7d8);
+  box-shadow:0 4px 18px #42dfec38
+}
+.citizen-primer-note{
+  color:#c7e5ec!important;background:#103f5266!important;
+  border-color:#57cde6!important
+}
+.citizen-preparation-note{
+  color:#ffe3b2!important;background:#54351c50!important;
+  border:1px solid #bd965965!important
+}
+.citizen-preparation-source{
+  color:#b5f9ff!important;background:#104054!important;
+  border:1px solid #5cbdce7a!important
+}
+.citizen-preparation-source:hover{background:#15566d!important}
+#main .citizen-mini-detail{
+  margin-top:15px;border:1px solid #39758a78;border-radius:10px;
+  background:#0a2436;overflow:hidden
+}
+#main .citizen-mini-detail>summary{
+  color:#9debfa;font:750 .83rem/1.5 Inter,system-ui,sans-serif;
+  list-style-position:inside;cursor:pointer;padding:10px 13px;
+  min-height:43px
+}
+#main .citizen-mini-detail>summary:hover{background:#153c52}
+#main .citizen-mini-detail[open]>summary{border-bottom:1px solid #3b6c7d}
+#main .citizen-mini-detail>p{
+  color:#e0f5ff!important;font:400 .87rem/1.65 Inter,system-ui,sans-serif;
+  padding:12px 13px 14px;margin:0
+}
+#main .citizen-review{
+  display:flex;align-items:center;flex-wrap:wrap;gap:10px 19px;
+  border:1px solid #2f6574;background:#0a2639;
+  border-radius:14px;padding:16px 19px;margin:19px 0 0
+}
+#main .citizen-review strong{color:#f2fbff;font:800 .94rem/1.4 Inter,system-ui,sans-serif}
+#main .citizen-review span{color:#c0d9e7;font:.87rem/1.4 Inter,system-ui,sans-serif}
+#main .citizen-review-track{
+  flex:1 1 190px;height:8px;border-radius:99px;
+  background:#15364a;overflow:hidden;border:1px solid #35637a
+}
+#main .citizen-review-track>i{
+  display:block;height:100%;width:0%;border-radius:99px;
+  background:linear-gradient(90deg,#28b8d7,#70efcf);
+  transition:width .25s ease
+}
+#main .citizen-action-check{
+  border:1px solid #3c8093;background:#0c4054;
+  color:#c7f8ff;font:800 .78rem/1.4 Inter,system-ui,sans-serif;
+  border-radius:9px;min-height:42px;padding:9px 12px;margin-top:12px;
+  transition:background-color .2s,border-color .2s
+}
+#main .citizen-action-check:hover{background:#12556a}
+#main .citizen-action-check[aria-pressed=true]{
+  color:#032920;background:#9cedd2;border-color:#9cedd2
+}
+#main #estado-enfen .citizen-enfen-main{
+  background:linear-gradient(142deg,#3c2134,#222536)!important;
+  border:1px solid #d46b798e!important;border-left:5px solid #f08d87!important;
+  color:#fbeef0!important
+}
+#main #estado-enfen .citizen-enfen-label{color:#ffc1ba!important}
+#main #estado-enfen .citizen-enfen-main h3{color:#fff4f4!important}
+#main #estado-enfen .citizen-enfen-main p{color:#f1d5da!important}
+#main #estado-enfen .citizen-enfen-control{
+  color:#ffe6e9!important;background:#502c3d!important;
+  border:1px solid #b5778773!important
+}
+#main #estado-enfen .citizen-enfen-button{
+  color:#181821!important;background:#f7b1a4!important;
+  transition:transform .2s,background-color .2s
+}
+#main #estado-enfen .citizen-enfen-button:hover{
+  background:#ffd0c5!important;transform:translateY(-2px)
+}
+#main #estado-enfen .citizen-enfen-explain{
+  background:linear-gradient(150deg,#0c3549,#092e40)!important;
+  border:1px solid #3d91a26e!important
+}
+#main #estado-enfen .citizen-enfen-explain h3{color:#9aeef7!important}
+#main #estado-enfen .citizen-enfen-explain p{color:#d1e8f2!important}
+#main .citizen-questions>summary{
+  color:#e8f6ff!important;background:transparent!important;
+  transition:background-color .2s
+}
+#main .citizen-questions>summary:hover{background:#173c51!important}
+#main .citizen-questions>p{color:#c9e2ed!important}
+#main .citizen-depth>summary{color:#f0faff!important}
+#main .citizen-depth>summary small{color:#6edfed!important}
+#main .citizen-depth>summary em{color:#a9cbdc!important}
+#main .citizen-depth-symbol{
+  background:#153c50!important;border-color:#3e798e!important;
+  color:#e0f6ff!important
+}
+#main .citizen-depth>summary:hover{background:#12394b!important}
+#main #detalle-tecnico .citizen-depth-content{
+  background:#071a2a!important;border-color:#2d556c!important;
+  color:#eff9ff!important
+}
+#main #guia-contenido .guide-dossier-head h2{color:#f2fbff!important}
+#main #guia-contenido .guide-dossier-mark{color:#7ddbe8!important}
+#main #guia-contenido .guide-topic-tabs{
+  background:#0a2334!important;border:1px solid #31576c
+}
+#main #guia-contenido .guide-topic-tabs button{
+  color:#bad8e5!important;background:transparent!important
+}
+#main #guia-contenido .guide-topic-tabs button:hover{
+  color:#fff!important;background:#1b4960!important
+}
+#main #guia-contenido .guide-topic-tabs button[aria-selected=true]{
+  background:linear-gradient(125deg,#0a678b,#17566f)!important;
+  color:#fff!important;border-color:#5baec0!important;box-shadow:0 7px 19px -15px #000
+}
+#main #guia-contenido .guide-topic-panel{
+  background:linear-gradient(145deg,#0e2b40,#081f31)!important;
+  border-color:#31586a!important
+}
+#main #guia-contenido .guide-topic-copy h3{color:#f3fbff!important}
+#main #guia-contenido .guide-topic-copy>p{color:#c7dfea!important}
+#main #guia-contenido .guide-topic-eyebrow{color:#7feafa!important}
+#main #guia-contenido .guide-data-note{
+  background:#0c3b4f!important;border-color:#467b8c!important;
+  border-left:4px solid #63dce6!important
+}
+#main #guia-contenido .guide-data-note>span{color:#a5eff8!important}
+#main #guia-contenido .guide-data-note>strong{color:#f1fdff!important}
+#main #guia-contenido .guide-data-note>p{color:#bbdbe8!important}
+#main #guia-contenido .guide-topic-side{
+  background:linear-gradient(145deg,#103d50,#102e44)!important;
+  border:1px solid #387787!important
+}
+#main #guia-contenido .guide-topic-side-title,
+#main #guia-contenido .guide-topic-side-caption{color:#8be9f3!important}
+#main #guia-contenido .guide-topic-side>p{color:#d8edf5!important}
+#main #guia-contenido .guide-topic-primary{
+  background:#83e5ee!important;color:#062c3f!important
+}
+#main #guia-contenido .guide-topic-primary:hover{background:#b5fbff!important}
+#main #guia-contenido .guide-topic-source{
+  background:#122f43!important;border-color:#3d7d8c!important;color:#d0f2f5!important
+}
+#main #guia-contenido .guide-topic-source:hover{background:#174b60!important}
+#main #ultimo,
+#main #fuentes,
+#main #cobertura,
+#main #meteo,
+#main #panorama{scroll-margin-top:90px}
+#main .section-heading h2,
+#main .workspace-heading h2,
+#main .coverage-heading h2,
+#main .overview-heading h2{color:#f0f9ff!important}
+#main .section-heading p,
+#main .workspace-heading p,
+#main .coverage-heading p{color:#b1cadb!important}
+#main .kicker{color:#91dceb!important}
+#main .latest-card,
+#main .insight-card,
+#main .kpi,
+#main .territory-card,
+#main .weather-day,
+#main .source-card,
+#main .glossary-entry,
+#main .official-document-card,
+#main .method{
+  border-color:#3a657a7d!important;
+  box-shadow:0 9px 23px -26px #000;
+  transition:border-color .23s,transform .23s,box-shadow .23s;
+}
+@media(hover:hover) and (pointer:fine){
+  #main .latest-card:hover,
+  #main .insight-card:hover,
+  #main .kpi:hover,
+  #main .territory-card:hover,
+  #main .weather-day:hover,
+  #main .source-card:hover,
+  #main .glossary-entry:hover,
+  #main .official-document-card:hover,
+  #main .method:hover{
+    border-color:#73dfea90!important;
+    box-shadow:0 17px 34px -24px #000,0 0 21px -26px #73f7fa;
+    transform:translateY(-3px)
+  }
+}
+#main .latest-foot a,
+#main .insight-card>a,
+#main .source-links a,
+#main .source-card>a{color:#7ae9f5!important}
+#main .latest-card .latest-badge{letter-spacing:.02em}
+#main .citizen-primer,
+#main .citizen-preparation{color:var(--oceano-text)}
+#main .radar-pathways>a{
+  background:linear-gradient(155deg,#12334a,#0b2235)!important;
+  border:1px solid #2b6178!important;
+  box-shadow:0 10px 28px -25px #000;
+  transition:background-color .2s,border-color .2s,transform .2s,box-shadow .2s
+}
+#main .radar-pathways>a:hover{
+  background:#16435b!important;border-color:#68d8ed!important;
+  transform:translateY(-4px);box-shadow:0 18px 33px -24px #000
+}
+#main .radar-pathways b{color:#eefbff!important}
+#main .radar-pathways>a>span:not(.pathway-icon){color:#afcddb!important}
+#main .workspace-heading{border-color:#2c5269!important}
+#main .workspace-heading a{color:#7de6f5!important}
+#main .freshness-strip .freshness-item{
+  border-color:#366079!important;background:linear-gradient(135deg,#112e43,#0b2338)!important
+}
+#main .freshness-item b{color:#d1e8f2!important}
+#main .tactical-deck .map-panel,#main .tactical-deck .inspector{
+  box-shadow:0 20px 48px -39px #000e!important;
+  border-color:#40657b8a!important
+}
+#main .mode-switch button,#main .layer-button{
+  transition:background-color .2s,border-color .2s,color .2s
+}
+#main .mode-switch button:focus-visible,
+#main .layer-button:focus-visible{outline:3px solid #70e9f2;outline-offset:2px}
+#main .simple-advanced-filters,
+#main .simple-map-options{border-color:#2c586a!important;background:#0b2538!important}
+#main .simple-advanced-filters>summary,
+#main .simple-map-options>summary{color:#e0f3fc!important}
+#main .simple-advanced-filters[open]>summary,
+#main .simple-map-options[open]>summary{background:#13354a}
+#main .source-card .source-dates dd,
+#main .method dd{color:#c6dfed!important}
+#main .method dt{color:#85deed!important}
+#main .table-scroll{border:1px solid #31536b}
+#main #metodologia .method{background:linear-gradient(150deg,#122d44,#071c2e)!important}
+#main footer{border-color:#31576e!important;color:#9ebcce!important}
+#main footer a{color:#7adfeb!important}
+#main .glossary-controls{border-color:#326278!important;background:#0d2b42!important}
+#main .glossary-entry[open]{border-color:#73e1ee!important}
+#main .reading-details summary{cursor:pointer}
+#main button:focus-visible,#main a:focus-visible,
+#main summary:focus-visible{outline:3px solid #7be7f0!important;outline-offset:3px}
+#main .citizen-mini-detail summary:focus-visible,
+#main .citizen-questions>summary:focus-visible{outline-offset:-3px}
+@media(max-width:760px){
+  #main .visual-guide{border-radius:20px}
+  #main #que-es,#main #preparacion,#main #estado-enfen,#main #guia-contenido{
+    box-shadow:0 14px 33px -27px #000e!important
+  }
+  #main .citizen-review{padding:12px 13px}
+  #main .citizen-review-track{flex-basis:100%}
+  #main .radar-pathways>a:hover{transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important}
+  #main .citizen-primer-steps li,
+  #main .citizen-actions li,
+  #main .latest-card,#main .insight-card,#main .kpi,
+  #main .territory-card,#main .source-card,
+  #main .weather-day,#main .radar-pathways>a{
+    transition:none!important;transform:none!important
+  }
+}
+
+
+/* Interacción accesible en todo el recorrido. */
+.ocean-reading-progress{
+  position:fixed;top:72px;left:0;right:0;height:3px;
+  z-index:1251;pointer-events:none;background:transparent
+}
+.ocean-reading-progress>i{
+  display:block;width:100%;height:100%;transform:scaleX(0);
+  transform-origin:left center;
+  background:linear-gradient(90deg,#ff967a 0%,#61e2ee 48%,#72eabf 100%);
+  box-shadow:0 0 10px #3cdee69c;will-change:transform
+}
+#main .citizen-review-note{
+  font:500 .78rem/1.55 Inter,system-ui,sans-serif;
+  color:#a2c6d6;margin:9px 4px 0
+}
+@media(max-width:760px){.ocean-reading-progress{top:62px}}
+@media(prefers-reduced-motion:no-preference){
+  .ocean-reveal{opacity:0;transform:translateY(16px);
+    transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.25,1)}
+  .ocean-reveal.ocean-visible{opacity:1;transform:none}
+}
+@media(prefers-reduced-motion:reduce){
+  .ocean-reveal{opacity:1!important;transform:none!important}
+  .ocean-reading-progress>i{box-shadow:none;will-change:auto}
+}
