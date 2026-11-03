@@ -1,0 +1,52 @@
+name: Publicar cambios visuales del observatorio
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'site/index.html'
+      - 'site/assets/**'
+      - 'tests/ui_wave_design.test.mjs'
+      - '.github/workflows/quick-visual-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: observatorio-visual-pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Descargar versión principal
+        uses: actions/checkout@v4
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validar diseño y rutas
+        run: |
+          node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs
+          node --check site/assets/app.mjs
+          node --check site/assets/appearance.mjs
+      - name: Comprobar integridad de datos sin consultar redes
+        run: python pipeline/update.py --validate-only
+      - name: Construir sitio con datos ya publicados
+        run: python pipeline/build.py
+      - name: Preparar GitHub Pages
+        uses: actions/configure-pages@v5
+      - name: Empaquetar sitio estático
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Desplegar interfaz
+        uses: actions/deploy-pages@v4
+        id: deploy
