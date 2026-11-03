@@ -46,3 +46,33 @@ test('los escenarios de riesgo no se declaran vencidos por una consulta fallida'
   assert.match(app,/REVISIÓN PENDIENTE/);
   assert.match(app,/DATO NO VIGENTE/);
 });
+
+
+test('el aprendizaje empieza por la definición y termina en acciones respaldadas por INDECI',()=>{
+  for(const id of ['que-es','primer-title','preparacion','preparation-title','detalle-tecnico']) {
+    assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
+  }
+  assert.ok(html.indexOf('id="que-es"')<html.indexOf('id="estado-enfen"'));
+  assert.ok(html.indexOf('id="ultimo"')<html.indexOf('id="preparacion"'));
+  assert.ok(html.indexOf('id="preparacion"')<html.indexOf('id="insights"'));
+  assert.match(html,/Una alerta sobre El Niño no es lo mismo que una orden de evacuación/);
+  assert.match(html,/indeci\/campa%C3%B1as\/143492-preparados-ante-el-fenomeno-el-nino/);
+  assert.match(html,/<details id="detalle-tecnico" class="citizen-depth">/);
+  assert.match(style,/@media\(max-width:760px\)/);
+  assert.match(style,/citizen-primer-steps/);
+  assert.match(style,/citizen-actions/);
+});
+
+test('un enlace a la explicación profunda la vuelve visible sin perder la ruta',()=>{
+  const appearance=read('site/assets/appearance.mjs');
+  assert.match(appearance,/function revelarAncla/);
+  assert.match(appearance,/ancestor\.tagName==='DETAILS'/);
+  assert.match(appearance,/addEventListener\('hashchange'/);
+  assert.match(html,/href="#insights"/);
+});
+
+test('una fecha de actualización de la página no se anuncia como fecha de cada dato',()=>{
+  assert.match(app,/Página revisada:/);
+  assert.match(app,/Cada noticia, medición y pronóstico tiene su propia fecha/);
+  assert.match(html,/¿Por qué aparecen números diferentes sobre la temperatura del mar\?/);
+});

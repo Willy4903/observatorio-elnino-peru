@@ -6,13 +6,13 @@ const css=readFileSync(new URL('../site/assets/visual.css',import.meta.url),'utf
 const count=(text,term)=>text.split(term).length-1;
 
 test('cabecera clara con menú real y navegación hacia secciones existentes',()=>{
-  for(const label of ['Observatorio','El Niño Perú','Inicio','ENFEN','Mapas y riesgos','Mi distrito','Recursos']){
+  for(const label of ['Observatorio','El Niño Perú','Inicio','¿Qué es El Niño?','Alerta oficial','Mi distrito','Cómo prepararse']){
     assert.ok(html.includes(label),'Falta '+label);
   }
-  for(const id of ['top','estado-enfen','ultimo','panorama','consulta','zonas','fuentes','glosario']){
+  for(const id of ['top','que-es','estado-enfen','ultimo','preparacion','panorama','consulta','zonas','fuentes','glosario']){
     assert.match(html,new RegExp('id="'+id+'"'));
   }
-  for(const route of ['#top','#estado-enfen','#ultimo','#panorama','#consulta','#fuentes','#zonas']){
+  for(const route of ['#top','#que-es','#estado-enfen','#ultimo','#preparacion','#panorama','#consulta','#fuentes','#zonas']){
     assert.ok(html.includes('href="'+route+'"'),'Ruta '+route);
   }
   assert.equal(count(html,'id="open-navigation"'),1);
