@@ -652,3 +652,21 @@ html{scroll-padding-top:88px}
   .guide-topic-panel{animation:none!important}
   #main .visual-guide .guide-flip:not(.is-flipped):hover{translate:none!important}
 }
+
+/* Lectura local antes del enlace externo en las tarjetas de novedades. */
+#main .latest-context{
+  margin:6px 0 4px;border:1px solid #406480;border-radius:11px;
+  background:#10243a;overflow:hidden
+}
+#main .latest-context>summary{
+  cursor:pointer;padding:11px 13px;min-height:42px;
+  color:#9de7ff;font:750 .83rem/1.45 Inter,system-ui,sans-serif;
+  list-style-position:inside
+}
+#main .latest-context>summary:hover{background:#193651}
+#main .latest-context[open]>summary{border-bottom:1px solid #406480}
+#main .latest-context>p{
+  color:#deedfa!important;font:400 .86rem/1.65 Inter,system-ui,sans-serif!important;
+  margin:0;padding:12px 14px 15px
+}
+#main .latest-context>summary:focus-visible{outline:3px solid #58caef;outline-offset:-3px}
