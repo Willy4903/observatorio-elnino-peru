@@ -12,6 +12,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   refresh-peru:
+    # Evita acumular trabajos en cola cuando todavía no está habilitado un runner peruano.
+    if: vars.PERU_RUNNER == 'true'
     name: Consultar SENAMHI y ENFEN desde Perú
     runs-on: [self-hosted, peru]
     timeout-minutes: 20
