@@ -170,7 +170,10 @@ async function ensureGridHistory(){
   await Promise.allSettled([...new Map([...choices.values()].map(v=>[v.path,v])).values()].filter(v=>!known.has(v.sha256)&&/^history\/grids\/\d{4}-\d{2}-\d{2}T\d{6}Z-[a-f0-9]+\.json\.gz$/.test(v.path)).map(async v=>{state.gridVersions.push(await getJson('./data/'+v.path));}));
 }
 function refreshWeatherRows(){
-  state.forecastRows=selectForecasts(modelWeather()?state.gridVersions:state.versions,state);
+  const chosen=selectForecasts(modelWeather()?state.gridVersions:state.versions,state);
+  // Si el rango incluye hoy o el futuro, las vistas públicas omiten pronósticos vencidos.
+  // Para consultar el archivo histórico se debe elegir un periodo completo anterior a hoy.
+  state.forecastRows=state.to>=limaDate()?chosen.filter(r=>r.valid_date>=limaDate()):chosen;
   const dates=forecastDates(state.forecastRows);
   if(state.frameDate!=='all'&&!dates.includes(state.frameDate))state.frameDate=dates.find(d=>d>=limaDate())??dates.at(-1)??'all';
 }
@@ -776,7 +779,7 @@ async function applyFilters(fit=false) {
   try {await ensurePoints();} catch (error) {$('filter-notice').textContent='No se pudo cargar el inventario geográfico. Las otras fuentes conservan su disponibilidad.';console.error(error);}
   if (turn!==rendering) return;
   refreshWeatherRows();
-  $('filter-notice').textContent=`${dateLabel(state.from)} – ${dateLabel(state.to)}. Las fechas cambian los datos del mar y los pronósticos que consultas. El riesgo usa el plan CENEPRED 2025–2027 y no cambia al elegir otro día. ENFEN muestra su último comunicado verificado.`;
+  $('filter-notice').textContent=`${dateLabel(state.from)} – ${dateLabel(state.to)}. ${state.to>=limaDate()?'El pronóstico muestra solo fechas de hoy en adelante; para consultar estimaciones antiguas, elige un periodo anterior a hoy.':'Estás consultando pronósticos archivados, que no representan el tiempo actual.'} El mapa del mar mantiene sus observaciones del periodo elegido. El riesgo CENEPRED corresponde a un escenario 2025–2027, no cambia con cada día. La alerta ENFEN tiene su propia fecha.`;
   renderKpis();renderMap();renderCharts();renderForecastTable();renderZones();
   if (fit) reframe();
 }
