@@ -1,27 +1,77 @@
 <!doctype html>
-<html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0d0f15"><meta name="description" content="Centro de control El Niño Perú. Datos del mar, pronósticos por distrito, estado ENFEN y zonas de riesgo en palabras simples, con fuentes oficiales."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/appearance.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
+<html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffffff"><meta name="description" content="Centro de control El Niño Perú. Datos del mar, pronósticos por distrito, estado ENFEN y zonas de riesgo en palabras simples, con fuentes oficiales."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><link rel="stylesheet" href="assets/visual.css?v=3"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/appearance.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
   <header class="radar-header">
-    <div class="radar-header-inner"><a class="radar-brand" href="#top" aria-label="El Niño Perú, inicio"><svg viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="14"/><circle cx="18" cy="18" r="7"/><path d="M18 18 30 10"/><circle class="brand-dot" cx="18" cy="18" r="2.5"/></svg><span>El Niño <b>Perú</b></span></a><div class="radar-header-actions"><a class="header-source-link" href="#fuentes">Fuentes oficiales</a><button id="open-navigation" type="button" class="radar-menu-button" aria-haspopup="dialog" aria-controls="navigation-dialog" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menú</span></button></div></div>
+    <div class="radar-header-inner">
+      <a class="radar-brand" href="#top" aria-label="Observatorio El Niño Perú, inicio">
+        <svg viewBox="0 0 52 52" aria-hidden="true" fill="none"><path d="M8 19c7-14 21-18 32-8 4 3 5 7 5 9-8-4-14-4-19 1-4 4-10 5-18-2Z" stroke="#f25a3c" stroke-width="5" stroke-linejoin="round"/><path d="M5 30c9-7 14-6 21 0 6 5 11 5 20-2M6 40c8-7 15-7 22-1 6 5 11 5 18-1" stroke="#057dbe" stroke-width="6" stroke-linecap="round"/></svg>
+        <span class="brand-lines"><strong>Observatorio</strong><strong>El Niño Perú</strong></span>
+      </a>
+      <nav class="radar-top-nav" aria-label="Navegación principal">
+        <a class="current" href="#top">Inicio</a>
+        <a href="#ultimo">ENFEN</a>
+        <a href="#panorama">Mapas y riesgos</a>
+        <a href="#consulta">Mi distrito</a>
+        <a href="#fuentes">Recursos</a>
+      </nav>
+      <div class="radar-header-actions">
+        <a class="radar-header-search" href="#consulta" aria-label="Consultar mi distrito">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 5 5"/></svg>
+        </a>
+        <button id="open-navigation" type="button" class="radar-menu-button" aria-label="Abrir menú de secciones" aria-haspopup="dialog" aria-controls="navigation-dialog" aria-expanded="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span>Menú</span>
+        </button>
+      </div>
+    </div>
   </header>
   <dialog id="navigation-dialog" class="navigation-dialog" aria-labelledby="navigation-title"><div class="navigation-top"><span id="navigation-title">Explora el observatorio</span><button id="close-navigation" type="button" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>  <nav class="section-nav" aria-label="Navegación del observatorio"><a class="nav-link active" href="#ultimo">Resumen de hoy</a><a class="nav-link" href="#panorama">Mapa interactivo</a><a class="nav-link" href="#insights">Qué significa</a><a class="nav-link" href="#series">Evolución del mar</a><a class="nav-link" href="#zonas">Zonas de riesgo</a><a class="nav-link" href="#cobertura">Departamentos</a><a class="nav-link" href="#meteo">Pronóstico</a><a class="nav-link" href="#fuentes">Fuentes oficiales</a><a class="nav-link" href="#glosario">Glosario</a><button id="download" class="button" type="button">Descargar datos ↧</button></nav><p class="navigation-caption">Datos del mar, tiempo previsto y riesgo posible. Con fuentes y fechas.</p></dialog>
 
 
 <main id="main" class="max-w-[1600px] w-full mx-auto p-3 lg:p-5 flex flex-col gap-5">
-  <section class="radar-stage" aria-labelledby="hero-title">
+  <section class="radar-stage visual-wave" aria-labelledby="hero-title">
     <canvas id="radar-sphere" class="radar-sphere" aria-hidden="true"></canvas>
-    <div class="radar-stage-content"><p class="radar-badge">Observatorio del Fenómeno El Niño en Perú</p><h1 id="hero-title">El Niño en Perú, explicado fácil</h1><p class="radar-tagline">¿Qué está pasando y qué significa para tu zona?</p><p class="radar-intro">Primero revisa el estado oficial de ENFEN. Después consulta el pronóstico y los distritos con riesgo identificado. Cada información tiene una fuente y fecha distintas.</p><div class="radar-cta"><a class="radar-button primary" href="#consulta">Consultar mi distrito <span aria-hidden="true">→</span></a><a class="radar-button ghost" href="#ultimo">Leer resumen de hoy <span aria-hidden="true">↗</span></a></div><div class="radar-status"><a href="#fuentes" id="global-status" class="health"><i></i>Verificando fuentes</a><span id="updated">Consultando la fecha de los datos…</span><span id="clockPET">HORA LIMA · UTC−5</span></div></div>
-    <div id="alert-strip" class="radar-official" hidden><div class="official-heading"><span class="official-dot" aria-hidden="true"></span>El estado oficial para Perú · ENFEN</div><div class="official-main"><span id="enfen-state">Consultando el comunicado…</span><a id="enfen-link" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener">Leer comunicado <span aria-hidden="true">↗</span></a></div><p id="enfen-date"></p></div>
+    <div class="radar-stage-content">
+      <p class="radar-badge">OBSERVATORIO · FUENTES OFICIALES</p>
+      <h1 id="hero-title">El Niño en el Perú:<span>¿qué sabemos hoy?</span></h1>
+      <p class="radar-tagline">Información oficial, sencilla y útil para ciudadanos, familias y autoridades locales.</p>
+      <p class="radar-intro">Consulta el estado oficial, el pronóstico de tu distrito y los escenarios territoriales de riesgo. Cada fuente tiene su propia fecha.</p>
+      <div class="radar-cta"><a class="radar-button primary" href="#consulta">Consultar mi distrito</a><a class="radar-button ghost" href="#ultimo">Leer resumen oficial</a></div>
+      <div class="radar-status">
+        <a href="#fuentes" id="global-status" class="health"><i></i>Verificando fuentes</a>
+        <span id="updated">Consultando la fecha de los datos…</span>
+        <span id="clockPET">HORA LIMA · UTC−5</span>
+      </div>
+    </div>
     <button type="button" id="stage-motion" class="stage-motion" aria-pressed="true">Pausar animación de portada</button>
   </section>
-<section id="guia-inicio" class="simple-guide" aria-labelledby="simple-guide-title">
-    <div class="simple-guide-head"><span class="kicker">EMPIEZA AQUÍ · 3 PASOS</span><h2 id="simple-guide-title">Entiende el observatorio en menos de un minuto</h2><p>Los datos observados, los pronósticos y los mapas de riesgo responden preguntas diferentes. No los confundas con una alerta de emergencia.</p></div>
-    <div class="simple-guide-grid">
-      <a href="#ultimo" class="simple-guide-card"><span class="simple-step">01 · SITUACIÓN</span><h3>¿Qué sabemos hoy?</h3><p>Lee el último resumen y el comunicado de ENFEN. Verifica siempre la fecha del dato.</p><span class="simple-action">Ver resumen →</span></a>
-      <a href="#consulta" class="simple-guide-card"><span class="simple-step">02 · MI LOCALIDAD</span><h3>¿Qué se espera en mi distrito?</h3><p>Elige tu departamento y distrito para consultar las previsiones disponibles.</p><span class="simple-action">Consultar distrito →</span></a>
-      <a href="#zonas" class="simple-guide-card"><span class="simple-step">03 · PREVENCIÓN</span><h3>¿Dónde existe mayor riesgo?</h3><p>Explora los escenarios de CENEPRED. Riesgo potencial no significa un desastre en curso.</p><span class="simple-action">Explorar riesgos →</span></a>
-    </div>
-    <p class="simple-guide-disclaimer">El estado oficial de El Niño lo comunica ENFEN. El tiempo previsto puede cambiar y los mapas de CENEPRED son escenarios de planificación.</p>
-  </section>
+<section id="guia-inicio" class="simple-guide visual-guide" aria-labelledby="simple-guide-title">
+  <div class="simple-guide-head">
+    <span class="kicker">EMPIEZA AQUÍ · 3 PREGUNTAS</span>
+    <h2 id="simple-guide-title">¿Qué sabemos hoy?</h2>
+    <p>El estado oficial de El Niño lo comunica ENFEN. La previsión meteorológica y los mapas de riesgo son informaciones distintas y no representan una alerta de emergencia.</p>
+  </div>
+  <div class="simple-guide-grid">
+    <a href="#ultimo" class="simple-guide-card guide-enfen" aria-labelledby="guide-enfen-title">
+      <div class="guide-copy"><div class="guide-title"><span class="guide-icon"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none"><path d="M8 3h12l6 6v20H8z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M20 3v7h6M12 15h10M12 20h10M12 25h7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span><h3 id="guide-enfen-title">¿Qué dice ENFEN?</h3></div>
+        <p>Estado actual del fenómeno y su pronóstico oficial.</p>
+        <span class="simple-action">Ver informe <span aria-hidden="true">→</span></span>
+      </div><img class="guide-art" src="assets/card-enfen.jpg" width="760" height="330" alt="" loading="eager" decoding="async">
+    </a>
+    <a href="#consulta" class="simple-guide-card guide-district" aria-labelledby="guide-district-title">
+      <div class="guide-copy"><div class="guide-title"><span class="guide-icon"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none"><path d="M16 29S6 18.8 6 12a10 10 0 0 1 20 0c0 6.8-10 17-10 17Z" fill="currentColor"/><circle cx="16" cy="12" r="3.7" fill="#0870b7"/></svg></span><h3 id="guide-district-title">¿Qué se espera en mi distrito?</h3></div>
+        <p>Consulta la información meteorológica y sus posibles efectos.</p>
+        <span class="simple-action">Consultar mi distrito <span aria-hidden="true">→</span></span>
+      </div><img class="guide-art" src="assets/card-distrito.jpg" width="760" height="330" alt="" loading="eager" decoding="async">
+    </a>
+    <a href="#zonas" class="simple-guide-card guide-risk" aria-labelledby="guide-risk-title">
+      <div class="guide-copy"><div class="guide-title"><span class="guide-icon"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none"><path d="M16 3 30 28H2L16 3Z" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/><path d="M16 11v9M16 24v.8" stroke="currentColor" stroke-width="2.9" stroke-linecap="round"/></svg></span><h3 id="guide-risk-title">¿Dónde existe mayor riesgo?</h3></div>
+        <p>Escenarios de lluvia, inundaciones y huaicos elaborados por CENEPRED.</p>
+        <span class="simple-action">Ver mapas de riesgo <span aria-hidden="true">→</span></span>
+      </div><img class="guide-art" src="assets/card-riesgo.jpg" width="760" height="330" alt="" loading="eager" decoding="async">
+    </a>
+  </div>
+  <p class="simple-guide-disclaimer">Imágenes ilustrativas. Los comunicados ENFEN y los mapas de CENEPRED deben consultarse en las secciones oficiales; no corresponden a las fotografías o colores mostrados arriba.</p>
+</section>
+<div class="visual-alert-holder"><div id="alert-strip" class="radar-official" hidden><div class="official-heading"><span class="official-dot" aria-hidden="true"></span>El estado oficial para Perú · ENFEN</div><div class="official-main"><span id="enfen-state">Consultando el comunicado…</span><a id="enfen-link" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener">Leer comunicado <span aria-hidden="true">↗</span></a></div><p id="enfen-date"></p></div></div>
 <section id="ultimo" class="latest-section" aria-labelledby="latest-title"><div class="section-heading"><div><span class="kicker">RESUMEN ACTUALIZADO</span><h2 id="latest-title">Lo importante de hoy, sin tecnicismos</h2><p id="latest-updated" class="panel-description">Consultando la información más reciente…</p></div><a href="#fuentes" class="text-link">Ver fuentes y fechas ↗</a></div><div id="latest-cards" class="latest-grid" aria-live="polite"></div><p class="insight-method">La etiqueta indica si el dato está al día. El estado oficial de El Niño para Perú lo comunica ENFEN.</p></section>
   <section id="insights" class="insights-section"><div class="section-heading"><div><span class="kicker">INTERPRETACIÓN</span><h2>Cómo interpretar lo que está pasando</h2><p id="insight-scope" class="panel-description"></p></div><a href="#glosario" class="button">Palabras explicadas ⓘ</a></div><div id="insight-cards" class="insight-grid" aria-live="polite"></div><p class="insight-method">La alerta para Perú corresponde al comunicado oficial de ENFEN.</p></section>
   <section id="resumen" class="radar-overview" aria-labelledby="overview-title"><div class="overview-heading"><div><span class="kicker">INDICADORES CON FECHA Y FUENTE</span><h2 id="overview-title">Cuatro datos para entender la situación</h2><p id="summary-scope">Todo el Perú. Los indicadores se ajustan a la zona y las fechas que elijas.</p></div><a href="#filters" class="text-link">Cambiar zona o fechas ↗</a></div>

@@ -1,0 +1,33 @@
+name: Validar rediseño del observatorio
+on:
+  pull_request:
+    paths:
+      - 'site/index.html'
+      - 'site/assets/**'
+      - 'tests/ui_wave_design.test.mjs'
+      - 'tests/ui_simplicity.test.mjs'
+      - '.github/workflows/validate-visual.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'site/index.html'
+      - 'site/assets/**'
+      - 'tests/ui_wave_design.test.mjs'
+      - 'tests/ui_simplicity.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comprobar estructura, fuentes, recursos y actualización
+        run: node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs
+      - name: Comprobar módulos y scripts
+        run: |
+          node --check site/assets/app.mjs
+          node --check site/assets/appearance.mjs
