@@ -48,10 +48,11 @@ jobs:
       - name: Probar adquisición y filtros
         run: |
           python -m unittest discover -s tests -v
-          node --test tests/selectors.test.mjs tests/latest.test.mjs tests/ui_simplicity.test.mjs tests/lectura_ciudadana.test.mjs tests/guide3d.test.mjs
+          node --test tests/selectors.test.mjs tests/latest.test.mjs tests/ui_simplicity.test.mjs tests/lectura_ciudadana.test.mjs tests/guide3d.test.mjs tests/ocean_theme.test.mjs
           node --check site/assets/app.mjs
           node --check site/assets/appearance.mjs
           node --check site/assets/guide3d.mjs
+          node --check site/assets/ocean-experience.mjs
           node --check site/assets/ocean.mjs
           node --check site/assets/glossary.mjs
           node --check site/assets/weather.mjs
