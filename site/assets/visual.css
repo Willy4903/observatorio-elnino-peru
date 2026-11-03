@@ -418,3 +418,13 @@ html{scroll-padding-top:88px}
   .citizen-preparation-source{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.citizen-depth *, .citizen-actions *{transition:none!important}}
+
+
+#main .citizen-questions{width:calc(100% - 36px);max-width:1260px;margin:0 auto 24px;
+  border-radius:13px;border:1px solid #c8ddeb;background:#f0f8fc;overflow:hidden;color:#16364f}
+.citizen-questions>summary{padding:15px 20px;min-height:50px;font:800 .92rem/1.5 Inter,system-ui,sans-serif;cursor:pointer}
+.citizen-questions>summary:hover{background:#e2f0f8}
+.citizen-questions>p{padding:0 20px 17px;margin:0;color:#38546b;font:.91rem/1.65 Inter,system-ui,sans-serif}
+.citizen-questions a{color:#075f91;font-weight:800;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:1080px){.radar-top-nav{display:none!important}}
+@media(max-width:760px){#main .citizen-questions{width:calc(100% - 22px);margin-bottom:17px}}
