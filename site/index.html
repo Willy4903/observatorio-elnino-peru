@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffffff"><meta name="description" content="Centro de control El Niño Perú. Datos del mar, pronósticos por distrito, estado ENFEN y zonas de riesgo en palabras simples, con fuentes oficiales."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><link rel="stylesheet" href="assets/visual.css?v=3"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/appearance.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
+<html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#ffffff"><meta name="description" content="Entiende qué es El Niño, qué dice ENFEN, qué tiempo se espera en tu distrito y cómo prepararte. Datos oficiales con fechas y explicaciones sencillas."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><link rel="stylesheet" href="assets/visual.css?v=3"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/appearance.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
   <header class="radar-header">
     <div class="radar-header-inner">
       <a class="radar-brand" href="#top" aria-label="Observatorio El Niño Perú, inicio">
@@ -8,10 +8,10 @@
       </a>
       <nav class="radar-top-nav" aria-label="Navegación principal">
         <a class="current" href="#top">Inicio</a>
-        <a href="#estado-enfen">ENFEN</a>
-        <a href="#panorama">Mapas y riesgos</a>
+        <a href="#que-es">¿Qué es El Niño?</a>
+        <a href="#estado-enfen">Alerta oficial</a>
         <a href="#consulta">Mi distrito</a>
-        <a href="#fuentes">Recursos</a>
+        <a href="#preparacion">Cómo prepararse</a>
       </nav>
       <div class="radar-header-actions">
         <a class="radar-header-search" href="#consulta" aria-label="Consultar mi distrito">
@@ -23,7 +23,7 @@
       </div>
     </div>
   </header>
-  <dialog id="navigation-dialog" class="navigation-dialog" aria-labelledby="navigation-title"><div class="navigation-top"><span id="navigation-title">Explora el observatorio</span><button id="close-navigation" type="button" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>  <nav class="section-nav" aria-label="Navegación del observatorio"><a class="nav-link active" href="#ultimo">Lo esencial de hoy</a><a class="nav-link" href="#estado-enfen">Alerta oficial ENFEN</a><a class="nav-link" href="#panorama">Mapa interactivo</a><a class="nav-link" href="#insights">Qué significa</a><a class="nav-link" href="#series">Evolución del mar</a><a class="nav-link" href="#zonas">Zonas de riesgo</a><a class="nav-link" href="#cobertura">Departamentos</a><a class="nav-link" href="#meteo">Pronóstico</a><a class="nav-link" href="#fuentes">Fuentes oficiales</a><a class="nav-link" href="#glosario">Glosario</a><button id="download" class="button" type="button">Descargar datos ↧</button></nav><p class="navigation-caption">Datos del mar, tiempo previsto y riesgo posible. Con fuentes y fechas.</p></dialog>
+  <dialog id="navigation-dialog" class="navigation-dialog" aria-labelledby="navigation-title"><div class="navigation-top"><span id="navigation-title">Explora el observatorio</span><button id="close-navigation" type="button" aria-label="Cerrar menú"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div>  <nav class="section-nav" aria-label="Navegación del observatorio"><a class="nav-link active" href="#ultimo">Lo esencial de hoy</a><a class="nav-link" href="#que-es">Qué es El Niño</a><a class="nav-link" href="#preparacion">Cómo prepararme</a><a class="nav-link" href="#estado-enfen">Alerta oficial ENFEN</a><a class="nav-link" href="#panorama">Mapa interactivo</a><a class="nav-link" href="#insights">Explicación detallada</a><a class="nav-link" href="#series">Evolución del mar</a><a class="nav-link" href="#zonas">Zonas de riesgo</a><a class="nav-link" href="#cobertura">Departamentos</a><a class="nav-link" href="#meteo">Pronóstico</a><a class="nav-link" href="#fuentes">Fuentes oficiales</a><a class="nav-link" href="#glosario">Glosario</a><button id="download" class="button" type="button">Descargar datos ↧</button></nav><p class="navigation-caption">Datos del mar, tiempo previsto y riesgo posible. Con fuentes y fechas.</p></dialog>
 
 
 <main id="main" class="max-w-[1600px] w-full mx-auto p-3 lg:p-5 flex flex-col gap-5">
@@ -32,9 +32,9 @@
     <div class="radar-stage-content">
       <p class="radar-badge">OBSERVATORIO · FUENTES OFICIALES</p>
       <h1 id="hero-title">El Niño en el Perú:<span>lo que debes saber</span></h1>
-      <p class="radar-tagline">Información fácil de entender: qué ocurre, qué puede pasar y cómo prepararnos.</p>
-      <p class="radar-intro">La temperatura del mar, el pronóstico del tiempo y el riesgo de inundación son cosas distintas. Aquí las explicamos sin palabras complicadas.</p>
-      <div class="radar-cta"><a class="radar-button primary" href="#consulta">Consultar mi distrito</a><a class="radar-button ghost" href="#estado-enfen">Ver alerta de ENFEN</a></div>
+      <p class="radar-tagline">Entiende el fenómeno, conoce el estado oficial y descubre qué puedes hacer.</p>
+      <p class="radar-intro">El Niño, el pronóstico de lluvias y el riesgo de inundación no son lo mismo. Te mostramos cada dato con su fecha y fuente.</p>
+      <div class="radar-cta"><a class="radar-button primary" href="#que-es">Entender El Niño</a><a class="radar-button ghost" href="#estado-enfen">Ver alerta de ENFEN</a></div>
       <div class="radar-status">
         <a href="#fuentes" id="global-status" class="health"><i></i>Verificando fuentes</a>
         <span id="updated">Consultando la fecha de los datos…</span>
@@ -43,28 +43,42 @@
     </div>
     <button type="button" id="stage-motion" class="stage-motion" aria-pressed="true">Pausar animación de portada</button>
   </section>
+<section id="que-es" class="citizen-primer" aria-labelledby="primer-title">
+  <div class="citizen-primer-intro">
+    <span class="citizen-kicker">PRIMERO, LO ESENCIAL</span>
+    <h2 id="primer-title">¿Qué es El Niño y por qué nos importa?</h2>
+    <p>Es un fenómeno natural relacionado con el calentamiento de una parte del océano Pacífico y cambios en la atmósfera. Puede modificar las lluvias y las temperaturas, pero sus efectos no son iguales en todo el Perú.</p>
+    <a href="#estado-enfen" class="citizen-link">Conoce qué dice la alerta oficial <span aria-hidden="true">→</span></a>
+  </div>
+  <ol class="citizen-primer-steps">
+    <li><span class="citizen-step-num">01</span><h3>El mar cambia</h3><p>Los científicos comparan la temperatura del océano con lo habitual. Un mar más cálido es una señal que necesitan analizar.</p></li>
+    <li><span class="citizen-step-num">02</span><h3>El tiempo puede cambiar</h3><p>En algunas zonas podrían producirse lluvias intensas u otros cambios. Una señal del mar no indica qué pasará hoy en tu calle.</p></li>
+    <li><span class="citizen-step-num">03</span><h3>Cada lugar tiene riesgos distintos</h3><p>Tu riesgo depende del terreno, la exposición de tu vivienda y los avisos locales. Consulta tu zona y prepárate con información oficial.</p></li>
+  </ol>
+  <p class="citizen-primer-note">El Niño Costero se refiere a condiciones cercanas a la costa de Perú y Ecuador; los índices del Pacífico central describen otra región del océano. No deben confundirse.</p>
+</section>
 <section id="guia-inicio" class="simple-guide visual-guide" aria-labelledby="simple-guide-title">
   <div class="simple-guide-head">
-    <span class="kicker">EMPIEZA AQUÍ · 3 PREGUNTAS</span>
+    <span class="kicker">ELIGE QUÉ QUIERES CONSULTAR</span>
     <h2 id="simple-guide-title">Elige lo que quieres conocer</h2>
-    <p>El estado oficial de El Niño lo comunica ENFEN. La previsión meteorológica y los mapas de riesgo son informaciones distintas y no representan una alerta de emergencia.</p>
+    <p>La alerta oficial, el pronóstico del tiempo y los lugares expuestos a inundaciones son datos diferentes. Puedes revisar cada tema por separado.</p>
   </div>
   <div class="simple-guide-grid">
     <a href="#estado-enfen" class="simple-guide-card guide-enfen" aria-labelledby="guide-enfen-title">
       <div class="guide-copy"><div class="guide-title"><span class="guide-icon"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none"><path d="M8 3h12l6 6v20H8z" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><path d="M20 3v7h6M12 15h10M12 20h10M12 25h7" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></span><h3 id="guide-enfen-title">¿Qué dice ENFEN?</h3></div>
-        <p>Conoce la alerta vigente y qué significa para tu familia.</p>
+        <p>Lee el estado oficial, su fecha y lo que significa para tu familia.</p>
         <span class="simple-action">Entender la alerta <span aria-hidden="true">→</span></span>
       </div><img class="guide-art" src="assets/card-enfen.jpg" width="760" height="330" alt="" loading="eager" decoding="async">
     </a>
     <a href="#consulta" class="simple-guide-card guide-district" aria-labelledby="guide-district-title">
       <div class="guide-copy"><div class="guide-title"><span class="guide-icon"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none"><path d="M16 29S6 18.8 6 12a10 10 0 0 1 20 0c0 6.8-10 17-10 17Z" fill="currentColor"/><circle cx="16" cy="12" r="3.7" fill="#0870b7"/></svg></span><h3 id="guide-district-title">¿Qué se espera en mi distrito?</h3></div>
-        <p>Consulta la información meteorológica y sus posibles efectos.</p>
+        <p>Consulta lluvia y temperatura previstas para un punto de tu distrito.</p>
         <span class="simple-action">Consultar mi distrito <span aria-hidden="true">→</span></span>
       </div><img class="guide-art" src="assets/card-distrito.jpg" width="760" height="330" alt="" loading="eager" decoding="async">
     </a>
     <a href="#zonas" class="simple-guide-card guide-risk" aria-labelledby="guide-risk-title">
       <div class="guide-copy"><div class="guide-title"><span class="guide-icon"><svg viewBox="0 0 32 32" aria-hidden="true" fill="none"><path d="M16 3 30 28H2L16 3Z" stroke="currentColor" stroke-width="2.7" stroke-linejoin="round"/><path d="M16 11v9M16 24v.8" stroke="currentColor" stroke-width="2.9" stroke-linecap="round"/></svg></span><h3 id="guide-risk-title">¿Dónde existe mayor riesgo?</h3></div>
-        <p>Escenarios de lluvia, inundaciones y huaicos elaborados por CENEPRED.</p>
+        <p>Conoce los lugares identificados por CENEPRED para planificar medidas de prevención.</p>
         <span class="simple-action">Ver mapas de riesgo <span aria-hidden="true">→</span></span>
       </div><img class="guide-art" src="assets/card-riesgo.jpg" width="760" height="330" alt="" loading="eager" decoding="async">
     </a>
@@ -73,11 +87,11 @@
 </section>
 <div class="visual-alert-holder"><div id="alert-strip" class="radar-official" hidden><div class="official-heading"><span class="official-dot" aria-hidden="true"></span>El estado oficial para Perú · ENFEN</div><div class="official-main"><span id="enfen-state">Consultando el comunicado…</span><a id="enfen-link" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener">Leer comunicado <span aria-hidden="true">↗</span></a></div><p id="enfen-date"></p></div></div>
 <section id="estado-enfen" class="citizen-enfen" aria-labelledby="citizen-enfen-title">
-  <div class="citizen-enfen-heading"><span class="kicker">LA INFORMACIÓN OFICIAL · ENFEN</span><h2 id="citizen-enfen-title">¿Hay alerta de El Niño en el Perú?</h2><p>ENFEN es el grupo de instituciones del Estado que vigila El Niño y comunica su situación oficial.</p></div>
+  <div class="citizen-enfen-heading"><span class="kicker">LA INFORMACIÓN OFICIAL · ENFEN</span><h2 id="citizen-enfen-title">¿Hay alerta de El Niño en el Perú?</h2><p>ENFEN reúne a instituciones técnicas del Estado y comunica el estado oficial de El Niño Costero en Perú.</p></div>
   <div class="citizen-enfen-body"><div class="citizen-enfen-main"><span class="citizen-enfen-label">ESTADO COMUNICADO POR ENFEN</span><h3 id="enfen-publicado">Consultando el comunicado oficial…</h3><p id="enfen-resumen">Aquí aparecerá la situación indicada por ENFEN y la fecha del documento.</p><p class="citizen-enfen-control" id="enfen-control" role="status">Comprobando la información publicada.</p><a id="enfen-documento" class="citizen-enfen-button" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener noreferrer">Leer el documento oficial ↗</a></div>
   <div class="citizen-enfen-explain"><h3>¿Qué significa una alerta?</h3><p>Que las autoridades y la población deben informarse y prepararse ante posibles efectos de El Niño. <strong>No significa</strong> que haya una inundación en tu distrito ni que vaya a llover hoy en todo el Perú.</p><p>Para saber si se esperan lluvias en tu zona, consulta el <a href="#consulta">pronóstico de tu distrito</a>.</p></div></div>
 </section>
-<section id="ultimo" class="latest-section" aria-labelledby="latest-title"><div class="section-heading"><div><span class="kicker">EN POCAS PALABRAS</span><h2 id="latest-title">Lo que necesitas saber hoy</h2><p id="latest-updated" class="panel-description">Consultando la información más reciente…</p></div><a href="#fuentes" class="text-link">Ver fuentes y fechas ↗</a></div><div id="latest-cards" class="latest-grid" aria-live="polite"></div><p class="insight-method">Los datos y pronósticos tienen fechas distintas. «Al día» no significa que todos describan lo que ocurre ahora en tu calle. Los números sobre distritos de INDECI y CENEPRED provienen de informes distintos y no deben sumarse.</p></section>
+<section id="ultimo" class="latest-section" aria-labelledby="latest-title"><div class="section-heading"><div><span class="kicker">EN POCAS PALABRAS</span><h2 id="latest-title">Cuatro datos para entender la situación</h2><p id="latest-updated" class="panel-description">Consultando la información más reciente…</p></div><a href="#fuentes" class="text-link">Ver fuentes y fechas ↗</a></div><div id="latest-cards" class="latest-grid" aria-live="polite"></div><p class="insight-method">Cada noticia, dato del mar y pronóstico conserva su fecha. Un pronóstico no es una observación, y los distritos mencionados por INDECI no son directamente comparables con el escenario CENEPRED. No sumes estas cifras.</p></section>
   <section id="insights" class="insights-section"><div class="section-heading"><div><span class="kicker">QUÉ SIGNIFICAN LOS DATOS</span><h2>Te explicamos cada cifra</h2><p id="insight-scope" class="panel-description"></p></div><a href="#glosario" class="button">Palabras explicadas ⓘ</a></div><div id="insight-cards" class="insight-grid" aria-live="polite"></div><p class="insight-method">La alerta para Perú corresponde al comunicado oficial de ENFEN.</p></section>
   <section id="resumen" class="radar-overview" aria-labelledby="overview-title"><div class="overview-heading"><div><span class="kicker">INDICADORES CON FECHA Y FUENTE</span><h2 id="overview-title">Cuatro datos para entender la situación</h2><p id="summary-scope">Todo el Perú. Los indicadores se ajustan a la zona y las fechas que elijas.</p></div><a href="#filters" class="text-link">Cambiar zona o fechas ↗</a></div>
     <div class="kpi-grid grid grid-cols-2 gap-3">
