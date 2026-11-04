@@ -99,23 +99,99 @@ function updatePeriodInputs() {
   $('from-wrap').firstChild.textContent=period==='day'?'Día':'Desde';
 }
 function readFilters() {
-  const period=$('period').value;
+  const period=$('period').value,department=$('department').value;
+  let from,to;
   if (period==='month') {
-    if (!$('month').value) return false;
-    state.from=$('month').value+'-01';
-    const [year,month]=$('month').value.split('-').map(Number);
-    state.to=new Date(Date.UTC(year,month,0,12)).toISOString().slice(0,10);
+    const value=$('month').value;
+    if (/^\d{4}-\d{2}$/.test(value)) {
+      from=value+'-01';
+      const month=Number(value.slice(-2));
+      if(month>=1&&month<=12){const end=new Date(from+'T12:00:00Z');end.setUTCMonth(month,0);to=end.toISOString().slice(0,10);}
+    }
   } else {
-    state.from=$('from').value; state.to=period==='day'?state.from:$('to').value;
+    from=$('from').value;to=period==='day'?from:$('to').value;
   }
-  if(state.department!==$('department').value){state.district='all';state.inspectorDistrict=null;}
-  state.department=$('department').value;
-  if (!state.from || !state.to || state.from>state.to) {
-    $('filter-notice').textContent='Elige un periodo válido: la fecha inicial debe ser anterior o igual a la final.';
+  const validDate=value=>/^\d{4}-\d{2}-\d{2}$/.test(value??'')&&Number.isFinite(Date.parse(value+'T12:00:00Z'))&&new Date(value+'T12:00:00Z').toISOString().slice(0,10)===value;
+  const validDepartment=department==='all'||state.data.boundaries?.data.features.some(f=>f.properties.code===department);
+  const valid=validDate(from)&&validDate(to)&&from<=to&&['month','range','day'].includes(period)&&validDepartment;
+  for(const id of ['from','to','month','department','period'])$(id).removeAttribute('aria-invalid');
+  if (!valid) {
+    const invalid=period==='month'?['month']:['from',...(period==='range'?['to']:[])];
+    if(!validDepartment)invalid.push('department');
+    for(const id of invalid){$(id).setAttribute('aria-invalid','true');$(id).setAttribute('aria-describedby','filter-notice');}
+    state.filterInvalid=true;
+    $('filter-notice').textContent='Elige un periodo válido: la fecha inicial debe ser anterior o igual a la final. Se conserva la última selección aplicada.';
     $('filter-notice').closest('details').open=true;
+    $('department').value=state.department;
+    $('inspector-department').value=state.department;$('inspector-district').value=state.district;
+    renderPanoramaContext();
     return false;
   }
+  state.filterInvalid=false;
+  if(state.department!==department){state.district='all';state.inspectorDistrict=null;}
+  state.from=from;state.to=to;state.department=department;
   return true;
+}
+
+// Preserve the actual buttons while their data or selected state changes.
+function updateKeyedButtons(container,html,attribute){
+  const template=document.createElement('template');template.innerHTML=html;
+  const next=[...template.content.children];
+  if(!next.length||next.some(node=>node.tagName!=='BUTTON'||!node.hasAttribute(attribute))){
+    if(container.innerHTML!==html)container.innerHTML=html;
+    return;
+  }
+  const focused=document.activeElement?.closest(`button[${attribute}]`);
+  const focusedKey=focused&&container.contains(focused)?focused.getAttribute(attribute):null;
+  const current=new Map([...container.children].filter(node=>node.hasAttribute(attribute)).map(node=>[node.getAttribute(attribute),node]));
+  const retained=new Set();
+  next.forEach((node,index)=>{
+    const key=node.getAttribute(attribute),button=current.get(key)??node;
+    if(button!==node){
+      button.className=node.className;
+      button.setAttribute('aria-pressed',node.getAttribute('aria-pressed'));
+      if(button.innerHTML!==node.innerHTML)button.innerHTML=node.innerHTML;
+    }
+    retained.add(button);
+    if(container.children[index]!==button)container.insertBefore(button,container.children[index]??null);
+  });
+  for(const node of [...container.children])if(!retained.has(node))node.remove();
+  if(focusedKey&&document.activeElement!==focused){
+    [...container.children].find(node=>node.getAttribute(attribute)===focusedKey)?.focus({preventScroll:true});
+  }
+}
+
+function renderPanoramaContext(){
+  const scope=$('panorama-scope'),period=$('panorama-period'),status=$('panorama-status');
+  const department=state.data.boundaries?.data.features.find(f=>f.properties.code===state.department)?.properties.name;
+  const zone=selectedDistrict()?.district??department??'Todo el Perú';
+  const mode=state.kind==='observation'?'Estado del mar':state.kind==='forecast'?'Tiempo previsto':state.layer==='heat'?'Puntos documentados':'Riesgo por distrito';
+  const provider=state.kind==='observation'?'NOAA':state.kind==='forecast'?weatherProvider():'CENEPRED';
+  if(scope)scope.textContent=`${titleCase(zone)} · ${mode} · ${provider}`;
+  if(period)period.textContent=`${dateLabel(state.from)} – ${dateLabel(state.to)}`;
+  if(!status)return;
+  let text,kind='ready';
+  if(state.filterInvalid){kind='error';text='Fechas sin aplicar. Corrige el periodo o restablece la vista; se conserva la última selección válida.';}
+  else if(state.filterLoading){kind='loading';text='Cargando los datos publicados para tu selección…';}
+  else if(state.kind==='observation'){
+    const ocean=selectedOcean('noaa_ocean_sst');
+    if(!ocean){kind='empty';text='NOAA: sin campo del mar para el periodo aplicado. Prueba otras fechas o restablece la vista.';}
+    else text=`NOAA · Campo del mar del ${dateLabel(ocean.meta.latest_date)}. Los índices y las corrientes conservan sus propias fechas.`;
+  }else if(state.kind==='forecast'){
+    const rows=mapForecastRows(),dates=forecastDates(rows);
+    if(!rows.length){kind='empty';text=`${weatherProvider()}: sin pronóstico para esta zona y estas fechas. Prueba otra fuente, otro periodo o restablece la vista.`;}
+    else text=`${weatherProvider()} · ${dates.length===1?dateLabel(dates[0]):`${dateLabel(dates[0])} – ${dateLabel(dates.at(-1))}`}. Pronóstico, no observación de lluvia ocurrida.`;
+  }else if(state.layer==='heat'){
+    if(state.inventoryError){kind='error';text='No se pudo cargar el inventario CENEPRED. Prueba de nuevo o consulta las fuentes.';}
+    else if(!selectedPoints().length){kind='empty';text='CENEPRED: no hay puntos documentados para esta selección. No equivale a ausencia de peligro.';}
+    else text=`CENEPRED · ${fmt(selectedPoints().length)} puntos documentados. Inventario de riesgo, no emergencias actuales.`;
+  }else{
+    if(!selectedRisks().length){kind='empty';text='CENEPRED: sin clasificación de riesgo para esta selección. La falta de datos no equivale a ausencia de riesgo.';}
+    else text='CENEPRED · Escenario distrital 2025–2027. Sus categorías sirven para prepararse y no cambian al elegir otro día.';
+  }
+  if(status.textContent!==text)status.textContent=text;
+  status.dataset.state=kind;
+  $('panorama')?.setAttribute('aria-busy',String(Boolean(state.filterLoading)));
 }
 
 async function loadData() {
@@ -351,12 +427,14 @@ function renderWeatherCards(){
   const model=modelWeather(),dates=forecastDates(state.forecastRows).slice(-7),locations=new Set(state.forecastRows.map(r=>r.locality_id)).size;
   $('weather-provider-label').textContent=`TIEMPO PREVISTO · ${weatherProvider()}`;
   $('forecast-chart-note').textContent=model?`${locations>1?'Promedio de las estimaciones para los distritos elegidos.':'Estimación para un punto del distrito.'} Cada fecha indica el final de un periodo de 24 horas.`:'Promedio de las localidades SENAMHI disponibles. No representa toda la superficie del departamento.';
-  $('weather-days').innerHTML=dates.map(date=>{const rows=frameRows(state.forecastRows,date),first=rows[0],rain=mean(rows.map(r=>r.precipitation_mm).filter(Number.isFinite));return `<button type="button" class="weather-day ${state.frameDate===date?'selected':''}" data-weather-date="${date}" aria-pressed="${state.frameDate===date}"><span>${model?'24 horas hasta el ':''}${e(dateLabel(date))}</span><strong><b><span>Más calor</span>${fmt(mean(rows.map(r=>r.tmax_c)),1)}°</b><i><span>Más frío</span>${fmt(mean(rows.map(r=>r.tmin_c)),1)}°</i></strong><small>${model?'Lluvia: '+fmt(rain,2)+' mm en 24 horas':rows.some(r=>r.rain_mentioned)?'Se menciona lluvia en el pronóstico':'Ver descripción del tiempo'}</small><em>${model?e(windowLabel(first)):fmt(new Set(rows.map(r=>r.locality_id)).size)+' localidades'}<br>${model&&rows.length>1?'Promedio de '+fmt(rows.length)+' puntos':model?'Estimación para un punto del distrito':''}</em></button>`;}).join('')||'<p class="weather-unavailable">No hay pronóstico disponible para estas fechas y esta zona. Prueba otras fechas o consulta la otra fuente.</p>';
+  updateKeyedButtons($('weather-days'),dates.map(date=>{const rows=frameRows(state.forecastRows,date),first=rows[0],rain=mean(rows.map(r=>r.precipitation_mm).filter(Number.isFinite));return `<button type="button" class="weather-day ${state.frameDate===date?'selected':''}" data-weather-date="${date}" aria-pressed="${state.frameDate===date}"><span>${model?'24 horas hasta el ':''}${e(dateLabel(date))}</span><strong><b><span>Más calor</span>${fmt(mean(rows.map(r=>r.tmax_c)),1)}°</b><i><span>Más frío</span>${fmt(mean(rows.map(r=>r.tmin_c)),1)}°</i></strong><small>${model?'Lluvia: '+fmt(rain,2)+' mm en 24 horas':rows.some(r=>r.rain_mentioned)?'Se menciona lluvia en el pronóstico':'Ver descripción del tiempo'}</small><em>${model?e(windowLabel(first)):fmt(new Set(rows.map(r=>r.locality_id)).size)+' localidades'}<br>${model&&rows.length>1?'Promedio de '+fmt(rows.length)+' puntos':model?'Estimación para un punto del distrito':''}</em></button>`;}).join('')||'<p class="weather-unavailable">No hay pronóstico disponible para estas fechas y esta zona. Prueba otras fechas o consulta la otra fuente.</p>','data-weather-date');
   $('weather-issue').textContent=model?(state.data.district_forecast?`Estimación de NOAA GFS para un punto dentro de cada distrito. Puede cambiar y variar dentro de la zona. Último pronóstico elaborado: ${timestamp(state.data.district_forecast.meta.issued_at)}.`:'Aún no hay una descarga de NOAA GFS que haya pasado los controles. Revisa las fuentes y sus fechas.'):'Pronóstico de SENAMHI por localidad. Sus temperaturas y descripciones se conservan tal como las publica la fuente.';
 }
 function renderDistrictPicker(){
   const rows=districtOptions(state.data.cenepred_risk?.data??[],state.department),provinces=[...new Set(rows.map(r=>r.province))];
-  $('inspector-district').innerHTML='<option value="all">Todos los distritos</option>'+provinces.map(province=>`<optgroup label="${e(titleCase(province))}">${rows.filter(r=>r.province===province).map(r=>`<option value="${e(r.ubigeo)}">${e(titleCase(r.district))}</option>`).join('')}</optgroup>`).join('');
+  const picker=$('inspector-district');
+  const options='<option value="all">Todos los distritos</option>'+provinces.map(province=>`<optgroup label="${e(titleCase(province))}">${rows.filter(r=>r.province===province).map(r=>`<option value="${e(r.ubigeo)}">${e(titleCase(r.district))}</option>`).join('')}</optgroup>`).join('');
+  if(picker.optionsMarkup!==options){picker.innerHTML=options;picker.optionsMarkup=options;}
   $('inspector-district').disabled=state.department==='all'||!rows.length;$('inspector-district').value=state.district;
   $('district-picker-label').textContent=state.department==='all'?'Luego, elige tu distrito':`Elige tu distrito · ${rows.length} disponibles`;
   $('clear-territory').disabled=state.department==='all'&&state.district==='all';
@@ -411,15 +489,20 @@ function layoutTerritoryLabels(){
   }
 }
 function selectTerritory(code){
+  $('department').value=code;
+  if(!readFilters())return false;
   state.inspectorDepartment=code;state.inspectorDistrict=null;state.district='all';
   if(code==='all')state.oceanExtent='national';
-  $('department').value=code;
   void applyFilters(true);
+  return true;
 }
 function selectDistrict(code){
+  const record=code==='all'?null:(state.data.cenepred_risk?.data??[]).find(r=>r.ubigeo===code);
+  if(code!=='all'&&!record)return;
+  $('department').value=record?.department_code??state.department;
+  if(!readFilters())return;
   if(code!=='all'){
-    const record=(state.data.cenepred_risk?.data??[]).find(r=>r.ubigeo===code);if(!record)return;
-    state.department=record.department_code;$('department').value=record.department_code;state.inspectorDepartment=record.department_code;
+    state.inspectorDepartment=record.department_code;
     $('risk-level').value='all';
     state.forecastProvider='gfs';
   }
@@ -429,7 +512,7 @@ function renderCoverage(){
   const rows=territorialCoverage(state.data.boundaries?.data.features??[],state.data.cenepred_risk?.data??[],selectForecasts(state.versions,{...state,department:'all',district:'all'}),state.hazard);
   const riskCount=rows.filter(r=>r.risk?.total).length,weatherCount=rows.filter(r=>r.localities).length;
   $('coverage-summary').textContent=`24 departamentos y Callao. ${riskCount} de ${rows.length} tienen datos de riesgo de CENEPRED y ${weatherCount} tienen localidades con pronóstico SENAMHI en las fechas elegidas.`;
-  $('territory-grid').innerHTML=rows.map(r=>`<button type="button" class="territory-card ${state.department===r.code?'selected':''}" data-department="${e(r.code)}" aria-pressed="${state.department===r.code}"><span class="territory-card-title"><span>${e(titleCase(r.name))}</span><small>${e(r.code)}</small></span><span class="territory-risk"><span>DISTRITOS CON MAYOR RIESGO</span><b>${r.risk?.total?`${fmt(r.risk.high)} <small>/ ${fmt(r.risk.total)}</small>`:'Sin clasificación'}</b></span><span class="territory-weather ${r.localities?'':'no-coverage'}">${r.localities?`${fmt(r.localities)} localidades · SENAMHI`:'Sin datos SENAMHI en estas fechas'}</span></button>`).join('');
+  updateKeyedButtons($('territory-grid'),rows.map(r=>`<button type="button" class="territory-card ${state.department===r.code?'selected':''}" data-department="${e(r.code)}" aria-pressed="${state.department===r.code}"><span class="territory-card-title"><span>${e(titleCase(r.name))}</span><small>${e(r.code)}</small></span><span class="territory-risk"><span>DISTRITOS CON MAYOR RIESGO</span><b>${r.risk?.total?`${fmt(r.risk.high)} <small>/ ${fmt(r.risk.total)}</small>`:'Sin clasificación'}</b></span><span class="territory-weather ${r.localities?'':'no-coverage'}">${r.localities?`${fmt(r.localities)} localidades · SENAMHI`:'Sin datos SENAMHI en estas fechas'}</span></button>`).join(''),'data-department');
 }
 function addGraticule(){
   for(const lat of [-20,-15,-10,-5,0,5]){
@@ -478,6 +561,12 @@ function renderMap() {
   document.querySelectorAll('.map-no-data').forEach(el=>el.remove());
   const ocean=state.kind==='observation';$('nino34-inset').hidden=!ocean;$('ocean-readout').hidden=!ocean;$('pacific-view').hidden=!ocean;$('coast-view').hidden=!ocean;
   for(const [id,extent] of [['national-view','national'],['coast-view','coast'],['pacific-view','pacific']]){const selected=state.department==='all'&&state.oceanExtent===extent;$(id).classList.toggle('selected',selected);$(id).setAttribute('aria-pressed',String(selected));}
+  document.querySelectorAll('[data-map-mode]').forEach(button=>{
+    const mode=button.dataset.mapMode;
+    button.hidden=mode==='sst'?state.kind!=='observation':mode==='rain'?state.kind!=='forecast':state.kind!=='risk_scenario';
+  });
+  $('vectors-toggle').hidden=!ocean;
+  document.querySelector('[data-map-mode="heat"]').innerHTML='<i></i>Puntos documentados';
   document.querySelector('[data-map-mode="risk"]').innerHTML=`<i></i>Riesgo · ${HAZARDS[state.hazard]}`;
   document.querySelector('[data-map-mode="rain"]').innerHTML=`<i></i>Lluvia prevista · ${weatherProvider()}`;
   document.querySelectorAll('[data-map-mode]').forEach(b=>{const active=b.dataset.mapMode===(ocean?'sst':state.layer);b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));});
@@ -578,8 +667,14 @@ function renderMap() {
   renderInsights();
   renderLatest();
   renderRanking(groups);
+  renderPanoramaContext();
 }
-function showMapEmpty(text) { const el=document.createElement('div');el.className='map-no-data';el.textContent=text;$('map').parentNode.append(el); }
+function showMapEmpty(text) {
+  const el=document.createElement('div');el.className='map-no-data';
+  const message=document.createElement('p');message.textContent=text;
+  const reset=document.createElement('button');reset.type='button';reset.dataset.panoramaReset='';reset.className='map-reset';reset.textContent='Restablecer vista';
+  el.append(message,reset);$('map').parentNode.append(el);
+}
 
 function renderRanking(groups) {
   if (state.kind==='observation') {
@@ -780,12 +875,14 @@ async function applyFilters(fit=false) {
   if (!readFilters()) return;
   stopPlayback();
   const turn=++rendering;
+  state.filterLoading=true;state.inventoryError=false;renderPanoramaContext();
   state.forecastPage=0;state.zonePage=0;
   await Promise.all([ensureForecastHistory(),ensureGridHistory(),ensureOceanHistory(),ensureDistrictBoundaries()]);
-  try {await ensurePoints();} catch (error) {$('filter-notice').textContent='No se pudo cargar el inventario geográfico. Las otras fuentes conservan su disponibilidad.';console.error(error);}
+  try {await ensurePoints();} catch (error) {state.inventoryError=true;console.error(error);}
   if (turn!==rendering) return;
+  state.filterLoading=false;
   refreshWeatherRows();
-  $('filter-notice').textContent=`${dateLabel(state.from)} – ${dateLabel(state.to)}. ${state.to>=limaDate()?'El pronóstico muestra solo fechas de hoy en adelante; para consultar estimaciones antiguas, elige un periodo anterior a hoy.':'Estás consultando pronósticos archivados, que no representan el tiempo actual.'} El mapa del mar mantiene sus observaciones del periodo elegido. El riesgo CENEPRED corresponde a un escenario 2025–2027, no cambia con cada día. La alerta ENFEN tiene su propia fecha.`;
+  if(!state.filterInvalid)$('filter-notice').textContent=`${state.inventoryError?'No se pudo cargar el inventario geográfico; las otras fuentes conservan su disponibilidad. ':''}${dateLabel(state.from)} – ${dateLabel(state.to)}. ${state.to>=limaDate()?'El pronóstico muestra solo fechas de hoy en adelante; para consultar estimaciones antiguas, elige un periodo anterior a hoy.':'Estás consultando pronósticos archivados, que no representan el tiempo actual.'} El mapa del mar mantiene sus observaciones del periodo elegido. El riesgo CENEPRED corresponde a un escenario 2025–2027, no cambia con cada día. La alerta ENFEN tiene su propia fecha.`;
   renderKpis();renderMap();renderCharts();renderForecastTable();renderZones();
   if (fit) reframe();
 }
@@ -794,11 +891,22 @@ function setKind(kind) {
   stopPlayback();
   state.kind=kind;
   document.querySelectorAll('[data-kind]').forEach(b=>{b.classList.toggle('selected',b.dataset.kind===kind);b.setAttribute('aria-pressed',String(b.dataset.kind===kind));});
-  const options=kind==='risk_scenario'?[['heat','Lugares documentados por zona'],['risk','Distritos en riesgo alto o muy alto']]:kind==='forecast'?[['tmax','Temperatura máxima'],['tmin','Temperatura mínima'],['rain','Textos que mencionan lluvia']]:[['sst','Calor del mar respecto a lo habitual']];
+  const options=kind==='risk_scenario'?[['risk','Riesgo oficial por distrito'],['heat','Puntos documentados · no emergencias']]:kind==='forecast'?[['tmax','Temperatura máxima'],['tmin','Temperatura mínima'],['rain','Textos que mencionan lluvia']]:[['sst','Calor del mar respecto a lo habitual']];
   $('map-layer').innerHTML=options.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');
   if(kind==='forecast'){options[2][1]=modelWeather()?'Lluvia · mm en 24 horas':'Textos que mencionan lluvia';const dates=forecastDates(state.forecastRows);if(state.frameDate==='all')state.frameDate=dates.find(d=>d>=limaDate())??dates.at(-1)??'all';$('map-layer').innerHTML=options.map(([value,label])=>`<option value="${value}">${label}</option>`).join('');}
   state.layer=options[0][0];$('hazard-wrap').hidden=kind!=='risk_scenario';
   state.oceanExtent='national';renderMap();reframe();
+}
+function resetPanorama(){
+  stopPlayback();setDefaults();
+  state.oceanExtent='national';state.inspectorDepartment='all';state.forecastProvider='gfs';state.frameDate='all';
+  state.vectors=true;state.hazard='inundacion';state.frequency='weekly';state.table='districts';
+  state.weatherMotion=!matchMedia('(prefers-reduced-motion: reduce)').matches;
+  $('hazard').value='inundacion';$('frequency').value='weekly';$('risk-level').value='high';
+  $('forecast-search').value='';$('zone-search').value='';$('document-date').checked=false;
+  document.querySelectorAll('[data-table]').forEach(button=>{const active=button.dataset.table==='districts';button.classList.toggle('selected',active);button.setAttribute('aria-pressed',String(active));});
+  readFilters();refreshWeatherRows();setKind('observation');
+  void applyFilters(true);
 }
 async function exportData() {
   let rows,fields;
@@ -832,26 +940,41 @@ function bindEvents() {
   document.querySelectorAll('[data-kind]').forEach(b=>b.addEventListener('click',()=>setKind(b.dataset.kind)));
   document.querySelectorAll('[data-map-mode]').forEach(b=>b.addEventListener('click',()=>{const mode=b.dataset.mapMode;setKind(mode==='sst'?'observation':mode==='rain'?'forecast':'risk_scenario');if(mode!=='sst'){state.layer=mode;$('map-layer').value=mode;renderMap();}}));
   $('vectors-toggle').addEventListener('click',()=>{if(state.kind!=='observation'){state.vectors=true;setKind('observation');}else{state.vectors=!state.vectors;renderMap();}});
-  const showExtent=extent=>{state.oceanExtent=extent;$('department').value='all';state.district='all';state.inspectorDistrict=null;void applyFilters(true);};
+  const showExtent=extent=>{if(selectTerritory('all'))state.oceanExtent=extent;};
   $('national-view').addEventListener('click',()=>showExtent('national'));$('coverage-all').addEventListener('click',()=>showExtent('national'));
   $('coast-view').addEventListener('click',()=>showExtent('coast'));
   $('pacific-view').addEventListener('click',()=>showExtent('pacific'));$('nino34-inset').addEventListener('click',()=>showExtent(state.oceanExtent==='pacific'?'national':'pacific'));
   $('inspector-department').addEventListener('change',()=>selectTerritory($('inspector-department').value));
   $('inspector-district').addEventListener('change',()=>selectDistrict($('inspector-district').value));
   $('clear-territory').addEventListener('click',()=>showExtent('national'));
+  $('panorama-reset')?.addEventListener('click',resetPanorama);
+  $('panorama').addEventListener('click',event=>{if(event.target.closest('[data-panorama-reset]')){resetPanorama();$('panorama-reset')?.focus({preventScroll:true});}});
   $('territory-grid').addEventListener('click',event=>{const button=event.target.closest('[data-department]');if(button)selectTerritory(button.dataset.department);});
   const inspectRow=event=>{if(event.target.closest('a'))return;const row=event.target.closest('tr[data-ubigeo]');if(row)selectDistrict(row.dataset.ubigeo);};
   $('zone-body').addEventListener('click',inspectRow);$('zone-body').addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();inspectRow(event);}});
   $('map-layer').addEventListener('change',()=>{state.layer=$('map-layer').value;renderMap();});
   $('hazard').addEventListener('change',()=>{state.hazard=$('hazard').value;state.zonePage=0;renderKpis();renderMap();renderZones();});
   $('map-reset').addEventListener('click',reframe);
+  const mapPanel=document.querySelector('.map-panel');
+  const originalMapAttributes=new Map(['role','aria-modal','aria-labelledby','tabindex'].map(name=>[name,mapPanel.getAttribute(name)]));
   const toggleMap=expanded=>{
-    document.querySelector('.map-panel').classList.toggle('expanded',expanded);document.body.classList.toggle('map-expanded',expanded);
+    mapPanel.classList.toggle('expanded',expanded);document.body.classList.toggle('map-expanded',expanded);
     $('map-expand').setAttribute('aria-expanded',String(expanded));$('map-expand').textContent=expanded?'Cerrar mapa':'Ampliar mapa';
+    if(expanded){mapPanel.setAttribute('role','dialog');mapPanel.setAttribute('aria-modal','true');mapPanel.setAttribute('aria-labelledby','map-title');mapPanel.setAttribute('tabindex','-1');mapPanel.focus({preventScroll:true});}
+    else{for(const [name,value] of originalMapAttributes){if(value===null)mapPanel.removeAttribute(name);else mapPanel.setAttribute(name,value);}$('map-expand').focus({preventScroll:true});}
     requestAnimationFrame(()=>{state.map.invalidateSize();reframe();});
   };
   $('map-expand').addEventListener('click',()=>toggleMap($('map-expand').getAttribute('aria-expanded')!=='true'));
-  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&$('map-expand').getAttribute('aria-expanded')==='true'){toggleMap(false);$('map-expand').focus();}});
+  document.addEventListener('keydown',event=>{
+    if($('map-expand').getAttribute('aria-expanded')!=='true')return;
+    if(event.key==='Escape'){event.preventDefault();toggleMap(false);return;}
+    if(event.key!=='Tab')return;
+    const controls=[...mapPanel.querySelectorAll('a[href],button,input,select,textarea,[tabindex]')].filter(element=>!element.disabled&&element.tabIndex>=0&&element.getClientRects().length&&getComputedStyle(element).visibility!=='hidden'&&!element.closest('[hidden]'));
+    if(!controls.length){event.preventDefault();mapPanel.focus();return;}
+    const first=controls[0],last=controls.at(-1),active=document.activeElement;
+    if(event.shiftKey&&(active===first||active===mapPanel||!mapPanel.contains(active))){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&(active===last||active===mapPanel||!mapPanel.contains(active))){event.preventDefault();first.focus();}
+  });
   $('frequency').addEventListener('change',()=>{state.frequency=$('frequency').value;renderKpis();renderCharts();if(state.kind==='observation')renderMap();});
   $('forecast-search').addEventListener('input',()=>{state.forecastPage=0;renderForecastTable();});
   $('forecast-prev').addEventListener('click',()=>{state.forecastPage--;renderForecastTable();});$('forecast-next').addEventListener('click',()=>{state.forecastPage++;renderForecastTable();});
@@ -883,5 +1006,8 @@ try {
 } catch(error) {
   $('load-message').hidden=false;$('load-message').classList.add('error');
   $('load-message').textContent='No se pudo cargar el conjunto de datos publicado. Revise la conexión y el estado de las ejecuciones en GitHub Actions.';
+  state.filterLoading=false;
+  if($('panorama-status')){$('panorama-status').textContent='No se pudieron cargar los datos del mapa. Comprueba la conexión y las fuentes oficiales.';$('panorama-status').dataset.state='error';}
+  $('panorama')?.setAttribute('aria-busy','false');
   console.error(error);
 }

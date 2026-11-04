@@ -1,0 +1,125 @@
+/* Panorama: controles legibles y contexto de la selección, sin alterar datos. */
+html { scroll-padding-top: 90px; }
+#main #panorama, #main #consulta { scroll-margin-top: 0; }
+.radar-header .radar-header-actions { width: auto !important; flex: 0 0 auto; min-width: 0; }
+#panorama { min-width: 0; }
+#panorama > *, #panorama .map-top > *, #panorama .control-stack { min-width: 0; }
+.panorama-heading { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px 24px; padding: 4px 0 6px; }
+.panorama-heading h2 { margin: 8px 0 10px; color: var(--oceano-text); font: 750 clamp(1.6rem,2.8vw,2.25rem)/1.2 Inter,sans-serif; letter-spacing: -.035em; text-wrap: balance; }
+.panorama-heading > div > p { margin: 0; color: var(--oceano-muted); font: 14px/1.7 Inter,sans-serif; }
+.panorama-heading .kicker { color: var(--oceano-cyan); font-size: 10px; letter-spacing: .09em; }
+.panorama-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.panorama-action { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 14px; border: 1px solid var(--oceano-line); border-radius: 9px; background: var(--oceano-base); color: var(--oceano-text); font: 650 12px/1.4 Inter,sans-serif; }
+.panorama-action.primary { background: var(--oceano-cyan); color: #082331; border-color: var(--oceano-cyan); }
+.panorama-action:hover { border-color: var(--oceano-cyan); }
+.panorama-context { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 7px 20px; padding: 13px 16px; border: 1px solid var(--oceano-line-soft); border-radius: 10px; background: var(--oceano-base); color: var(--oceano-text); font: 550 12px/1.6 Inter,sans-serif; overflow-wrap: anywhere; }
+#panorama-period { margin-left: auto; color: var(--oceano-muted); }
+.panorama-status { grid-column: 1 / -1; margin: -7px 0 0; color: var(--oceano-muted); font: 12px/1.6 Inter,sans-serif; overflow-wrap: anywhere; }
+.panorama-status:empty { display: none; }
+#main #panorama .map-panel { background: var(--oceano-base); border-radius: 16px; }
+#panorama .map-top { padding: 20px !important; background: var(--oceano-base); }
+#panorama .map-top h2 { font: 750 21px/1.4 Inter,sans-serif; letter-spacing: -.02em; }
+#panorama .map-top .coordinates { display: none; }
+#panorama .map-top .pill { font: 650 9px/1.5 Inter,sans-serif; white-space: nowrap; }
+#panorama .mode-switch { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; padding: 5px; border-color: var(--oceano-line); background: #061725; border-radius: 10px; }
+#panorama .mode-switch button { min-width: 0; min-height: 46px; padding: 8px; border-radius: 7px; font: 650 12px/1.4 Inter,sans-serif; white-space: normal; color: var(--oceano-muted); }
+#panorama .mode-switch button.selected { background: #123c50; border-color: #48adca; color: #e6fbff; }
+#panorama .mode-switch button[data-kind="forecast"].selected { background: #123c50; border-color: #48adca; color: #e6fbff; }
+#panorama .mode-switch button[data-kind="risk_scenario"].selected { background: #3b3026; border-color: #cc9d59; color: #ffe4b9; }
+#panorama .layer-switches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+#panorama .layer-button { min-height: 44px; padding: 8px 12px; font: 600 12px/1.4 Inter,sans-serif; border-radius: 8px; white-space: normal; }
+.panorama-map-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--oceano-line-soft); }
+#panorama .panorama-map-tools .map-reset, .panorama-zone-link { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 9px 12px; border: 1px solid var(--oceano-line); border-radius: 8px; background: #0a2032; color: var(--oceano-text); font: 600 12px/1.4 Inter,sans-serif; }
+.panorama-zone-link { margin-left: auto; color: var(--oceano-cyan); }
+#panorama .simple-map-options { margin: 0; border: 0; border-top: 1px solid var(--oceano-line-soft); border-bottom: 1px solid var(--oceano-line-soft); border-radius: 0; }
+#panorama .simple-map-options > summary { padding: 12px 18px; min-height: 44px; font: 600 12px/1.5 Inter,sans-serif; }
+#panorama .map-controls { padding: 14px 16px; gap: 12px; }
+#panorama .map-controls label { min-width: 0; font: 550 12px/1.5 Inter,sans-serif; }
+#panorama .map-controls select, #panorama .map-extents button, #panorama #map-reset { min-height: 44px; font-size: 12px; }
+#panorama .map-container { height: clamp(480px,64svh,640px); min-height: 0; }
+#panorama .map-guide { padding: 15px 18px 8px; margin: 0; color: var(--oceano-text); font: 13px/1.75 Inter,sans-serif; }
+#panorama .map-gesture-hint { padding: 4px 18px 14px; color: var(--oceano-muted); font: 12px/1.7 Inter,sans-serif; }
+#panorama .map-method { margin: 0 18px 12px; }
+#panorama .map-method > summary { min-height: 44px; font-size: 12px; }
+#panorama .map-overlay-note { max-width: 55%; font-size: 10px; line-height: 1.5; }
+#panorama .map-legend { font-size: 11px; line-height: 1.65; }
+#panorama .map-legend .legend-title { font-size: 11px; }
+#panorama .legend-ends, #panorama .legend-empty { font-size: 10px; }
+#panorama .weather-controls { gap: 10px; padding: 14px 16px; background: #0a2032; }
+#panorama .weather-controls label { flex: 1 1 155px; min-width: 0; font: 550 12px/1.5 Inter,sans-serif; color: var(--oceano-muted); }
+#panorama .weather-controls select { width: 100%; min-width: 0; min-height: 44px; font: 500 13px/1.4 Inter,sans-serif; }
+#panorama .weather-controls button { min-height: 44px; font-size: 12px; }
+#panorama .weather-controls p { font: 11px/1.65 Inter,sans-serif; }
+#panorama .inspector-label { color: var(--oceano-cyan); font-size: 11px; line-height: 1.65; }
+#panorama .territory-picker { font: 600 13px/1.5 Inter,sans-serif; }
+#panorama .territory-picker select { min-width: 0; max-width: 100%; min-height: 46px; font: 500 15px/1.5 Inter,sans-serif; }
+#panorama .inspector-metric { min-width: 0; border-color: var(--oceano-line-soft); background: #0a2032; }
+#panorama .inspector-metric span { font: 600 10px/1.5 Inter,sans-serif; }
+#panorama .inspector-metric b { font-family: Inter,sans-serif; }
+#panorama .inspector-facts { min-width: 0; }
+#panorama .inspector-facts dd { overflow-wrap: anywhere; }
+#panorama .map-no-data { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 24px; text-align: center; font: 550 14px/1.7 Inter,sans-serif; }
+#panorama .map-no-data button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--oceano-line); border-radius: 8px; background: var(--oceano-raised); color: var(--oceano-text); font-size: 13px; }
+#panorama .map-panel.expanded { height: 100dvh; min-height: 0; overflow: auto; }
+#panorama .map-panel.expanded .map-container { min-height: 200px; flex: 1 0 200px; height: auto; }
+#panorama .map-panel.expanded .panorama-map-tools { flex-shrink: 0; }
+#panorama .map-panel.expanded .panorama-zone-link { display: none; }
+#panorama button:focus-visible, #panorama a:focus-visible, #panorama select:focus-visible { outline: 3px solid var(--oceano-cyan); outline-offset: 3px; }
+#filters [aria-invalid="true"] { border-color: #ff8e79; outline: 2px solid #ff8e79; outline-offset: 2px; }
+@media(max-width:1100px) {
+  .panorama-heading { grid-template-columns: minmax(0,1fr); }
+  .panorama-actions { align-self: start; }
+}
+@media(max-width:800px) {
+  html { scroll-padding-top: 76px; }
+  .radar-header-actions { width: auto !important; flex: 0 0 auto; min-width: 0; }
+  .radar-header-inner { justify-content: space-between; }
+  .radar-brand { min-width: 0; }
+  .mobile-nav { grid-template-columns: repeat(5,minmax(0,1fr)); }
+  .mobile-nav a { min-width: 0; min-height: 48px; font-size: 9px; }
+  .mobile-nav a span { font-size: 19px; line-height: 1.1; }
+  .panorama-heading { gap: 14px; }
+  .panorama-heading > div > p { font-size: 13px; }
+  .panorama-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .panorama-actions .primary { grid-column: 1 / -1; }
+  .panorama-action { padding: 10px; font-size: 12px; }
+  .panorama-context { display: grid; gap: 5px; padding: 12px; font-size: 12px; }
+  #panorama-period { margin-left: 0; }
+  #panorama .map-top { padding: 16px !important; }
+  #panorama .map-top h2 { font-size: 19px; }
+  #panorama .map-top .pill { display: none; }
+  #panorama .mode-switch button { min-height: 48px; padding: 8px 5px; font-size: 11px; }
+  #panorama .layer-button { font-size: 11px; }
+  .panorama-map-tools { gap: 8px; padding: 10px; }
+  #panorama .panorama-map-tools .map-reset, .panorama-zone-link { flex: 1 1 auto; padding: 8px 10px; font-size: 11px; }
+  #panorama .map-container { height: clamp(420px,62svh,540px); min-height: 0; }
+  #panorama .map-overlay-note { max-width: none; font-size: 10px; }
+  #panorama .ocean-inset { top: 66px; width: 138px; padding: 9px; }
+  #panorama .ocean-inset > span { font-size: 9px; }
+  #panorama .ocean-inset b { font-size: 21px; }
+  #panorama .ocean-inset small { font-size: 9px; }
+  #panorama .map-legend { max-width: calc(100% - 16px); width: 174px; padding: 9px; }
+  #panorama .ocean-readout { max-width: 42%; }
+  #panorama .ocean-readout span { font-size: 8px; }
+  #panorama .ocean-readout b { font-size: 9px; }
+  #panorama .map-guide { padding: 14px 14px 8px; }
+  #panorama .map-gesture-hint { padding-inline: 14px; }
+  #panorama .weather-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); padding: 12px; }
+  #panorama .weather-controls #forecast-provider-wrap { grid-column: 1 / -1; }
+  #panorama .weather-controls select, #panorama .territory-picker select { font-size: 16px; }
+  #panorama .weather-controls p { grid-column: 1 / -1; }
+  #panorama .control-stack .inspector { padding: 18px !important; }
+}
+@media(max-width:350px) {
+  .radar-brand .brand-lines strong { font-size: 14px; }
+  .radar-header-actions { gap: 2px; }
+  #panorama .mode-switch button { font-size: 10px; }
+  #panorama .inspector-metrics { grid-template-columns: minmax(0,1fr); }
+}
+@media(max-height:520px) and (max-width:1023px) {
+  #panorama .map-panel.expanded .weather-controls { display: flex; }
+  #panorama .map-panel.expanded .weather-controls select { min-height: 44px; max-width: 180px; font-size: 13px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  #panorama button { transition: none; }
+}

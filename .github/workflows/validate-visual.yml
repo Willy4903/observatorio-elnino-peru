@@ -9,6 +9,7 @@ on:
       - 'tests/lectura_ciudadana.test.mjs'
       - 'tests/guide3d.test.mjs'
       - 'tests/ocean_theme.test.mjs'
+      - 'tests/panorama.e2e.cjs'
       - '.github/workflows/validate-visual.yml'
   push:
     branches: [main]
@@ -17,6 +18,7 @@ on:
       - 'site/assets/**'
       - 'tests/ui_wave_design.test.mjs'
       - 'tests/ui_simplicity.test.mjs'
+      - 'tests/panorama.e2e.cjs'
   workflow_dispatch:
 
 permissions:
@@ -28,6 +30,9 @@ jobs:
     timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - name: Comprobar estructura, fuentes, recursos y actualización
         run: node --test tests/ui_simplicity.test.mjs tests/ui_wave_design.test.mjs tests/lectura_ciudadana.test.mjs tests/guide3d.test.mjs tests/ocean_theme.test.mjs
       - name: Comprobar módulos y scripts
@@ -36,3 +41,10 @@ jobs:
           node --check site/assets/appearance.mjs
           node --check site/assets/guide3d.mjs
           node --check site/assets/ocean-experience.mjs
+          node --check tests/panorama.e2e.cjs
+      - name: Preparar Chromium para las pruebas del mapa
+        run: |
+          npm install --prefix "$RUNNER_TEMP/observatorio-browser" --no-save --package-lock=false playwright@1.62.1
+          node "$RUNNER_TEMP/observatorio-browser/node_modules/playwright/cli.js" install --with-deps chromium
+      - name: Probar filtros, accesibilidad y vista móvil de Panorama
+        run: NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/panorama.e2e.cjs

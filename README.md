@@ -71,6 +71,18 @@ node --check site/assets/glossary.mjs
 python -m http.server 8000 --directory dist
 ```
 
+La vista Panorama distingue mar, pronóstico y riesgo, muestra la zona y el periodo aplicados y permite restablecer la selección. Si el rango de fechas es inválido, conserva la última selección válida. Las acciones de ampliar el mapa y pausar sus gestos están disponibles junto a las capas.
+
+Las pruebas funcionales de Panorama usan los datos incluidos y comprueban filtros, cifras distritales, foco de teclado y tamaños de 320 a 1440 px. Para ejecutarlas con Playwright instalado:
+
+```bash
+node tests/panorama.e2e.cjs
+# Si Chromium ya está instalado en el sistema:
+PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node tests/panorama.e2e.cjs
+```
+
+El workflow de validación visual prepara Playwright y Chromium sin añadir dependencias al sitio estático.
+
 El CSS de utilidades está precompilado. Si se cambian sus clases, regenerarlo con `npx --yes --package tailwindcss@3.4.17 tailwindcss -c design/tailwind.config.cjs -i design/input.css -o site/assets/vendor/tailwind.css --minify`.
 
 Abre `http://localhost:8000`. Para actualizar una fuente:
