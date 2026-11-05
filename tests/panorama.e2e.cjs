@@ -49,6 +49,7 @@ async function contextFor(browser, base, width, height) {
 
 async function load(page, base) {
   await page.goto(base + '#panorama');
+  await page.evaluate(() => { const d = document.getElementById('detalle-tecnico'); if (d) d.open = true; });
   await page.waitForFunction(year => document.querySelector('#inspector-department')?.options.length === 26 &&
     document.querySelector('#panorama-period')?.textContent.includes(year) &&
     document.querySelector('#weather-days [data-weather-date]'), referenceYear);
