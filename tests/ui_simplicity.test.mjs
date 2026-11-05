@@ -8,7 +8,7 @@ const workflow=readFileSync(new URL('../.github/workflows/monitor.yml',import.me
 const pipeline=readFileSync(new URL('../pipeline/update.py',import.meta.url),'utf8');
 
 test('la portada muestra tres preguntas comprensibles y las fuentes',()=>{
-  for(const phrase of ['lo que debes saber','¿Qué es El Niño y por qué nos importa?','¿Qué se espera en mi distrito?','¿Dónde existe mayor riesgo?','¿Qué puedo hacer para estar preparado?'])assert.ok(html.includes(phrase),phrase);
+  for(const phrase of ['lo que debes saber','El Niño en 1 minuto','¿Cómo funciona El Niño y qué puede pasar en el Perú?','¿Qué se espera en mi distrito?','¿Dónde existe mayor riesgo?','¿Qué puedo hacer para estar preparado?'])assert.ok(html.includes(phrase),phrase);
   for(const id of ['que-es','estado-enfen','ultimo','preparacion','consulta','zonas','fuentes','insights'])assert.match(html,new RegExp('id="'+id+'"'));
 });
 test('los filtros complejos conservan sus identificadores y se muestran bajo demanda',()=>{

@@ -13,7 +13,7 @@ test('ENFEN tiene una explicación dedicada para personas sin formación técnic
     assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
   }
   assert.match(html,/href="#estado-enfen"/);
-  assert.match(html,/¿Qué significa una alerta\?/);
+  assert.match(html,/¿Qué es ENFEN y qué significa una alerta\?/);
   assert.match(html,/No significa/);
   assert.match(style,/citizen-enfen-body/);
 });
@@ -49,10 +49,15 @@ test('los escenarios de riesgo no se declaran vencidos por una consulta fallida'
 
 
 test('el aprendizaje empieza por la definición y termina en acciones respaldadas por INDECI',()=>{
-  for(const id of ['que-es','primer-title','preparacion','preparation-title','detalle-tecnico']) {
+  for(const id of ['que-es','un-minuto-title','preparacion','preparation-title','detalle-tecnico']) {
     assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
   }
-  assert.ok(html.indexOf('id="que-es"')<html.indexOf('id="estado-enfen"'));
+  assert.ok(html.indexOf('id="estado-enfen"')<html.indexOf('id="un-minuto"'));
+  assert.ok(html.indexOf('id="un-minuto"')<html.indexOf('id="ultimo"'));
+  assert.ok(html.indexOf('id="ultimo"')<html.indexOf('id="que-es"'));
+  assert.ok(html.indexOf('id="que-es"')<html.indexOf('id="guia-inicio"'));
+  assert.ok(html.indexOf('id="guia-inicio"')<html.indexOf('id="consulta"'));
+  assert.ok(html.indexOf('id="consulta"')<html.indexOf('id="preparacion"'));
   assert.ok(html.indexOf('id="ultimo"')<html.indexOf('id="preparacion"'));
   assert.ok(html.indexOf('id="preparacion"')<html.indexOf('id="insights"'));
   assert.match(html,/Una alerta sobre El Niño no es lo mismo que una orden de evacuación/);

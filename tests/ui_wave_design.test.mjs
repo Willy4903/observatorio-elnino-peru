@@ -6,13 +6,13 @@ const css=readFileSync(new URL('../site/assets/visual.css',import.meta.url),'utf
 const count=(text,term)=>text.split(term).length-1;
 
 test('cabecera clara con menú real y navegación hacia secciones existentes',()=>{
-  for(const label of ['Observatorio','El Niño Perú','Inicio','¿Qué es El Niño?','Alerta oficial','Mi distrito','Cómo prepararse']){
+  for(const label of ['Observatorio','El Niño Perú','Inicio','Qué es','Alerta oficial','Mi distrito','Cómo prepararme','Datos y fuentes']){
     assert.ok(html.includes(label),'Falta '+label);
   }
   for(const id of ['top','que-es','estado-enfen','ultimo','preparacion','panorama','consulta','zonas','fuentes','glosario']){
     assert.match(html,new RegExp('id="'+id+'"'));
   }
-  for(const route of ['#top','#que-es','#estado-enfen','#ultimo','#preparacion','#panorama','#consulta','#fuentes','#zonas']){
+  for(const route of ['#top','#que-es','#estado-enfen','#consulta','#preparacion','#fuentes','#glosario']){
     assert.ok(html.includes('href="'+route+'"'),'Ruta '+route);
   }
   assert.equal(count(html,'id="open-navigation"'),1);
@@ -46,7 +46,7 @@ test('tres tarjetas ilustradas y fuentes oficiales separadas',()=>{
   assert.ok(html.includes('¿Qué dice ENFEN?'));
   assert.ok(html.includes('¿Qué se espera en mi distrito?'));
   assert.ok(html.includes('¿Dónde existe mayor riesgo?'));
-  assert.ok(html.includes('Imágenes ilustrativas.'));
+  assert.ok(html.includes('Imágenes ilustrativas'));
   assert.ok(html.includes('CENEPRED'));
   assert.equal(count(html,'id="alert-strip"'),1);
   assert.equal(count(html,'id="enfen-state"'),1);

@@ -7,25 +7,25 @@ const subjects = [
     key: 'enfen',
     subject: '¿Qué dice ENFEN?',
     tag: 'ALERTA OFICIAL',
-    title: 'Una alerta no es una inundación',
+    title: 'Una alerta es un aviso para prepararse',
     concept: 'ENFEN reúne a instituciones que vigilan El Niño y publican su situación oficial. Una alerta invita a informarnos y prepararnos.',
-    takeaway: 'No significa que hoy vaya a llover en todas las ciudades.'
+    takeaway: 'Es una invitación a estar atento y organizado, no a alarmarse.'
   },
   {
     key: 'pronostico',
     subject: '¿Qué se espera en mi distrito?',
     tag: 'PRONÓSTICO DEL TIEMPO',
-    title: 'Un pronóstico no es una certeza',
+    title: 'Un pronóstico es una estimación',
     concept: 'Los modelos estiman la lluvia y la temperatura de los próximos días. Sus resultados pueden cambiar cuando reciben nuevos datos.',
-    takeaway: 'Un punto del distrito no describe todas sus calles ni indica la probabilidad de lluvia.'
+    takeaway: 'Representa un punto del distrito. Conviene volver a consultarlo, porque puede cambiar.'
   },
   {
     key: 'riesgo',
     subject: '¿Dónde existe mayor riesgo?',
     tag: 'MAPAS DE RIESGO',
-    title: 'Riesgo no significa desastre',
+    title: 'Riesgo es saber dónde prevenir',
     concept: 'CENEPRED identifica distritos donde una inundación o un huaico podría causar daños. Sirve para planificar medidas preventivas.',
-    takeaway: 'Un mapa de riesgo no confirma una emergencia en este momento.'
+    takeaway: 'Sirve para planificar con tiempo; no describe una emergencia de hoy.'
   }
 ];
 

@@ -45,3 +45,8 @@ export function weatherMotionLayer(rows,{metric='tmax',enabled=true}={}){
     }
   }))();
 }
+
+// Referencia aproximada para describir la lluvia estimada en 24 horas. NO es un criterio oficial: no se encontró una tabla en
+// milímetros publicada por SENAMHI o INDECI. Se muestra siempre como «referencial» y no indica nivel de riesgo.
+export const RAIN_REFERENCE_MM_24H=[{max:1,label:'casi sin lluvia'},{max:10,label:'ligera'},{max:30,label:'moderada'},{max:Infinity,label:'fuerte'}];
+export function rainLabel(mm){return Number.isFinite(mm)?RAIN_REFERENCE_MM_24H.find(x=>mm<x.max).label:'sin dato';}
