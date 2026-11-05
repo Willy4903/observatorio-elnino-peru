@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Observatorio Ciudadano El Niño: Perú y el Mundo (2026-2027)</title>
+<meta name="description" content="Plataforma ciudadana que explica en lenguaje sencillo qué es El Niño, qué ocurre hoy en el Perú y el mundo, sus consecuencias y qué hacer en casa.">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --verde:#16a34a; --amarillo:#eab308; --naranja:#ea580c; --rojo:#dc2626;
+    --ink:#0f172a; --muted:#475569;
+  }
+  html{scroll-behavior:smooth}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:#f8fafc;font-size:17px;line-height:1.65}
+  .tab-btn[aria-selected="true"]{background:#0f172a;color:#fff;box-shadow:0 2px 8px rgba(15,23,42,.25)}
+  .tab-panel{display:none}
+  .tab-panel.active{display:block;animation:fade .35s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .pulse-dot{animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .img-card{position:relative;overflow:hidden;background:linear-gradient(135deg,#0ea5e9,#1e3a8a)}
+  .img-card img{width:100%;height:100%;object-fit:cover;display:block}
+  .img-fallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:rgba(255,255,255,.85)}
+  .wave-move{animation:drift 6s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:translateX(0)}to{transform:translateX(10px)}}
+  .check-item input{width:1.4rem;height:1.4rem;accent-color:#16a34a;flex-shrink:0}
+  .check-item.done span.label{text-decoration:line-through;color:#64748b}
+  :focus-visible{outline:3px solid #2563eb;outline-offset:2px}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body id="top">
+
+<!-- ENCABEZADO -->
+<header class="bg-slate-900 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <div class="flex items-center gap-2 font-semibold">
+      <i data-i="waves" class="w-6 h-6 text-sky-400"></i>
+      <span>Observatorio Ciudadano El Niño</span>
+    </div>
+    <span class="text-sm text-slate-300">Actualizado: octubre/noviembre 2026</span>
+  </div>
+</header>
+
+<!-- BANNER DE ALERTA GLOBAL -->
+<section aria-label="Alerta global vigente" class="bg-gradient-to-r from-red-700 via-orange-600 to-orange-500 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-8 md:py-12">
+    <div class="inline-flex items-center gap-2 bg-white/15 rounded-full px-3 py-1 text-sm font-semibold mb-4">
+      <span class="w-2.5 h-2.5 rounded-full bg-white pulse-dot"></span> ALERTA GLOBAL VIGENTE
+    </div>
+    <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">Advertencia de El Niño Fuerte a Muy Fuerte</h1>
+    <p class="mt-3 text-lg md:text-xl max-w-3xl text-orange-50">
+      El Niño: Perú y el Mundo (2026-2027). Aquí te explicamos, sin términos difíciles, qué está pasando en el mar, cómo puede afectar tu vida y qué puedes hacer hoy en tu casa.
+    </p>
+    <div class="mt-6 flex flex-wrap gap-3">
+      <button data-go="s1" class="bg-white text-slate-900 font-semibold rounded-lg px-5 py-3 hover:bg-orange-50">Entender El Niño</button>
+      <button data-go="s4" class="bg-slate-900/40 border border-white/50 font-semibold rounded-lg px-5 py-3 hover:bg-slate-900/60">Ir directo a qué hacer en casa</button>
+    </div>
+  </div>
+</section>
+
+<!-- SEMÁFORO -->
+<section aria-label="Cómo leer los colores" class="bg-white border-b border-slate-200">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+    <span class="font-semibold text-slate-700">Cómo leer los colores:</span>
+    <span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded-full" style="background:var(--verde)"></span>Verde: normal</span>
+    <span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded-full" style="background:var(--amarillo)"></span>Amarillo: vigilancia</span>
+    <span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded-full" style="background:var(--naranja)"></span>Naranja: alerta</span>
+    <span class="inline-flex items-center gap-2"><span class="w-4 h-4 rounded-full" style="background:var(--rojo)"></span>Rojo: peligro</span>
+  </div>
+</section>
+
+<!-- NAVEGACIÓN POR PESTAÑAS -->
+<nav class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200" aria-label="Secciones">
+  <div class="max-w-6xl mx-auto px-2 py-2 flex gap-2 overflow-x-auto" role="tablist">
+    <button role="tab" id="tab-s1" aria-controls="s1" aria-selected="true"  class="tab-btn whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200">1. Qué es El Niño</button>
+    <button role="tab" id="tab-s2" aria-controls="s2" aria-selected="false" class="tab-btn whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200">2. Qué pasa hoy</button>
+    <button role="tab" id="tab-s3" aria-controls="s3" aria-selected="false" class="tab-btn whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200">3. Consecuencias</button>
+    <button role="tab" id="tab-s4" aria-controls="s4" aria-selected="false" class="tab-btn whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200">4. Qué hacer en casa</button>
+  </div>
+</nav>
+
+<main class="max-w-6xl mx-auto px-4 py-8">
+
+<!-- ================= SECCIÓN 1 ================= -->
+<section id="s1" class="tab-panel active" role="tabpanel" aria-labelledby="tab-s1">
+  <p class="text-sm font-semibold text-sky-700 uppercase tracking-wide">Sección 1 · Fuente: NASA y OMM</p>
+  <h2 class="text-3xl font-extrabold mt-1">¿Qué es El Niño y cómo funciona?</h2>
+  <p class="mt-3 max-w-3xl text-slate-700">
+    Imagina el océano Pacífico como una gran bañera. Normalmente el viento empuja el agua tibia hacia un lado. En El Niño, ese empuje falla y el agua tibia vuelve hacia nuestras costas.
+  </p>
+
+  <!-- Comparador -->
+  <div class="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div class="p-4 md:p-6 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+      <h3 class="text-xl font-bold">Comparador: un año normal frente a un año de El Niño</h3>
+      <div class="inline-flex rounded-xl bg-slate-100 p-1" role="group" aria-label="Elegir condición">
+        <button id="btn-normal" class="cmp-btn rounded-lg px-4 py-2 font-semibold text-sm" aria-pressed="true">Año normal</button>
+        <button id="btn-nino" class="cmp-btn rounded-lg px-4 py-2 font-semibold text-sm" aria-pressed="false">Año El Niño</button>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-5">
+      <div class="lg:col-span-3 p-4 md:p-6">
+        <!-- SVG NORMAL -->
+        <svg id="svg-normal" viewBox="0 0 700 340" class="w-full h-auto rounded-xl" role="img" aria-label="Esquema del Pacífico en un año normal: vientos hacia Asia, agua caliente lejos de Perú y agua fría subiendo frente a la costa">
+          <defs>
+            <linearGradient id="skyN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0f2fe"/><stop offset="1" stop-color="#f0f9ff"/></linearGradient>
+            <linearGradient id="seaN" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f97316"/><stop offset=".35" stop-color="#fb923c"/><stop offset=".65" stop-color="#38bdf8"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient>
+            <marker id="arrW" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0f172a"/></marker>
+            <marker id="arrB" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#1d4ed8"/></marker>
+          </defs>
+          <rect width="700" height="340" fill="url(#skyN)"/>
+          <circle cx="90" cy="48" r="26" fill="#fde047"/>
+          <!-- océano -->
+          <rect x="40" y="150" width="620" height="140" fill="url(#seaN)"/>
+          <path d="M40 150 Q200 140 350 150 T660 150" stroke="#fff" stroke-opacity=".6" fill="none" stroke-width="3" class="wave-move"/>
+          <!-- termoclina -->
+          <path d="M40 200 Q300 205 480 240 T660 270" stroke="#fff" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+          <text x="60" y="222" fill="#fff" font-size="12" font-weight="700">Agua caliente acumulada</text>
+          <!-- tierras -->
+          <path d="M0 150 L40 150 L40 300 L0 300Z" fill="#65a30d"/>
+          <path d="M660 150 L700 120 L700 300 L660 300Z" fill="#65a30d"/>
+          <text x="2" y="320" font-size="12" font-weight="700" fill="#0f172a">ASIA / AUSTRALIA</text>
+          <text x="570" y="320" font-size="12" font-weight="700" fill="#0f172a">PERÚ</text>
+          <!-- vientos -->
+          <line x1="560" y1="85" x2="150" y2="85" stroke="#0f172a" stroke-width="5" marker-end="url(#arrW)"/>
+          <line x1="520" y1="115" x2="200" y2="115" stroke="#0f172a" stroke-width="5" marker-end="url(#arrW)"/>
+          <text x="230" y="70" font-size="13" font-weight="700" fill="#0f172a">Vientos alisios fuertes: empujan el agua tibia lejos de Perú</text>
+          <!-- afloramiento -->
+          <line x1="600" y1="270" x2="600" y2="190" stroke="#1d4ed8" stroke-width="5" marker-end="url(#arrB)"/>
+          <line x1="560" y1="270" x2="560" y2="190" stroke="#1d4ed8" stroke-width="5" marker-end="url(#arrB)"/>
+          <text x="370" y="262" font-size="13" font-weight="700" fill="#fff">Agua fría y rica en alimento sube (afloramiento)</text>
+          <!-- peces -->
+          <g fill="#fff" opacity=".9"><ellipse cx="520" cy="215" rx="12" ry="5"/><ellipse cx="545" cy="230" rx="12" ry="5"/><ellipse cx="500" cy="238" rx="12" ry="5"/></g>
+          <!-- nubes pequeñas -->
+          <g fill="#fff"><ellipse cx="170" cy="40" rx="36" ry="12"/><ellipse cx="200" cy="34" rx="26" ry="12"/></g>
+        </svg>
+
+        <!-- SVG EL NIÑO -->
+        <svg id="svg-nino" viewBox="0 0 700 340" class="w-full h-auto rounded-xl hidden" role="img" aria-label="Esquema del Pacífico en un año El Niño: vientos débiles, agua caliente regresa hacia Perú, no sube agua fría y se forman nubes de tormenta">
+          <defs>
+            <linearGradient id="skyE" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#94a3b8"/><stop offset="1" stop-color="#cbd5e1"/></linearGradient>
+            <linearGradient id="seaE" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fb923c"/><stop offset=".5" stop-color="#f97316"/><stop offset="1" stop-color="#dc2626"/></linearGradient>
+            <marker id="arrW2" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#0f172a"/></marker>
+            <marker id="arrR" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#7f1d1d"/></marker>
+          </defs>
+          <rect width="700" height="340" fill="url(#skyE)"/>
+          <!-- océano caliente -->
+          <rect x="40" y="150" width="620" height="140" fill="url(#seaE)"/>
+          <path d="M40 150 Q200 160 350 150 T660 150" stroke="#fff" stroke-opacity=".6" fill="none" stroke-width="3" class="wave-move"/>
+          <path d="M40 235 Q300 240 480 270 T660 285" stroke="#fff" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+          <text x="60" y="265" fill="#fff" font-size="12" font-weight="700">El calor se hunde y se extiende</text>
+          <path d="M0 150 L40 150 L40 300 L0 300Z" fill="#a16207"/>
+          <path d="M660 150 L700 120 L700 300 L660 300Z" fill="#65a30d"/>
+          <text x="2" y="320" font-size="12" font-weight="700" fill="#0f172a">ASIA / AUSTRALIA</text>
+          <text x="570" y="320" font-size="12" font-weight="700" fill="#0f172a">PERÚ</text>
+          <!-- viento débil -->
+          <line x1="400" y1="95" x2="320" y2="95" stroke="#0f172a" stroke-width="3" stroke-dasharray="6 5" marker-end="url(#arrW2)"/>
+          <text x="150" y="130" font-size="13" font-weight="700" fill="#0f172a">Vientos débiles o invertidos</text>
+          <!-- agua caliente regresa -->
+          <line x1="140" y1="195" x2="580" y2="195" stroke="#7f1d1d" stroke-width="6" marker-end="url(#arrR)"/>
+          <text x="220" y="185" font-size="13" font-weight="700" fill="#fff">La masa de agua caliente regresa hacia Perú</text>
+          <!-- sin afloramiento -->
+          <g stroke="#1e3a8a" stroke-width="5"><line x1="580" y1="285" x2="580" y2="250"/><line x1="540" y1="285" x2="540" y2="250"/></g>
+          <path d="M565 262 l30 -22 M595 262 l-30 -22" stroke="#fff" stroke-width="5" stroke-linecap="round" transform="translate(-2 6)"/>
+          <text x="370" y="278" font-size="12" font-weight="700" fill="#fff">El agua fría queda bloqueada</text>
+          <!-- tormenta -->
+          <g fill="#475569"><ellipse cx="560" cy="48" rx="70" ry="24"/><ellipse cx="610" cy="60" rx="50" ry="22"/><ellipse cx="510" cy="64" rx="48" ry="20"/></g>
+          <g stroke="#38bdf8" stroke-width="3" stroke-linecap="round"><line x1="520" y1="88" x2="512" y2="112"/><line x1="550" y1="90" x2="542" y2="114"/><line x1="580" y1="90" x2="572" y2="114"/><line x1="610" y1="88" x2="602" y2="112"/></g>
+          <path d="M600 108 l-10 16 h9 l-8 16 l18 -22 h-10 l8 -10z" fill="#fde047"/>
+          <!-- evaporación -->
+          <g stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"><path d="M440 145 q8 -12 0 -22 q-8 -10 0 -20"/><path d="M480 145 q8 -12 0 -22 q-8 -10 0 -20"/></g>
+          <text x="250" y="60" font-size="13" font-weight="700" fill="#0f172a">Mucha evaporación = nubes de tormenta</text>
+        </svg>
+      </div>
+
+      <div class="lg:col-span-2 p-4 md:p-6 bg-slate-50 border-t lg:border-t-0 lg:border-l border-slate-100">
+        <div id="txt-normal">
+          <span class="inline-block text-xs font-bold uppercase px-2 py-1 rounded text-white" style="background:var(--verde)">Año normal</span>
+          <ul class="mt-4 space-y-3">
+            <li class="flex gap-3"><i data-i="wind" class="w-6 h-6 text-slate-600 shrink-0 mt-1"></i><span>Los vientos soplan de Sudamérica hacia Asia y empujan el agua caliente lejos de nuestras costas.</span></li>
+            <li class="flex gap-3"><i data-i="waves" class="w-6 h-6 text-sky-600 shrink-0 mt-1"></i><span>Mar frío frente a Perú: sube agua con nutrientes desde el fondo (afloramiento) y hay buena pesca.</span></li>
+            <li class="flex gap-3"><i data-i="rain" class="w-6 h-6 text-sky-600 shrink-0 mt-1"></i><span>Lluvias regulares, sin tormentas fuera de lo común en la costa.</span></li>
+          </ul>
+        </div>
+        <div id="txt-nino" class="hidden">
+          <span class="inline-block text-xs font-bold uppercase px-2 py-1 rounded text-white" style="background:var(--rojo)">Año El Niño</span>
+          <ul class="mt-4 space-y-3">
+            <li class="flex gap-3"><i data-i="wind" class="w-6 h-6 text-slate-600 shrink-0 mt-1"></i><span>Los vientos se debilitan o se invierten. Una gran masa de agua caliente regresa hacia las costas de América.</span></li>
+            <li class="flex gap-3"><i data-i="thermo" class="w-6 h-6 text-red-600 shrink-0 mt-1"></i><span>Mar caliente: el agua fría deja de subir, los peces de agua fría se alejan y se evapora muchísima agua.</span></li>
+            <li class="flex gap-3"><i data-i="rain" class="w-6 h-6 text-sky-600 shrink-0 mt-1"></i><span>Esa evaporación alimenta nubes de tormenta: lluvias torrenciales en unas zonas y sequía en otras.</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fotografías -->
+  <div class="mt-8 grid sm:grid-cols-3 gap-4">
+    <figure class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="Mar tranquilo y azul frente a una costa" src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&w=800&q=70"><div class="img-fallback"><i data-i="waves" class="w-12 h-12"></i></div></div>
+      <figcaption class="p-4"><strong class="block">Mar frío</strong><span class="text-slate-600 text-base">Condición normal: aguas ricas en alimento y pesca abundante.</span></figcaption>
+    </figure>
+    <figure class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="Cielo oscuro de tormenta sobre el mar" src="https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&w=800&q=70"><div class="img-fallback"><i data-i="rain" class="w-12 h-12"></i></div></div>
+      <figcaption class="p-4"><strong class="block">Nubes de tormenta</strong><span class="text-slate-600 text-base">El Niño: el mar caliente se evapora y carga el cielo de lluvia.</span></figcaption>
+    </figure>
+    <figure class="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="La Tierra vista desde el espacio" src="https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?auto=format&fit=crop&w=800&q=70"><div class="img-fallback"><i data-i="globe" class="w-12 h-12"></i></div></div>
+      <figcaption class="p-4"><strong class="block">Vigilancia desde el espacio</strong><span class="text-slate-600 text-base">Los satélites observan todo el Pacífico día y noche.</span></figcaption>
+    </figure>
+  </div>
+
+  <!-- NASA -->
+  <div class="mt-8 rounded-2xl bg-slate-900 text-white p-6 md:p-8">
+    <h3 class="text-2xl font-bold">Cómo se vigila El Niño desde el espacio (NASA)</h3>
+    <div class="mt-5 grid md:grid-cols-2 gap-5">
+      <div class="bg-white/10 rounded-xl p-5">
+        <div class="flex items-center gap-3"><i data-i="globe" class="w-8 h-8 text-sky-300"></i><h4 class="font-bold text-lg">Satélites que miden la altura del mar</h4></div>
+        <p class="mt-2 text-slate-200">El agua caliente se expande y ocupa más espacio. Por eso, donde el mar está más caliente, su nivel sube unos centímetros. Los satélites miden esa diferencia desde el espacio.</p>
+      </div>
+      <div class="bg-white/10 rounded-xl p-5">
+        <div class="flex items-center gap-3"><i data-i="thermo" class="w-8 h-8 text-orange-300"></i><h4 class="font-bold text-lg">Boyas que miden el calor oculto</h4></div>
+        <p class="mt-2 text-slate-200">Boyas ancladas en el océano miden la temperatura bajo la superficie. Así se detecta el calor acumulado en profundidad, que luego sale a la superficie y alimenta las tormentas.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SECCIÓN 2 ================= -->
+<section id="s2" class="tab-panel" role="tabpanel" aria-labelledby="tab-s2">
+  <p class="text-sm font-semibold text-sky-700 uppercase tracking-wide">Sección 2 · Fuente: NOAA CPC y OMM · Estado octubre/noviembre 2026</p>
+  <h2 class="text-3xl font-extrabold mt-1">¿Qué está pasando hoy en el Perú y el mundo?</h2>
+
+  <div class="mt-5 rounded-2xl p-5 md:p-6 text-white flex gap-4 items-start" style="background:var(--rojo)">
+    <i data-i="alert" class="w-10 h-10 shrink-0"></i>
+    <div>
+      <p class="text-xl font-extrabold">Advertencia de El Niño Fuerte a Muy Fuerte</p>
+      <p class="text-red-50">Se espera que continúe desde finales de 2026 hasta el verano de 2027 (enero a marzo).</p>
+    </div>
+  </div>
+
+  <!-- Probabilidades -->
+  <div class="mt-6 grid md:grid-cols-2 gap-4">
+    <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <h3 class="font-bold text-lg">Probabilidad según la OMM</h3>
+      <p class="text-5xl font-extrabold mt-2" style="color:var(--rojo)">Casi 100%</p>
+      <div class="h-3 rounded-full bg-slate-200 mt-3 overflow-hidden"><div class="h-full rounded-full" style="width:99%;background:var(--rojo)"></div></div>
+      <p class="mt-3 text-slate-700">En palabras simples: es prácticamente seguro que El Niño siga fuerte o muy fuerte hasta el verano de 2027.</p>
+    </article>
+    <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <h3 class="font-bold text-lg">Probabilidad según NOAA</h3>
+      <p class="text-5xl font-extrabold mt-2" style="color:var(--naranja)">Más de 83%</p>
+      <div class="h-3 rounded-full bg-slate-200 mt-3 overflow-hidden"><div class="h-full rounded-full" style="width:83%;background:var(--naranja)"></div></div>
+      <p class="mt-3 text-slate-700">En palabras simples: más de 8 de cada 10 posibilidades de que El Niño se mantenga fuerte o muy fuerte.</p>
+    </article>
+  </div>
+
+  <!-- Termómetros -->
+  <h3 class="text-2xl font-bold mt-10">El termómetro del mar</h3>
+  <p class="text-slate-600 max-w-3xl">Cada barra muestra cuántos grados más caliente de lo normal está el mar. La marca en +0,5 °C es el punto desde el cual los científicos consideran que ya hay El Niño.</p>
+
+  <div class="mt-4 grid lg:grid-cols-2 gap-5">
+    <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center gap-2"><i data-i="thermo" class="w-6 h-6 text-red-600"></i><h4 class="font-bold">Frente a Perú y Ecuador (Región Niño 1+2)</h4></div>
+      <p class="text-4xl font-extrabold mt-2" style="color:var(--rojo)">+3,9 °C</p>
+      <div class="relative mt-3">
+        <div class="h-5 rounded-full overflow-hidden" style="background:linear-gradient(90deg,var(--verde) 0%,var(--amarillo) 15%,var(--naranja) 45%,var(--rojo) 100%)"></div>
+        <div class="absolute top-0 h-5 w-1 bg-slate-900" style="left:12.5%" title="Umbral de El Niño"></div>
+        <div class="absolute -top-1 h-7 w-2 rounded bg-slate-900 border-2 border-white" style="left:97.5%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-slate-500 mt-1"><span>0 °C normal</span><span>+0,5 umbral</span><span>+4 °C</span></div>
+      <p class="mt-3">El mar frente a la costa norte del Perú está casi 4 grados más caliente de lo normal, lo que funciona como combustible para lluvias torrenciales.</p>
+      <p class="mt-2 text-sm text-slate-600">Algunos sectores del Pacífico oriental superan los +4,0 °C en la superficie. Bajo el agua, el calor llega a +10,0 °C sobre lo normal: es como una gran reserva de energía lista para salir a la superficie.</p>
+    </article>
+
+    <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center gap-2"><i data-i="thermo" class="w-6 h-6 text-orange-600"></i><h4 class="font-bold">Pacífico Central (Región Niño 3.4)</h4></div>
+      <p class="text-4xl font-extrabold mt-2" style="color:var(--naranja)">+2,1 °C</p>
+      <div class="relative mt-3">
+        <div class="h-5 rounded-full overflow-hidden" style="background:linear-gradient(90deg,var(--verde) 0%,var(--amarillo) 15%,var(--naranja) 45%,var(--rojo) 100%)"></div>
+        <div class="absolute top-0 h-5 w-1 bg-slate-900" style="left:12.5%" title="Umbral de El Niño"></div>
+        <div class="absolute -top-1 h-7 w-2 rounded bg-slate-900 border-2 border-white" style="left:52.5%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-slate-500 mt-1"><span>0 °C normal</span><span>+0,5 umbral</span><span>+4 °C</span></div>
+      <p class="mt-3">En el centro del océano Pacífico, la zona que los científicos usan como termómetro oficial de El Niño está 2 grados más caliente de lo normal.</p>
+      <div class="mt-3 rounded-xl bg-orange-50 border border-orange-200 p-3 text-sm">
+        <strong>Posible evento histórico:</strong> hay hasta 83% de probabilidad (entre octubre y diciembre de 2026) de que alcance o supere los +2,5 °C en el Índice Relativo Oceánico (RONI). En simple: un indicador que compara qué tan caliente está esa zona frente al resto del océano tropical.
+      </div>
+    </article>
+  </div>
+
+  <!-- Selector de impacto -->
+  <h3 class="text-2xl font-bold mt-10">Selector de impacto: Perú o el mundo</h3>
+  <div class="mt-3 inline-flex rounded-xl bg-slate-200 p-1" role="group" aria-label="Elegir ámbito">
+    <button id="sel-peru" class="sel-btn rounded-lg px-5 py-2 font-semibold" aria-pressed="true">En el Perú</button>
+    <button id="sel-mundo" class="sel-btn rounded-lg px-5 py-2 font-semibold" aria-pressed="false">En el mundo</button>
+  </div>
+
+  <div id="impact-peru" class="mt-5 grid lg:grid-cols-5 gap-5">
+    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
+      <p class="font-semibold mb-2">Esquema del territorio (toca una zona)</p>
+      <svg viewBox="0 0 300 340" class="w-full h-auto" role="img" aria-label="Esquema simplificado del Perú dividido en costa norte, sierra sur y selva">
+        <rect width="300" height="340" fill="#e0f2fe" rx="12"/>
+        <text x="14" y="30" font-size="12" font-weight="700" fill="#0369a1">OCÉANO PACÍFICO</text>
+        <path d="M120 40 L215 70 L250 150 L275 230 L230 320 L170 320 L120 240 L85 160 Z" fill="#d9f99d" stroke="#4d7c0f" stroke-width="2"/>
+        <g class="zone" data-zone="norte" tabindex="0" role="button" aria-label="Costa norte" style="cursor:pointer">
+          <path d="M120 40 L215 70 L205 130 L98 118 Z" fill="#dc2626" fill-opacity=".85" stroke="#fff" stroke-width="2"/>
+          <text x="150" y="95" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">COSTA NORTE</text>
+        </g>
+        <g class="zone" data-zone="sur" tabindex="0" role="button" aria-label="Sierra sur" style="cursor:pointer">
+          <path d="M170 235 L250 195 L275 230 L230 320 L170 320 Z" fill="#ea580c" fill-opacity=".85" stroke="#fff" stroke-width="2"/>
+          <text x="223" y="270" font-size="12" font-weight="800" fill="#fff" text-anchor="middle">SIERRA SUR</text>
+        </g>
+        <g class="zone" data-zone="occ" tabindex="0" role="button" aria-label="Vertiente occidental" style="cursor:pointer">
+          <path d="M98 118 L205 130 L250 195 L170 235 L120 240 L85 160 Z" fill="#f59e0b" fill-opacity=".85" stroke="#fff" stroke-width="2"/>
+          <text x="160" y="185" font-size="11" font-weight="800" fill="#1f2937" text-anchor="middle">VERTIENTE</text>
+          <text x="160" y="199" font-size="11" font-weight="800" fill="#1f2937" text-anchor="middle">OCCIDENTAL</text>
+        </g>
+      </svg>
+      <p class="text-xs text-slate-500">Esquema ilustrativo, no es un mapa oficial.</p>
+    </div>
+
+    <div class="lg:col-span-3 space-y-4">
+      <div id="zone-info" class="bg-white rounded-2xl border-l-8 p-5 shadow-sm" style="border-color:var(--rojo)">
+        <p class="text-xs font-bold uppercase" style="color:var(--rojo)">Peligro</p>
+        <h4 class="text-xl font-extrabold">Costa Norte</h4>
+        <p class="mt-1">Alto riesgo de lluvias intensas, desbordes de ríos y activación de quebradas, sobre todo en el verano de diciembre 2026 a marzo 2027.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="img-card h-40 rounded-2xl"><img loading="lazy" alt="Lluvia intensa sobre una calle" src="https://images.unsplash.com/photo-1547036967-23d11aacaee0?auto=format&fit=crop&w=800&q=70"><div class="img-fallback"><i data-i="rain" class="w-12 h-12"></i></div></div>
+        <div class="img-card h-40 rounded-2xl"><img loading="lazy" alt="Tierra seca y agrietada por la sequía" src="https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?auto=format&fit=crop&w=800&q=70"><div class="img-fallback"><i data-i="sun" class="w-12 h-12"></i></div></div>
+      </div>
+      <p class="text-sm text-slate-600">Arriba, lluvias en la costa; abajo, sequía en la Sierra Sur: un mismo fenómeno, efectos opuestos según la zona.</p>
+    </div>
+  </div>
+
+  <div id="impact-mundo" class="mt-5 grid md:grid-cols-2 gap-5 hidden">
+    <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center gap-2"><i data-i="rain" class="w-7 h-7 text-sky-600"></i><h4 class="text-xl font-bold">Más lluvia e inundaciones</h4></div>
+      <ul class="mt-3 space-y-2">
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--rojo)"></span>Costa pacífica de Sudamérica</li>
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--naranja)"></span>Sur de Estados Unidos</li>
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--naranja)"></span>África oriental</li>
+      </ul>
+    </article>
+    <article class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="flex items-center gap-2"><i data-i="flame" class="w-7 h-7 text-orange-600"></i><h4 class="text-xl font-bold">Sequías e incendios forestales</h4></div>
+      <ul class="mt-3 space-y-2">
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--naranja)"></span>Australia</li>
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--naranja)"></span>Indonesia</li>
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--amarillo)"></span>Sur de África</li>
+        <li class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:var(--amarillo)"></span>Partes de la Amazonía y América Central</li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- ================= SECCIÓN 3 ================= -->
+<section id="s3" class="tab-panel" role="tabpanel" aria-labelledby="tab-s3">
+  <p class="text-sm font-semibold text-sky-700 uppercase tracking-wide">Sección 3 · Fuente: OPS/OMS 2026-2027</p>
+  <h2 class="text-3xl font-extrabold mt-1">Consecuencias, catástrofes y enfermedades</h2>
+
+  <div class="mt-6 grid md:grid-cols-2 gap-5">
+
+    <article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="Inundación en una zona urbana" src="https://images.unsplash.com/photo-1547036967-23d11aacaee0?auto=format&fit=crop&w=900&q=70"><div class="img-fallback"><i data-i="home" class="w-14 h-14"></i></div></div>
+      <div class="p-5">
+        <div class="flex items-center gap-2"><span class="rounded-lg p-2 text-white" style="background:var(--rojo)"><i data-i="home" class="w-6 h-6"></i></span><h3 class="text-xl font-bold">1. Desastres naturales e infraestructura</h3></div>
+        <ul class="mt-3 list-disc pl-5 space-y-1">
+          <li>Zonas húmedas: inundaciones, huaicos y deslizamientos de tierra.</li>
+          <li>Zonas secas: sequías severas e incendios forestales.</li>
+        </ul>
+        <div class="mt-4 grid grid-cols-2 gap-3 text-center">
+          <div class="rounded-xl bg-red-50 border border-red-200 p-3"><p class="text-3xl font-extrabold" style="color:var(--rojo)">70</p><p class="text-sm">personas fallecidas en el Perú</p></div>
+          <div class="rounded-xl bg-orange-50 border border-orange-200 p-3"><p class="text-3xl font-extrabold" style="color:var(--naranja)">633</p><p class="text-sm">establecimientos de salud afectados</p></div>
+        </div>
+        <p class="mt-3 text-sm text-slate-700">Datos de la OPS/OMS del episodio previo (diciembre 2025 a agosto 2026). Por eso debemos prepararnos desde ahora para el pico de inicios de 2027: hospitales y postas dañados también dejan sin atención a quienes más la necesitan.</p>
+      </div>
+    </article>
+
+    <article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="Mosquito sobre la piel" src="https://images.unsplash.com/photo-1584036561566-baf8f5f1b144?auto=format&fit=crop&w=900&q=70"><div class="img-fallback"><i data-i="activity" class="w-14 h-14"></i></div></div>
+      <div class="p-5">
+        <div class="flex items-center gap-2"><span class="rounded-lg p-2 text-white" style="background:var(--naranja)"><i data-i="activity" class="w-6 h-6"></i></span><h3 class="text-xl font-bold">2. Enfermedades infecciosas y vectoriales</h3></div>
+        <div class="mt-3 space-y-3">
+          <div class="rounded-xl bg-amber-50 border border-amber-200 p-3">
+            <p class="font-semibold">Dengue, malaria y zika</p>
+            <p class="text-sm">El agua estancada por las lluvias (o el agua almacenada sin tapa durante sequías) multiplica los criaderos del zancudo que transmite estas enfermedades.</p>
+          </div>
+          <div class="rounded-xl bg-red-50 border border-red-200 p-3">
+            <p class="font-semibold">Cólera, leptospirosis y diarreas</p>
+            <p class="text-sm">Aparecen cuando los desagües colapsan y se contaminan el agua potable y los alimentos tras las inundaciones.</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="Sol fuerte y calor extremo" src="https://images.unsplash.com/photo-1504701954957-2010ec3bcec1?auto=format&fit=crop&w=900&q=70"><div class="img-fallback"><i data-i="sun" class="w-14 h-14"></i></div></div>
+      <div class="p-5">
+        <div class="flex items-center gap-2"><span class="rounded-lg p-2 text-white" style="background:var(--amarillo)"><i data-i="sun" class="w-6 h-6"></i></span><h3 class="text-xl font-bold">3. Golpes de calor y problemas respiratorios</h3></div>
+        <ul class="mt-3 list-disc pl-5 space-y-1">
+          <li>Olas de calor extremo: afectan al corazón y provocan deshidratación severa.</li>
+          <li>Humo de incendios forestales: dispara cuadros de asma y otras enfermedades respiratorias.</li>
+        </ul>
+        <p class="mt-3 text-sm text-slate-700">Personas mayores, niños y quienes tienen enfermedades del corazón o pulmón son los más vulnerables.</p>
+      </div>
+    </article>
+
+    <article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="img-card h-44"><img loading="lazy" alt="Campo agrícola" src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=900&q=70"><div class="img-fallback"><i data-i="trend" class="w-14 h-14"></i></div></div>
+      <div class="p-5">
+        <div class="flex items-center gap-2"><span class="rounded-lg p-2 text-white" style="background:var(--naranja)"><i data-i="trend" class="w-6 h-6"></i></span><h3 class="text-xl font-bold">4. Crisis alimentaria y económica</h3></div>
+        <p class="text-4xl font-extrabold mt-3" style="color:var(--naranja)">Más de 5,2 millones</p>
+        <p class="mt-1">de personas en las Américas enfrentan inseguridad alimentaria aguda ligada a El Niño. Es decir, no tienen asegurada la comida suficiente.</p>
+        <p class="mt-2 text-sm text-slate-700">Causas: pérdida de cosechas y migración de peces de agua fría, como la anchoveta, que se alejan del mar caliente.</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ================= SECCIÓN 4 ================= -->
+<section id="s4" class="tab-panel" role="tabpanel" aria-labelledby="tab-s4">
+  <p class="text-sm font-semibold text-sky-700 uppercase tracking-wide">Sección 4 · Módulo práctico</p>
+  <h2 class="text-3xl font-extrabold mt-1">¿Qué debo hacer en mi casa?</h2>
+  <p class="mt-2 text-slate-700 max-w-3xl">Marca cada acción cuando la completes. Tu avance se guarda en este navegador.</p>
+
+  <div class="mt-5 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+    <div class="flex items-center justify-between">
+      <p class="font-bold">Tu preparación</p>
+      <p class="font-bold" id="prog-text">0 de 0</p>
+    </div>
+    <div class="h-4 rounded-full bg-slate-200 mt-2 overflow-hidden"><div id="prog-bar" class="h-full rounded-full transition-all" style="width:0;background:var(--rojo)"></div></div>
+    <p id="prog-msg" class="mt-2 text-sm text-slate-600"></p>
+    <button id="reset-check" class="mt-3 text-sm underline text-slate-600">Reiniciar lista</button>
+  </div>
+
+  <div class="mt-6 grid lg:grid-cols-2 gap-5">
+    <article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="img-card h-40"><img loading="lazy" alt="Lavado de manos con agua limpia" src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=900&q=70"><div class="img-fallback"><i data-i="heart" class="w-14 h-14"></i></div></div>
+      <div class="p-5">
+        <h3 class="text-xl font-bold flex items-center gap-2"><i data-i="heart" class="w-6 h-6 text-red-600"></i>Protege tu salud</h3>
+        <ul class="mt-3 space-y-2" id="list-salud"></ul>
+      </div>
+    </article>
+    <article class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      <div class="img-card h-40"><img loading="lazy" alt="Techo de una vivienda bajo la lluvia" src="https://images.unsplash.com/photo-1519692933481-e162a57d6721?auto=format&fit=crop&w=900&q=70"><div class="img-fallback"><i data-i="home" class="w-14 h-14"></i></div></div>
+      <div class="p-5">
+        <h3 class="text-xl font-bold flex items-center gap-2"><i data-i="home" class="w-6 h-6 text-sky-700"></i>Protege tu vivienda</h3>
+        <ul class="mt-3 space-y-2" id="list-vivienda"></ul>
+      </div>
+    </article>
+  </div>
+
+  <div class="mt-6 rounded-2xl bg-sky-50 border border-sky-200 p-5 text-sm text-slate-700">
+    <strong>Importante:</strong> esta plataforma es informativa. Ante una emergencia o una alerta local, sigue siempre las indicaciones de las autoridades de tu zona (Defensa Civil, municipalidad, establecimiento de salud).
+  </div>
+</section>
+
+</main>
+
+<!-- PIE DE PÁGINA -->
+<footer class="bg-slate-900 text-slate-300 mt-10">
+  <div class="max-w-6xl mx-auto px-4 py-10 grid md:grid-cols-2 gap-8">
+    <div>
+      <h3 class="text-white font-bold text-lg">Observatorio Ciudadano El Niño</h3>
+      <p class="mt-2 text-sm">Perú y el Mundo (2026-2027). Información científica traducida a lenguaje cotidiano para que cualquier persona pueda entenderla y actuar.</p>
+    </div>
+    <div>
+      <h3 class="text-white font-bold text-lg">Fuentes oficiales</h3>
+      <ul class="mt-2 text-sm space-y-1">
+        <li><strong class="text-white">OMM:</strong> Organización Meteorológica Mundial (probabilidades y estado global).</li>
+        <li><strong class="text-white">NOAA:</strong> Centro de Predicción del Clima, EE. UU. (regiones Niño y RONI).</li>
+        <li><strong class="text-white">NASA:</strong> observación del océano con satélites y boyas.</li>
+        <li><strong class="text-white">OPS/OMS:</strong> Organización Panamericana de la Salud (impactos en salud 2026-2027).</li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-slate-700 text-center text-xs py-4 px-4">
+    Fotografías: Unsplash. Esquemas: ilustrativos y simplificados. <a href="#top" class="underline">Volver arriba</a>
+  </div>
+</footer>
+
+<script>
+/* ---------- Iconos (estilo Lucide, SVG en línea) ---------- */
+var ICONS = {
+  waves:'<path d="M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/><path d="M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1"/>',
+  wind:'<path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/><path d="M12.6 19.4A2 2 0 1 0 14 16H2"/>',
+  rain:'<path d="M4 14.9A7 7 0 1 1 15.7 8h1.8a4.5 4.5 0 0 1 2.5 8.2"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>',
+  thermo:'<path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/>',
+  globe:'<circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>',
+  alert:'<path d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/>',
+  flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4.1 2-6 .5 2.5 2 4.9 4 6.500 2 1.600 3 3.500 3 5.500a7 7 0 1 1-14 0c0-1.200.4-2.300 1-3a2.500 2.500 0 0 0 2.500 2.500z"/>',
+  heart:'<path d="M19 14c1.5-1.5 3-3.200 3-5.500A5.500 5.500 0 0 0 16.500 3c-1.800 0-3 .5-4.500 2-1.500-1.500-2.700-2-4.500-2A5.500 5.500 0 0 0 2 8.500c0 2.300 1.500 4 3 5.500l7 7Z"/>',
+  home:'<path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+  activity:'<path d="M22 12h-2.500a2 2 0 0 0-1.900 1.500l-2.400 8.400a.25.25 0 0 1-.5 0L9.200 2.200a.25.25 0 0 0-.5 0l-2.300 8.400A2 2 0 0 1 4.500 12H2"/>',
+  trend:'<path d="m22 17-8.500-8.500-5 5L2 7"/><path d="M16 17h6v-6"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>'
+};
+function paintIcons(root){
+  (root||document).querySelectorAll('i[data-i]').forEach(function(el){
+    var p = ICONS[el.getAttribute('data-i')] || '';
+    var cls = el.getAttribute('class') || '';
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" class="'+cls+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';
+    el.outerHTML = svg;
+  });
+}
+paintIcons();
+
+/* ---------- Imágenes con respaldo ---------- */
+document.querySelectorAll('.img-card img').forEach(function(img){
+  function fail(){ img.style.display='none'; var f=img.parentNode.querySelector('.img-fallback'); if(f) f.style.display='flex'; }
+  img.addEventListener('error', fail);
+  if(img.complete && img.naturalWidth===0) fail();
+});
+
+/* ---------- Pestañas ---------- */
+var tabs = document.querySelectorAll('.tab-btn');
+function showTab(id, scroll){
+  tabs.forEach(function(t){ t.setAttribute('aria-selected', t.getAttribute('aria-controls')===id ? 'true':'false'); });
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.toggle('active', p.id===id); });
+  if(scroll){ document.querySelector('nav').scrollIntoView({behavior:'smooth'}); }
+}
+tabs.forEach(function(t){ t.addEventListener('click', function(){ showTab(t.getAttribute('aria-controls'), true); }); });
+document.querySelectorAll('[data-go]').forEach(function(b){ b.addEventListener('click', function(){ showTab(b.getAttribute('data-go'), true); }); });
+
+/* ---------- Comparador ---------- */
+function setCmp(nino){
+  document.getElementById('svg-normal').classList.toggle('hidden', nino);
+  document.getElementById('svg-nino').classList.toggle('hidden', !nino);
+  document.getElementById('txt-normal').classList.toggle('hidden', nino);
+  document.getElementById('txt-nino').classList.toggle('hidden', !nino);
+  var a=document.getElementById('btn-normal'), b=document.getElementById('btn-nino');
+  a.setAttribute('aria-pressed', String(!nino)); b.setAttribute('aria-pressed', String(nino));
+  a.style.cssText = !nino ? 'background:var(--verde);color:#fff' : 'color:#334155';
+  b.style.cssText = nino ? 'background:var(--rojo);color:#fff' : 'color:#334155';
+}
+document.getElementById('btn-normal').onclick=function(){setCmp(false)};
+document.getElementById('btn-nino').onclick=function(){setCmp(true)};
+setCmp(false);
+
+/* ---------- Selector Perú / Mundo ---------- */
+function setScope(peru){
+  document.getElementById('impact-peru').classList.toggle('hidden', !peru);
+  document.getElementById('impact-mundo').classList.toggle('hidden', peru);
+  var a=document.getElementById('sel-peru'), b=document.getElementById('sel-mundo');
+  a.setAttribute('aria-pressed', String(peru)); b.setAttribute('aria-pressed', String(!peru));
+  a.style.cssText = peru ? 'background:#0f172a;color:#fff' : 'color:#334155';
+  b.style.cssText = !peru ? 'background:#0f172a;color:#fff' : 'color:#334155';
+}
+document.getElementById('sel-peru').onclick=function(){setScope(true)};
+document.getElementById('sel-mundo').onclick=function(){setScope(false)};
+setScope(true);
+
+var ZONES = {
+  norte:{lvl:'Peligro', color:'var(--rojo)', title:'Costa Norte', txt:'Alto riesgo de lluvias intensas, desbordes de ríos y activación de quebradas, sobre todo en el verano de diciembre 2026 a marzo 2027.'},
+  occ:{lvl:'Alerta', color:'var(--naranja)', title:'Vertiente occidental', txt:'Las laderas que miran al Pacífico también tienen alto riesgo de lluvias intensas, desbordes y huaicos en el verano de diciembre 2026 a marzo 2027.'},
+  sur:{lvl:'Alerta por sequía', color:'var(--naranja)', title:'Sierra Sur', txt:'Existe riesgo de déficit de lluvias: menos agua para cultivos, ganado y consumo. Conviene almacenar agua de forma segura y bien tapada.'}
+};
+function showZone(k){
+  var z=ZONES[k], box=document.getElementById('zone-info');
+  box.style.borderColor=z.color;
+  box.innerHTML='<p class="text-xs font-bold uppercase" style="color:'+z.color+'">'+z.lvl+'</p><h4 class="text-xl font-extrabold">'+z.title+'</h4><p class="mt-1">'+z.txt+'</p>';
+}
+document.querySelectorAll('.zone').forEach(function(g){
+  g.addEventListener('click', function(){ showZone(g.getAttribute('data-zone')); });
+  g.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); showZone(g.getAttribute('data-zone')); } });
+});
+
+/* ---------- Checklist ---------- */
+var CHECKS = {
+  salud:[
+    'Tapar todos los recipientes donde guardo agua (baldes, tinas, cilindros).',
+    'Eliminar criaderos de dengue: vaciar y voltear llantas, botellas, floreros y platos de macetas.',
+    'Cambiar el agua de floreros y bebederos de mascotas cada 2 o 3 días.',
+    'Hervir el agua para beber (al menos 1 minuto desde que hierve) o desinfectarla.',
+    'Lavar mis manos con agua y jabón antes de comer y después de ir al baño.',
+    'Lavar bien y cocinar los alimentos; no consumir comida que estuvo en contacto con agua de inundación.',
+    'Usar repelente y ropa que cubra brazos y piernas en horas de mayor actividad de zancudos.',
+    'Acudir al establecimiento de salud ante fiebre alta, diarrea persistente o dolor intenso, sin automedicarme.'
+  ],
+  vivienda:[
+    'Limpiar techos y canaletas para que la lluvia fluya sin acumularse.',
+    'Revisar que el techo y las paredes no tengan goteras ni grietas.',
+    'Identificar las rutas de evacuación ante huaicos y practicarlas con mi familia.',
+    'Acordar un punto de encuentro seguro, lejos de quebradas y ríos.',
+    'Armar la mochila de emergencia: agua, comida enlatada, linterna, radio a pilas, botiquín y medicinas.',
+    'Guardar documentos importantes en una bolsa hermética dentro de la mochila.',
+    'Tener a mano los números de emergencia y el celular cargado.',
+    'Mantener libres de basura los desagües y canales cercanos a mi casa.'
+  ]
+};
+var KEY='observatorio-elnino-checks';
+function loadState(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+function saveState(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+var state = loadState();
+function buildList(id, group){
+  var ul=document.getElementById(id);
+  CHECKS[group].forEach(function(txt,i){
+    var k=group+i, li=document.createElement('li');
+    li.className='check-item flex items-start gap-3 rounded-lg p-2 hover:bg-slate-50';
+    var cb=document.createElement('input'); cb.type='checkbox'; cb.id='c-'+k; cb.checked=!!state[k];
+    var lab=document.createElement('label'); lab.htmlFor=cb.id; lab.className='cursor-pointer flex-1';
+    var sp=document.createElement('span'); sp.className='label'; sp.textContent=txt; lab.appendChild(sp);
+    li.appendChild(cb); li.appendChild(lab);
+    li.classList.toggle('done', cb.checked);
+    cb.addEventListener('change', function(){ state[k]=cb.checked; li.classList.toggle('done', cb.checked); saveState(state); updateProgress(); });
+    ul.appendChild(li);
+  });
+}
+function updateProgress(){
+  var all=document.querySelectorAll('.check-item input'), done=0;
+  all.forEach(function(c){ if(c.checked) done++; });
+  var pct = all.length ? Math.round(done/all.length*100) : 0;
+  document.getElementById('prog-text').textContent = done+' de '+all.length;
+  var bar=document.getElementById('prog-bar'); bar.style.width=pct+'%';
+  bar.style.background = pct>=100 ? 'var(--verde)' : pct>=60 ? 'var(--amarillo)' : pct>=30 ? 'var(--naranja)' : 'var(--rojo)';
+  document.getElementById('prog-msg').textContent = pct>=100 ? 'Excelente: tu hogar está preparado.' : pct>=60 ? 'Vas bien, completa lo que falta antes del verano.' : pct>=30 ? 'Buen inicio. Sigue avanzando.' : 'Empieza hoy: cada acción reduce el riesgo para tu familia.';
+}
+buildList('list-salud','salud'); buildList('list-vivienda','vivienda'); updateProgress();
+document.getElementById('reset-check').onclick=function(){
+  state={}; saveState(state);
+  document.querySelectorAll('.check-item').forEach(function(li){ li.classList.remove('done'); li.querySelector('input').checked=false; });
+  updateProgress();
+};
+</script>
+</body>
+</html>
