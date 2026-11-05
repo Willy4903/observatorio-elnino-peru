@@ -11,6 +11,7 @@ on:
       - 'tests/ocean_theme.test.mjs'
       - 'tests/panorama.e2e.cjs'
       - 'tests/publication.e2e.cjs'
+      - 'tests/ciudadano.e2e.cjs'
       - 'tests/test_build.py'
       - 'pipeline/build.py'
       - '.github/workflows/validate-visual.yml'
@@ -23,6 +24,7 @@ on:
       - 'tests/ui_simplicity.test.mjs'
       - 'tests/panorama.e2e.cjs'
       - 'tests/publication.e2e.cjs'
+      - 'tests/ciudadano.e2e.cjs'
       - 'tests/test_build.py'
       - 'pipeline/build.py'
   workflow_dispatch:
@@ -50,6 +52,7 @@ jobs:
           node --check tests/panorama.e2e.cjs
           node --check site/assets/publication.mjs
           node --check tests/publication.e2e.cjs
+          node --check tests/ciudadano.e2e.cjs
       - name: Comprobar versiones de los recursos publicados
         run: python -m unittest discover -s tests -p 'test_build.py' -v
       - name: Preparar Chromium para las pruebas del mapa
@@ -60,3 +63,4 @@ jobs:
         run: |
           NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/panorama.e2e.cjs
           NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/publication.e2e.cjs
+          NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/ciudadano.e2e.cjs
