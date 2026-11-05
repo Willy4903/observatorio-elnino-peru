@@ -1,0 +1,120 @@
+/* Rediseño de la entrada: portada breve, estado oficial arriba, guía en tarjetas y preparación en tres columnas.
+   Se carga al final para ordenar espaciado y jerarquía sin cambiar la identidad visual. */
+:root{--rd-line:#2b4a66;--rd-raise:#0f2a40;--rd-text:#eaf4fc;--rd-muted:#b6cbdd;--rd-cyan:#7fe0ee}
+html{scroll-padding-top:84px}
+#main{gap:28px}
+
+/* Portada compacta */
+#main .visual-wave{min-height:0!important;padding:30px max(26px,calc((100vw - 1270px)/2)) 26px!important}
+#main .visual-wave #hero-title{font-size:clamp(2.1rem,4.4vw,3.7rem)!important}
+#main .visual-wave .radar-tagline{margin-top:12px!important}
+#main .radar-stage .radar-first{margin:10px 0 0;font-size:1rem;color:#e6f1fb;text-shadow:0 2px 7px #061b3048}
+#main .radar-stage .radar-first a{color:var(--rd-cyan);font-weight:700;text-underline-offset:4px}
+#main .visual-wave .radar-cta{display:flex!important;gap:10px;flex-wrap:wrap;margin-top:14px}
+#main .visual-wave .radar-status{margin-top:14px!important}
+
+/* Estado oficial ENFEN en la primera pantalla */
+#main #estado-enfen{margin-top:-6px;padding:20px 24px}
+#main #estado-enfen .citizen-enfen-heading{margin-bottom:12px}
+#main #estado-enfen .citizen-enfen-heading h2{font-size:clamp(1.35rem,3vw,1.9rem);margin:4px 0 0}
+#main #estado-enfen .citizen-enfen-body{grid-template-columns:minmax(0,1.3fr) minmax(0,.9fr);gap:16px}
+#main #estado-enfen .citizen-enfen-explain p{margin:0 0 10px;line-height:1.6}
+.enfen-semaforo{display:inline-flex;align-items:center;gap:10px;margin:8px 0 6px;padding:8px 14px 8px 10px;border-radius:999px;border:2px solid var(--sem,#7b8da1);background:color-mix(in srgb,var(--sem,#7b8da1) 16%,#0b1c2c);color:#fff;font-weight:800;font-size:1rem}
+.enfen-semaforo .sem-icon{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--sem,#7b8da1);color:#06121c}
+.enfen-semaforo .sem-icon svg{width:20px;height:20px}
+.enfen-semaforo[data-estado="alerta"]{--sem:#f97316}
+.enfen-semaforo[data-estado="vigilancia"]{--sem:#facc15}
+.enfen-semaforo[data-estado="no-activo"],.enfen-semaforo[data-estado="fin"]{--sem:#34d399}
+.enfen-semaforo[data-estado="publicado"]{--sem:#7fe0ee}
+.enfen-semaforo[data-estado="sin-dato"]{--sem:#8da2b8}
+
+/* El Niño en 1 minuto */
+.un-minuto{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:28px;align-items:center;padding:30px;border:1px solid var(--rd-line);border-radius:22px;background:linear-gradient(145deg,#0c2438,#0a1a2b)}
+.un-minuto h2{margin:6px 0 12px;font-size:clamp(1.7rem,3.4vw,2.4rem);line-height:1.15;color:var(--rd-text)}
+.um-analogia{font-size:1.2rem;line-height:1.55;color:var(--rd-text);margin:0 0 14px}
+.um-list{margin:0 0 16px;padding-left:22px;display:grid;gap:8px;color:var(--rd-muted);font-size:1.02rem;line-height:1.6}
+.um-peru{margin:0;padding:14px 16px;border-left:4px solid var(--rd-cyan);background:#0d2f45;border-radius:0 12px 12px 0;color:var(--rd-text);line-height:1.6}
+.um-peru a{color:var(--rd-cyan);font-weight:700}
+.um-figura{margin:0}
+.um-figura svg{width:100%;height:auto;display:block;border-radius:18px}
+.um-figura figcaption{margin-top:8px;font-size:.82rem;color:var(--rd-muted);text-align:center}
+
+/* Cuatro cifras, compactas */
+#main #ultimo .insight-method{margin-top:10px}
+
+/* Guía ciudadana en tarjetas */
+.anchor-alias{display:block;height:0;scroll-margin-top:0}
+#elnino-ciudadano .oc-intro{padding:26px 28px 20px}
+#elnino-ciudadano .oc-reading.oc-cards{max-width:none;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:20px 28px 28px}
+#elnino-ciudadano .oc-card{padding:20px;margin:0;border:1px solid var(--oceano-line,#2b4a66);border-radius:16px;background:#0d2539}
+#elnino-ciudadano .oc-section+.oc-section{margin-top:0;border-top:1px solid var(--oceano-line,#2b4a66)}
+#elnino-ciudadano .oc-card h3{font-size:1.2rem;margin:0 0 12px}
+#elnino-ciudadano .oc-art{width:100%;height:auto;display:block;margin:0 0 12px;border-radius:12px}
+#elnino-ciudadano .oc-compare,#elnino-ciudadano .oc-two{display:grid;gap:12px}
+#elnino-ciudadano .oc-compare h4,#elnino-ciudadano .oc-two h4{margin:0 0 4px;color:var(--rd-cyan)}
+#elnino-ciudadano .oc-compare p,#elnino-ciudadano .oc-two p{margin:0;font-size:1rem;line-height:1.6}
+#elnino-ciudadano .oc-caption{margin:12px 0 0;font-size:.88rem;line-height:1.6}
+#elnino-ciudadano .oc-note{margin:12px 0 0;font-size:1rem;line-height:1.6}
+#elnino-ciudadano .oc-effects{margin:0 0 6px;padding-left:20px;display:grid;gap:10px;color:var(--rd-muted);line-height:1.6}
+#elnino-ciudadano .oc-effects b{color:var(--rd-text)}
+
+/* Qué quieres consultar */
+#main #guia-inicio{margin-top:4px}
+.tres-tipos{margin:-8px 4px 0;padding:14px 18px;border:1px solid var(--rd-line);border-radius:14px;background:#0b2236;color:var(--rd-muted);line-height:1.65}
+.tres-tipos b{color:var(--rd-text)}
+.tres-tipos a{color:var(--rd-cyan);font-weight:700}
+
+/* Mi distrito: primero el selector, después el mapa */
+#panorama .panorama-heading{order:-2}
+#panorama #consulta{order:-1}
+.mi-zona{margin-top:14px;padding:16px 18px;border:1px solid var(--rd-line);border-radius:16px;background:var(--rd-raise)}
+.mi-zona h3{margin:0 0 6px;font-size:1.25rem;color:#fff}
+.mi-zona-frase{margin:0 0 10px;font-size:1.05rem;line-height:1.5;color:var(--rd-text)}
+.mi-zona-barra{height:12px;border-radius:99px;background:#16324b;overflow:hidden;margin:0 0 10px}
+.mi-zona-barra i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444);border-radius:99px}
+.mi-zona-nota{margin:0;font-size:.9rem;line-height:1.55;color:var(--rd-muted)}
+.mi-zona-nota a{color:var(--rd-cyan);font-weight:700}
+.territory-risk .risk-bar{display:block;height:6px;margin-top:6px;border-radius:99px;background:#16324b;overflow:hidden}
+.territory-risk .risk-bar i{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#ef4444)}
+.zonas-nota{margin:6px 0 0;font-size:.92rem;color:var(--rd-muted);line-height:1.55}
+
+/* Cómo prepararme: tres columnas */
+.prep-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:18px 0}
+.prep-card{padding:20px;border:1px solid var(--rd-line);border-radius:16px;background:#0d2539}
+.prep-icon{width:44px;height:44px;padding:9px;border-radius:12px;background:#12384f;color:var(--rd-cyan);margin-bottom:10px}
+.prep-card h3{margin:0 0 10px;font-size:1.2rem;color:#fff}
+.prep-list{margin:0;padding-left:20px;display:grid;gap:9px;color:var(--rd-muted);line-height:1.6}
+.prep-list a{color:var(--rd-cyan);font-weight:700}
+.oc-lecturas{margin-top:22px;padding-top:18px;border-top:1px solid var(--rd-line)}
+.oc-lecturas h3{margin:0 0 8px;font-size:1.1rem;color:#fff}
+.oc-lecturas .oc-source-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 24px}
+.oc-lecturas .oc-source-list li{padding:8px 0}
+.oc-lecturas .oc-source-list a{color:var(--rd-cyan);font-weight:700}
+.oc-lecturas .oc-source-list p{margin:2px 0 0;font-size:.9rem;color:var(--rd-muted);line-height:1.55}
+.oc-lecturas .oc-reading-note{margin:10px 0 0;font-size:.9rem;color:var(--rd-muted)}
+.oc-lecturas .oc-reading-note a{color:var(--rd-cyan)}
+.detalle-descarga{margin:18px 0 0}
+
+/* Navegación */
+.radar-top-nav a[aria-current="location"]{background:#ffe0e2;color:#b52639}
+.mobile-nav{grid-template-columns:repeat(6,minmax(0,1fr))}
+.mobile-nav a{font-size:9px;line-height:1.15;text-align:center;padding-inline:2px}
+.mobile-nav a[aria-current="location"]{color:var(--rd-cyan)}
+
+@media(max-width:1000px){
+  #elnino-ciudadano .oc-reading.oc-cards{grid-template-columns:1fr}
+  .prep-grid{grid-template-columns:1fr}
+  .un-minuto{grid-template-columns:1fr}
+  .oc-lecturas .oc-source-list{grid-template-columns:1fr}
+}
+@media(max-width:800px){
+  #main{gap:22px}
+  #main #estado-enfen{padding:18px 16px}
+  #main #estado-enfen .citizen-enfen-body{grid-template-columns:1fr}
+  .un-minuto{padding:22px 18px}
+  #elnino-ciudadano .oc-reading.oc-cards{padding:16px}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+
+.um-list,.prep-list,#elnino-ciudadano .oc-effects{list-style:disc}
+.um-list li::marker,.prep-list li::marker,#elnino-ciudadano .oc-effects li::marker{color:var(--rd-cyan)}

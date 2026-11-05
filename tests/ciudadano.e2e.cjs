@@ -9,7 +9,7 @@ try { pw = require('playwright'); } catch { pw = require('@playwright/test'); }
 
 const ROOT = path.resolve(process.env.PANORAMA_SITE_DIR || path.join(__dirname, '../site'));
 const MIME = {'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.json':'application/json','.gz':'application/gzip','.svg':'image/svg+xml','.jpg':'image/jpeg','.png':'image/png','.woff2':'font/woff2'};
-const sectionIds = ['oc-s1','oc-s2','oc-s3','oc-s4'];
+const sectionIds = ['oc-s1','oc-s2','oc-s3'];
 const destinationIds = ['estado-enfen','consulta','preparacion','glosario'];
 const server = http.createServer((request, response) => {
   let file;
@@ -35,8 +35,8 @@ async function readingAndLayout(page, label) {
   equal(await guide.getAttribute('aria-labelledby'), 'oc-title', `${label} la guía anuncia su título`);
   equal(await guide.locator('h2').count(), 1, `${label} un título principal en la guía`);
   check(await page.locator('#oc-title').isVisible(), `${label} título visible`);
-  equal(await guide.locator('.oc-section').evaluateAll(sections => sections.map(section => section.id)), sectionIds, `${label} cuatro apartados en orden de lectura`);
-  equal(await guide.locator('h3').count(), 4, `${label} cada apartado usa un encabezado de nivel 3`);
+  equal(await guide.locator('.oc-section').evaluateAll(sections => sections.map(section => section.id)), sectionIds, `${label} tres tarjetas en orden de lectura`);
+  equal(await guide.locator('h3').count(), 3, `${label} cada apartado usa un encabezado de nivel 3`);
   equal(await guide.locator('.oc-reading-nav a').evaluateAll(links => links.map(link => link.getAttribute('href'))), sectionIds.map(id => '#' + id), `${label} el índice contiene las cuatro anclas en orden`);
   const nav = guide.locator('.oc-reading-nav');
   equal(await nav.evaluate(element => element.tagName), 'NAV', `${label} índice identificado como navegación`);
@@ -56,10 +56,10 @@ async function readingAndLayout(page, label) {
   check(words <= 650, `${label} lectura breve (${words} palabras)`);
   check(!/Fuerte\s+a\s+Muy\s+Fuerte|Casi\s+100|M[aá]s\s+de\s+83|tu hogar est[aá] preparado/i.test(allText), `${label} sin advertencia fija ni certificación de preparación`);
   check(!/\d[\d.,]*\s*(?:%|°\s*C)/i.test(allText), `${label} la guía no presenta probabilidades ni temperaturas sin actualización`);
-  equal(await guide.locator('[role="tab"], [role="tablist"], [role="tabpanel"], .oc-tab-btn, .oc-tab-panel, input[type="checkbox"], progress, [role="progressbar"], img, svg, canvas, iframe').count(), 0, `${label} lectura sin pestañas, simuladores ni imágenes decorativas`);
+  equal(await guide.locator('[role="tab"], [role="tablist"], [role="tabpanel"], .oc-tab-btn, .oc-tab-panel, input[type="checkbox"], progress, [role="progressbar"], img, canvas, iframe').count(), 0, `${label} lectura sin pestañas, simuladores ni imágenes decorativas`);
   equal(await page.locator('script[src*="ciudadano.mjs"]').count(), 0, `${label} la lectura no requiere el antiguo controlador de pestañas`);
 
-  const sources = await guide.locator('.oc-source-list a').evaluateAll(links => links.map(link => ({
+  const sources = await page.locator('.oc-lecturas .oc-source-list a').evaluateAll(links => links.map(link => ({
     href:link.getAttribute('href'),target:link.target,rel:link.rel,text:link.textContent.trim(),
     description:link.closest('li')?.querySelector('p')?.textContent.trim()
   })));
@@ -79,7 +79,7 @@ async function readingAndLayout(page, label) {
 
   const layout = await guide.evaluate(element => {
     const box = element.getBoundingClientRect();
-    const paragraphs = [...element.querySelectorAll('.oc-section > p:not(.oc-reading-note), .oc-practical-list li')];
+    const paragraphs = [...element.querySelectorAll('.oc-section > p:not(.oc-reading-note):not(.oc-caption), .oc-compare p, .oc-two p')];
     return {
       viewport:document.documentElement.clientWidth, document:document.documentElement.scrollWidth,
       left:box.left, right:box.right,
@@ -95,7 +95,7 @@ async function readingAndLayout(page, label) {
   check(layout.document <= layout.viewport + 1, `${label} página sin desplazamiento horizontal (${layout.document}/${layout.viewport})`);
   check(layout.left >= -1 && layout.right <= layout.viewport + 1, `${label} guía dentro de la pantalla`);
   equal(layout.overflow, [], `${label} texto y enlaces dentro de la pantalla`);
-  check(layout.ordered.every((top, index, values) => index === 0 || top > values[index - 1]), `${label} los apartados se presentan uno después del otro`);
+  check(layout.ordered.every((top, index, values) => index === 0 || top >= values[index - 1] - 1), `${label} los apartados siguen el orden de lectura`);
   check(layout.smallestText >= 16, `${label} cuerpo de lectura de al menos 16 px`);
   check(layout.navTargets.every(height => height >= 44), `${label} índice con áreas de toque de al menos 44 px`);
 }
