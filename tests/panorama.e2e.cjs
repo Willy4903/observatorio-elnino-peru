@@ -12,6 +12,11 @@ const ROOT = path.resolve(process.env.PANORAMA_SITE_DIR || path.join(__dirname, 
 const MIME = {'.html':'text/html; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css','.json':'application/json','.gz':'application/gzip','.svg':'image/svg+xml','.jpg':'image/jpeg','.png':'image/png'};
 const forecast = JSON.parse(gunzipSync(fs.readFileSync(path.join(ROOT, 'data/district_forecast.json.gz')))).data;
 const historical = JSON.parse(gunzipSync(fs.readFileSync(path.join(ROOT, 'data/senamhi_forecast.json.gz')))).data;
+const forecastDates = [...new Set(forecast.map(row => row.valid_date))].sort();
+const referenceDate = forecastDates[0];
+assert.match(referenceDate || '', /^\d{4}-\d{2}-\d{2}$/, 'El GFS incluido debe contener fechas de pronóstico válidas');
+const referenceYear = referenceDate.slice(0, 4);
+const referenceTime = Date.parse(referenceDate + 'T17:00:00Z');
 const server = http.createServer((request, response) => {
   const url = new URL(request.url, 'http://localhost');
   const file = path.resolve(ROOT, '.' + (url.pathname === '/' ? '/index.html' : decodeURIComponent(url.pathname)));
@@ -31,23 +36,22 @@ const formatted = (number, digits) => new Intl.NumberFormat('es-PE', {maximumFra
 async function contextFor(browser, base, width, height) {
   const context = await browser.newContext({viewport:{width,height},isMobile:width<600,hasTouch:width<600,serviceWorkers:'block',reducedMotion:'reduce'});
   await context.route(url => !url.toString().startsWith(base), route => route.abort());
-  await context.addInitScript(() => {
+  await context.addInitScript(now => {
     // A clock, not a measurement fixture: current/archived classification stays reproducible.
     const ActualDate = Date;
-    const now = ActualDate.parse('2026-11-04T17:00:00Z');
     window.Date = class extends ActualDate {
       constructor(...args) { super(...(args.length ? args : [now])); }
       static now() { return now; }
     };
-  });
+  }, referenceTime);
   return context;
 }
 
 async function load(page, base) {
   await page.goto(base + '#panorama');
-  await page.waitForFunction(() => document.querySelector('#inspector-department')?.options.length === 26 &&
-    document.querySelector('#panorama-period')?.textContent.includes('2026') &&
-    document.querySelector('#weather-days [data-weather-date]'));
+  await page.waitForFunction(year => document.querySelector('#inspector-department')?.options.length === 26 &&
+    document.querySelector('#panorama-period')?.textContent.includes(year) &&
+    document.querySelector('#weather-days [data-weather-date]'), referenceYear);
   await page.locator('#panorama').evaluate(element => element.scrollIntoView());
 }
 
@@ -141,7 +145,7 @@ async function runInteractions(browser, base, width, height) {
     const appliedPeriod = await page.locator('#panorama-period').innerText();
     const appliedScope = await page.locator('#panorama-scope').innerText();
     const appliedMapKind = await page.locator('#map-kind').innerText();
-    await setDates(page, '2027-01-01', '2026-01-01');
+    await setDates(page, `${Number(referenceYear) + 1}-01-01`, `${referenceYear}-01-01`);
     await page.waitForFunction(() => document.querySelector('#from').getAttribute('aria-invalid') === 'true' || document.querySelector('#to').getAttribute('aria-invalid') === 'true');
     equal(await page.locator('#panorama-period').innerText(), appliedPeriod, `[${width}] fechas inválidas no reemplazan el periodo aplicado`);
     equal(await page.locator('#panorama-scope').innerText(), appliedScope, `[${width}] fechas inválidas conservan la zona y la fuente del mapa`);
@@ -149,7 +153,7 @@ async function runInteractions(browser, base, width, height) {
     equal(await page.locator('#panorama-status').getAttribute('data-state'), 'error', `[${width}] el rechazo de las fechas se anuncia`);
     await page.locator('[data-kind="observation"]').click();
     equal(await page.locator('#panorama-period').innerText(), appliedPeriod, `[${width}] cambiar capa después del error conserva el periodo válido`);
-    await setDates(page, '2026-11-04', '2026-11-06');
+    await setDates(page, referenceDate, forecastDates.at(-1));
     await page.waitForFunction(() => document.querySelector('#from').getAttribute('aria-invalid') !== 'true' &&
       document.querySelector('#to').getAttribute('aria-invalid') !== 'true' &&
       document.querySelector('#panorama-status').dataset.state !== 'loading' &&

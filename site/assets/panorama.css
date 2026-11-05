@@ -1,4 +1,8 @@
 /* Panorama: controles legibles y contexto de la selección, sin alterar datos. */
+.interface-update { position: fixed; top: 86px; right: 20px; z-index: 1450; display: flex; align-items: center; gap: 14px; max-width: min(560px,calc(100vw - 32px)); padding: 14px 16px; border: 1px solid var(--oceano-cyan); border-radius: 12px; color: var(--oceano-text); background: #0a2537; box-shadow: 0 14px 36px #0007; font: 13px/1.5 Inter,sans-serif; }
+.interface-update p { margin: 0; }
+.interface-update button { flex-shrink: 0; min-height: 44px; padding: 10px 13px; border: 0; border-radius: 8px; color: #082331; background: var(--oceano-cyan); font-weight: 700; }
+.interface-update button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
 html { scroll-padding-top: 90px; }
 #main #panorama, #main #consulta { scroll-margin-top: 0; }
 .radar-header .radar-header-actions { width: auto !important; flex: 0 0 auto; min-width: 0; }
@@ -71,6 +75,7 @@ html { scroll-padding-top: 90px; }
   .panorama-actions { align-self: start; }
 }
 @media(max-width:800px) {
+  .interface-update { top: 74px; right: 12px; left: 12px; max-width: none; flex-wrap: wrap; }
   html { scroll-padding-top: 76px; }
   .radar-header-actions { width: auto !important; flex: 0 0 auto; min-width: 0; }
   .radar-header-inner { justify-content: space-between; }

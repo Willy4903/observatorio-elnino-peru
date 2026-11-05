@@ -10,6 +10,9 @@ on:
       - 'tests/guide3d.test.mjs'
       - 'tests/ocean_theme.test.mjs'
       - 'tests/panorama.e2e.cjs'
+      - 'tests/publication.e2e.cjs'
+      - 'tests/test_build.py'
+      - 'pipeline/build.py'
       - '.github/workflows/validate-visual.yml'
   push:
     branches: [main]
@@ -19,6 +22,9 @@ on:
       - 'tests/ui_wave_design.test.mjs'
       - 'tests/ui_simplicity.test.mjs'
       - 'tests/panorama.e2e.cjs'
+      - 'tests/publication.e2e.cjs'
+      - 'tests/test_build.py'
+      - 'pipeline/build.py'
   workflow_dispatch:
 
 permissions:
@@ -42,9 +48,15 @@ jobs:
           node --check site/assets/guide3d.mjs
           node --check site/assets/ocean-experience.mjs
           node --check tests/panorama.e2e.cjs
+          node --check site/assets/publication.mjs
+          node --check tests/publication.e2e.cjs
+      - name: Comprobar versiones de los recursos publicados
+        run: python -m unittest discover -s tests -p 'test_build.py' -v
       - name: Preparar Chromium para las pruebas del mapa
         run: |
           npm install --prefix "$RUNNER_TEMP/observatorio-browser" --no-save --package-lock=false playwright@1.62.1
           node "$RUNNER_TEMP/observatorio-browser/node_modules/playwright/cli.js" install --with-deps chromium
       - name: Probar filtros, accesibilidad y vista móvil de Panorama
-        run: NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/panorama.e2e.cjs
+        run: |
+          NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/panorama.e2e.cjs
+          NODE_PATH="$RUNNER_TEMP/observatorio-browser/node_modules" node tests/publication.e2e.cjs

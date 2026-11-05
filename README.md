@@ -83,6 +83,10 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node tests/panorama.e2e.cj
 
 El workflow de validación visual prepara Playwright y Chromium sin añadir dependencias al sitio estático.
 
+La publicación asigna una versión de contenido a los estilos y módulos, incluidos los que ya tenían un parámetro `v`. La versión de la interfaz se comprueba por separado de los datos: si hay un cambio visual mientras la página permanece abierta, aparece «Actualizar vista». El botón conserva el apartado que estabas consultando. Las pestañas abiertas con una versión anterior a este mecanismo necesitan una primera recarga.
+
+`tests/test_build.py` comprueba el versionado y la construcción reproducible. `node tests/publication.e2e.cjs` verifica el aviso de una interfaz nueva aunque no haya cambiado el manifiesto de datos.
+
 El CSS de utilidades está precompilado. Si se cambian sus clases, regenerarlo con `npx --yes --package tailwindcss@3.4.17 tailwindcss -c design/tailwind.config.cjs -i design/input.css -o site/assets/vendor/tailwind.css --minify`.
 
 Abre `http://localhost:8000`. Para actualizar una fuente:
