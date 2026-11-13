@@ -17,7 +17,9 @@ test('las tarjetas salen ordenadas por frescura y con datos reales',()=>{
 });
 test('un dato viejo o con fuente caída se marca y pasa al final',()=>{
   const sea=read('noaa_ocean_sst.json.gz');
-  const items=buildLatest({today:'2026-11-10',sea,status:{noaa_ocean_sst:'ok'},fmt,dateLabel,titleCase});
+  // La fecha "de hoy" se calcula desde el dato del mar: así la prueba no caduca cuando el robot actualiza los datos.
+  const later=new Date(coastalSea(sea).date+'T12:00:00Z');later.setUTCDate(later.getUTCDate()+5);
+  const items=buildLatest({today:later.toISOString().slice(0,10),sea,status:{noaa_ocean_sst:'ok'},fmt,dateLabel,titleCase});
   assert.equal(items[0].fresh,'old');
   const degraded=buildLatest({today:'2026-10-26',sea,status:{noaa_ocean_sst:'degraded'},fmt,dateLabel,titleCase});
   assert.equal(degraded[0].fresh,'check');
