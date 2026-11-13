@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="observatorio-version" content="__UI_VERSION__"><meta name="theme-color" content="#061522"><meta name="description" content="Entiende qué es El Niño, qué dice ENFEN, qué tiempo se espera en tu distrito y cómo prepararte. Datos oficiales con fechas y explicaciones sencillas."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><link rel="stylesheet" href="assets/visual.css?v=4"><link rel="stylesheet" href="assets/ocean-theme.css?v=1"><link rel="stylesheet" href="assets/pathways-enhance.css?v=1"><link rel="stylesheet" href="assets/panorama.css"><link rel="stylesheet" href="assets/ciudadano.css"><link rel="stylesheet" href="assets/rediseno.css"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/publication.mjs"></script><script type="module" src="assets/appearance.mjs"></script><script type="module" src="assets/guide3d.mjs?v=1"></script><script type="module" src="assets/ocean-experience.mjs?v=1"></script><script type="module" src="assets/entrada.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
+<html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="observatorio-version" content="__UI_VERSION__"><meta name="theme-color" content="#061522"><meta name="description" content="Entiende qué es El Niño, qué dice ENFEN, qué tiempo se espera en tu distrito y cómo prepararte. Datos oficiales con fechas y explicaciones sencillas."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><link rel="stylesheet" href="assets/visual.css?v=4"><link rel="stylesheet" href="assets/ocean-theme.css?v=1"><link rel="stylesheet" href="assets/pathways-enhance.css?v=1"><link rel="stylesheet" href="assets/panorama.css"><link rel="stylesheet" href="assets/ciudadano.css"><link rel="stylesheet" href="assets/rediseno.css"><link rel="stylesheet" href="assets/enfen-center.css"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/publication.mjs"></script><script type="module" src="assets/appearance.mjs"></script><script type="module" src="assets/guide3d.mjs?v=1"></script><script type="module" src="assets/ocean-experience.mjs?v=1"></script><script type="module" src="assets/entrada.mjs"></script><script type="module" src="assets/enfen-center.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
   <header class="radar-header">
     <div class="radar-header-inner">
       <a class="radar-brand" href="#top" aria-label="Observatorio El Niño Perú, inicio">
@@ -47,22 +47,69 @@
     <button type="button" id="stage-motion" class="stage-motion" aria-pressed="true">Pausar animación de portada</button>
   </section>
 <div class="visual-alert-holder"><div id="alert-strip" class="radar-official" hidden><div class="official-heading"><span class="official-dot" aria-hidden="true"></span>El estado oficial para Perú · ENFEN</div><div class="official-main"><span id="enfen-state">Consultando el comunicado…</span><a id="enfen-link" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener">Leer comunicado <span aria-hidden="true">↗</span></a></div><p id="enfen-date"></p></div></div>
-<section id="estado-enfen" class="citizen-enfen" aria-labelledby="citizen-enfen-title">
+<section id="estado-enfen" class="citizen-enfen cmc" aria-labelledby="citizen-enfen-title">
+  <header class="cmc-bar">
+    <p class="cmc-id"><span class="cmc-live" aria-hidden="true"></span><strong>Observatorio El Niño Perú</strong><span class="cmc-tag">#estado-enfen</span></p>
+    <nav class="cmc-nav" aria-label="Secciones del centro de monitoreo">
+      <a href="#cmc-oceano">Monitoreo océano</a><a href="#cmc-estado" aria-current="true">Estado ENFEN</a><a href="#cmc-impactos">Impactos</a><a href="#cmc-fuentes">Trazabilidad</a><a href="#fuentes">Recursos</a>
+    </nav>
+    <p class="cmc-upd" id="cmc-updated" role="status">Consultando la fecha de los datos…</p>
+  </header>
   <div class="citizen-enfen-heading"><span class="kicker">ESTADO OFICIAL DE HOY</span><h2 id="citizen-enfen-title">¿Hay alerta de El Niño en el Perú?</h2></div>
-  <div class="citizen-enfen-body">
+  <div class="citizen-enfen-body cmc-hero" id="cmc-estado" data-nivel="sin-dato">
     <div class="citizen-enfen-main">
       <span class="citizen-enfen-label">LO QUE COMUNICA ENFEN, EL COMITÉ OFICIAL QUE VIGILA EL MAR Y EL CLIMA</span>
       <div id="enfen-semaforo" class="enfen-semaforo" data-estado="sin-dato" role="status"><span class="sem-icon" aria-hidden="true"></span><span class="sem-text">Estado: sin dato</span></div>
       <h3 id="enfen-publicado">Consultando el comunicado oficial…</h3>
       <p id="enfen-resumen">Aquí aparecerá la situación indicada por ENFEN y la fecha del documento.</p>
+      <p class="cmc-significa" id="cmc-significa"></p>
+      <p class="cmc-cambio" id="cmc-cambio"></p>
       <p class="citizen-enfen-control" id="enfen-control" role="status">Comprobando la información publicada.</p>
       <a id="enfen-documento" class="citizen-enfen-button" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener noreferrer">Leer el comunicado oficial <span aria-hidden="true">↗</span></a>
     </div>
     <div class="citizen-enfen-explain">
       <h3>¿Qué es ENFEN y qué significa una alerta?</h3>
       <p>ENFEN es el Comité Multisectorial encargado del Estudio Nacional del Fenómeno El Niño (<a href="#glosario">ver glosario</a>). Una alerta invita a informarse y a prepararse con tiempo. No significa que ya haya una inundación en tu distrito.</p>
+      <ol class="cmc-niveles" aria-label="Estados del sistema de alerta ENFEN">
+        <li data-n="no-activo"><b>No activo</b><span>Condiciones normales o sin señales de un evento.</span></li>
+        <li data-n="vigilancia"><b>Vigilancia</b><span>Es probable que se desarrolle El Niño o La Niña costeros.</span></li>
+        <li data-n="alerta"><b>Alerta</b><span>El evento ya se inició y se espera que continúe.</span></li>
+      </ol>
       <p>Para saber qué se espera en tu zona, revisa <a href="#consulta">Mi distrito</a>.</p>
     </div>
+  </div>
+
+  <div class="cmc-grid">
+    <section class="cmc-card cmc-esc" aria-labelledby="cmc-esc-h">
+      <div class="cmc-card-head"><h3 id="cmc-esc-h">Escala de magnitud y señal observada</h3>
+        <label class="cmc-select"><span>Trimestre observado</span><select id="cmc-trimestre" aria-describedby="cmc-esc-nota"></select></label></div>
+      <p class="cmc-sub">Dónde cae el calor del mar frente al Perú dentro de la escala de magnitud que usa ENFEN. Toca cada nivel para ver qué significa.</p>
+      <div class="cmc-esc-body">
+        <ul class="cmc-escala" id="cmc-escala" aria-label="Escala de magnitud de El Niño costero"></ul>
+        <figure class="cmc-mapa" aria-labelledby="cmc-mapa-cap"><div id="cmc-mapa"></div><figcaption id="cmc-mapa-cap">Regiones Niño 1+2 (frente a la costa norte y centro del Perú) y Niño 3.4 (Pacífico central). Color según la última anomalía mensual NOAA.</figcaption></figure>
+      </div>
+      <p class="cmc-nota" id="cmc-esc-nota"></p>
+      <div class="cmc-prob" id="cmc-prob"></div>
+    </section>
+    <section class="cmc-card cmc-pulso" id="cmc-oceano" aria-labelledby="cmc-pulso-h">
+      <div class="cmc-card-head"><h3 id="cmc-pulso-h">El pulso del océano</h3><span class="cmc-chip">Factores críticos</span></div>
+      <p class="cmc-sub">¿Qué está moviendo la señal? Datos publicados por NOAA y ENFEN, con su fecha.</p>
+      <div class="cmc-kpis" id="cmc-kpis"></div>
+    </section>
+  </div>
+
+  <div class="cmc-grid cmc-grid-b">
+    <section class="cmc-card cmc-hist" id="cmc-impactos" aria-labelledby="cmc-hist-h">
+      <div class="cmc-card-head"><h3 id="cmc-hist-h">Comparativo histórico de referencia</h3></div>
+      <p class="cmc-sub">El mar de hoy frente a los dos eventos más recordados en el Perú. La comparación usa la misma serie mensual de NOAA; cada evento tuvo impactos distintos.</p>
+      <div class="cmc-hist-g" id="cmc-hist"></div>
+      <p class="cmc-nota">Una anomalía alta no repite por sí sola los daños de otros años: también importan las lluvias, la exposición y la preparación. Para cifras oficiales de daños consulta INDECI; para salud, el Minsa y la OPS.</p>
+    </section>
+    <section class="cmc-card cmc-src" id="cmc-fuentes" aria-labelledby="cmc-src-h">
+      <div class="cmc-card-head"><h3 id="cmc-src-h">Fuentes y trazabilidad</h3><span class="cmc-chip" id="cmc-src-resumen">Comprobando…</span></div>
+      <p class="cmc-sub">Estado de la última consulta automática a cada portal oficial. Abre el portal para verificar.</p>
+      <ul class="cmc-matriz" id="cmc-matriz"></ul>
+    </section>
   </div>
 </section>
 <section id="un-minuto" class="un-minuto" aria-labelledby="un-minuto-title">
