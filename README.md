@@ -83,7 +83,26 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node tests/panorama.e2e.cj
 
 El workflow de validación visual prepara Playwright y Chromium sin añadir dependencias al sitio estático.
 
-La guía `#elnino-ciudadano` ofrece una lectura continua: concepto, alcance para el Perú, preparación y fuentes oficiales. Funciona sin JavaScript y remite al panel ENFEN y al pronóstico para consultar la situación vigente. No incorpora alertas, probabilidades ni estadísticas de daños fijadas en el texto. `node tests/ciudadano.e2e.cjs` comprueba su lectura y navegación con y sin JavaScript en escritorio y celular.
+## ¿Qué es El Niño? · Experiencia interactiva (`#que-es`)
+
+Sección educativa para todos los públicos, pensada para el aula y para compartir. Estética «Cyber-Science»: fondo `#0A0E17` con degradados violeta y cian, tarjetas de cristal, Plus Jakarta Sans y Outfit. Archivos: marcado en `site/index.html`, estilos en `site/assets/que-es.css` (todo bajo `#que-es`, prefijo `qe-`) y comportamiento en `site/assets/que-es.mjs`.
+
+- Interruptor **Modo Ciudadano / Escuelas**. Escuelas usa un lenguaje más simple y muestra un paso a la vez; se recuerda en el navegador (`localStorage`) y admite `?modo=escuelas`.
+- **¿Cómo se origina?** Esquema isométrico 3D en SVG con tres pasos (vientos débiles, agua cálida acumulada, lluvias intensas) y el botón comparativo «Año normal / Año con El Niño».
+- **Simulador de impacto**: control deslizante con las cuatro magnitudes de la escala ICEN de ENFEN (Débil, Moderada, Fuerte, Extraordinaria). El mapa usa los contornos departamentales de CENEPRED ya publicados en `site/data/boundaries.json`; el norte (lluvias) y el sur andino (sequía y calor) cambian con la intensidad, y un avatar explica cada nivel. Es una ilustración de patrones típicos de eventos pasados: no es un pronóstico, no usa datos de hoy y remite al estado oficial.
+- **Tres cosas clave**, **¿Mito o verdad?** (seis afirmaciones con explicación y puntaje) y **Guía rápida para compartir**.
+- Los textos viven en el HTML, no en el JavaScript: el módulo solo cambia atributos de estado (`data-mode`, `data-climate`, `data-step`, `data-level`) y el CSS decide qué se ve. Sin JavaScript se leen ambas condiciones, las ocho descripciones del simulador y la trivia como lista desplegable. Las animaciones se pausan fuera de pantalla y se desactivan con «reducir movimiento».
+
+Material descargable (`site/assets/share/`): infografía para colegios (PDF, A4), guía para WhatsApp (PNG de alto contraste) y manual de prevención familiar (PDF). El manual reproduce las recomendaciones de INDECI que ya muestra `#preparacion`; ninguno contiene alertas ni fechas de emisión, y todos enlazan a la página con un código QR. Se generan a partir del contenido de la propia página:
+
+```bash
+npm install --no-save playwright qrcode
+npx playwright install chromium        # una sola vez
+node design/share/render.cjs           # reescribe site/assets/share/*
+python design/peru_map.py              # regenera el mapa del simulador desde boundaries.json
+```
+
+`node --test tests/que_es.test.mjs` valida la estructura, el aislamiento del CSS y los archivos descargables. `node tests/que-es.e2e.cjs` recorre la interacción completa (modo, pasos, comparación, simulador con teclado, trivia, compartir y descargas) con y sin JavaScript, de 320 a 1440 px, con áreas táctiles de 44 px, contraste y nombres accesibles.
 
 La publicación asigna una versión de contenido a los estilos y módulos, incluidos los que ya tenían un parámetro `v`. La versión de la interfaz se comprueba por separado de los datos: si hay un cambio visual mientras la página permanece abierta, aparece «Actualizar vista». El botón conserva el apartado que estabas consultando. Las pestañas abiertas con una versión anterior a este mecanismo necesitan una primera recarga.
 

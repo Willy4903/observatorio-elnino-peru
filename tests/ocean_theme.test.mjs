@@ -14,7 +14,7 @@ test('identidad oceánica uniforme y versionada en toda la web',()=>{
   assert.match(html,/assets\/ocean-experience\.mjs\?v=1/);
   assert.ok(html.indexOf('visual.css?v=4')<html.indexOf('ocean-theme.css?v=1'));
   assert.match(theme,/--oceano-bg:#061522/);
-  for(const selector of ['.radar-header','#main .visual-guide','#main #que-es',
+  for(const selector of ['.radar-header','#main .visual-guide',
     '#main #preparacion','#main #estado-enfen','#main #guia-contenido',
     '#main .citizen-questions','#main #detalle-tecnico','#main .latest-card',
     '#main .source-card','#main .radar-pathways>a','#main .tactical-deck .map-panel']){
