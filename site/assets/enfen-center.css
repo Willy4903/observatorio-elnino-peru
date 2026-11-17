@@ -159,3 +159,95 @@
   .cmc-n button,.cmc-select select{min-height:44px}
 }
 @media (prefers-reduced-motion:reduce){.cmc-live{animation:none}.cmc-bar-f{transition:none}}
+
+/* Composición institucional: jerarquía de lectura y datos con procedencia visible. */
+#main #estado-enfen.cmc{padding:28px;gap:24px;border-radius:20px;background:radial-gradient(ellipse at 90% 0,rgba(6,182,212,.055),transparent 45%),#060B14}
+#estado-enfen.cmc .cmc-bar{display:grid;grid-template-columns:1fr auto;padding:0 0 18px;border:0;border-bottom:1px solid var(--c-line);border-radius:0;background:none;gap:18px}
+.cmc-bar .cmc-id{letter-spacing:.035em;flex-wrap:wrap;line-height:1.5}
+.cmc-bar .cmc-tag{border-radius:4px;background:#122539;color:#83afc2;font-size:.58rem;letter-spacing:.1em}
+.cmc-bar .cmc-nav{grid-row:2;grid-column:1/-1;gap:8px}
+.cmc-bar .cmc-nav a{border-radius:5px;padding:0 14px;min-height:44px}
+.cmc-bar .cmc-nav a[aria-current]{background:rgba(6,182,212,.07);box-shadow:inset 0 -2px 0 #06b6d4;color:#e6edf7!important}
+.cmc-bar .cmc-upd{grid-row:1;grid-column:2;background:none;border:0;border-radius:0;color:var(--c-tx2);font-weight:400;line-height:1.5}
+.cmc-bar .cmc-live{animation:none;width:8px;height:8px;background:#06b6d4;box-shadow:0 0 12px #06b6d466}
+#main #estado-enfen.cmc .citizen-enfen-heading{margin:0;padding:0;gap:10px}
+#main #estado-enfen.cmc .citizen-enfen-heading h2{font-size:clamp(1.3rem,2vw,1.8rem);text-transform:none;letter-spacing:-.03em;margin:0}
+#estado-enfen.cmc .citizen-enfen-heading .kicker{color:#7b9bb7;letter-spacing:.17em;font-size:.65rem}
+#main #estado-enfen.cmc .cmc-hero{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);padding:28px;gap:32px;border-radius:12px;box-shadow:inset 4px 0 var(--nv),0 0 32px -20px var(--nv);background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--nv) 12%,transparent),transparent 70%),#0f172a}
+#estado-enfen.cmc #enfen-publicado{font-size:clamp(1.7rem,2.7vw,2.8rem);letter-spacing:-.035em;line-height:1.15;text-shadow:none;max-width:24ch;margin:12px 0}
+#estado-enfen.cmc .enfen-semaforo{font-size:.68rem;letter-spacing:.06em;min-height:28px;padding:4px 9px;border:1px solid color-mix(in srgb,var(--nv) 40%,transparent);background:color-mix(in srgb,var(--nv) 8%,transparent);color:var(--c-tx)}
+#estado-enfen.cmc #enfen-resumen{font-size:.8rem;line-height:1.6;color:#b8c5d7;font-weight:400;max-width:66ch}
+#estado-enfen.cmc .citizen-enfen-label{font-size:.6rem;color:#9baac0;letter-spacing:.15em}
+#estado-enfen.cmc .cmc-significa{background:none;border:0;padding:0;margin:18px 0 12px;max-width:65ch;font-size:.95rem;line-height:1.7}
+#estado-enfen.cmc .cmc-cambio{font-size:.78rem;line-height:1.6;padding-top:14px;border-top:1px solid var(--c-line)}
+#estado-enfen.cmc .citizen-enfen-control{font-size:.72rem;line-height:1.6;color:#9baac0}
+#estado-enfen.cmc .citizen-enfen-button{margin-top:10px;border-radius:6px;font-size:.78rem;background:color-mix(in srgb,var(--nv) 15%,#0f172a);border:1px solid var(--nv);box-shadow:none}
+#estado-enfen.cmc .citizen-enfen-explain{border-left:1px solid var(--c-line);padding-left:28px;align-self:center}
+.cmc-eyebrow{display:block;color:#8ca2bc;font:600 .6rem/1.5 var(--c-body);letter-spacing:.14em;margin-bottom:8px}
+#estado-enfen.cmc .citizen-enfen-explain h3{font-size:1rem;line-height:1.5}
+#main #estado-enfen.cmc .citizen-enfen-explain p{font-size:.76rem;color:#a9b6ca;line-height:1.7}
+.cmc .cmc-niveles{gap:0;margin:16px 0}
+.cmc .cmc-niveles li{position:relative;padding:10px 12px 10px 28px;border:0;border-radius:0;border-bottom:1px solid var(--c-line);background:none;font-size:.72rem;line-height:1.5}
+.cmc .cmc-niveles li::before{content:'';position:absolute;left:6px;top:15px;width:6px;height:6px;background:#06b6d4;border-radius:50%}
+.cmc .cmc-niveles li[data-n="vigilancia"]::before{background:#f97316}.cmc .cmc-niveles li[data-n="alerta"]::before{background:#ef4444}
+.cmc .cmc-niveles li[data-actual]{background:color-mix(in srgb,var(--nv) 7%,transparent)}
+.cmc .cmc-niveles b{font-size:.76rem}
+.cmc .cmc-grid{gap:20px;align-items:stretch}.cmc .cmc-grid-b{grid-template-columns:minmax(0,62fr) minmax(0,38fr)}
+.cmc .cmc-card{padding:22px;border-radius:12px;background:linear-gradient(135deg,#111c30,#0f172a);display:flex;flex-direction:column}
+.cmc .cmc-card-head{margin-bottom:14px;align-items:flex-start;gap:16px}
+.cmc .cmc-card-head h3{font-size:.95rem;line-height:1.5;letter-spacing:-.025em}
+.cmc-index{font:500 .65rem var(--c-body);color:#7891af;margin-right:8px}
+.cmc .cmc-sub{font-size:.76rem;line-height:1.65;color:#a9b6ca;margin-bottom:18px}
+.cmc .cmc-select{font-size:.55rem;gap:6px;letter-spacing:.04em;flex-wrap:wrap}
+.cmc .cmc-select select{font-size:.75rem;min-height:44px;border-radius:6px}
+.cmc-reading-key{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;font-size:.65rem;color:#a9b6ca;margin-bottom:18px;padding:12px 0;border-block:1px solid var(--c-line)}
+.cmc-reading-key span{color:#67e8f9;font-size:.52rem;letter-spacing:.08em}
+.cmc .cmc-n button{border-radius:6px;padding:10px 12px;background:rgba(255,255,255,.015)}
+.cmc .cmc-n-top{font-size:.65rem}.cmc .cmc-n-top b{font-size:.78rem}.cmc .cmc-n-top strong{font:700 .85rem var(--c-body)}
+.cmc .cmc-n.on button{box-shadow:none;background:color-mix(in srgb,var(--k) 6%,transparent)}
+.cmc .cmc-bar-t{height:5px;border-radius:2px}.cmc .cmc-bar-f{border-radius:2px}
+.cmc .cmc-nota,.cmc .cmc-mapa figcaption{color:#9baac0;font-size:.68rem;line-height:1.65}
+.cmc .cmc-mapa svg{border-radius:6px;min-height:125px}
+.cmc .cmc-prob{margin-top:20px;border:1px solid var(--c-line);border-radius:8px;background:#060b1444;padding:16px}
+.cmc-prob-head{display:flex;align-items:start;justify-content:space-between;gap:10px;margin-bottom:12px}.cmc-prob-head h4{font-size:.82rem;line-height:1.5}
+.cmc .cmc-prob p{font-size:.72rem;line-height:1.65}
+.cmc-prob-levels{display:grid;gap:10px;margin:16px 0}.cmc-prob-levels>span{display:flex;align-items:center;gap:8px;font-size:.72rem;color:#b8c5d7}.cmc-prob-levels i{width:7px;height:7px;border-radius:2px;background:var(--k)}.cmc-prob-levels b{margin-left:auto;font-variant-numeric:tabular-nums}
+.cmc .cmc-link{font-size:.74rem;display:inline-flex;align-items:center;min-height:44px}
+.cmc .cmc-kpis{flex:1;gap:12px;align-content:start}.cmc .cmc-kpi{padding:16px 12px;border-radius:8px;border-top:1px solid var(--c-line);background:#131e32}
+#estado-enfen.cmc .cmc-kpi h4{font-size:.6rem!important;line-height:1.65!important;color:#b6c4d7!important;letter-spacing:.05em;min-height:32px}
+.cmc .cmc-kpi-v{font:700 clamp(1.2rem,1.9vw,1.9rem)/1.3 var(--c-body);letter-spacing:-.04em;margin:5px 0}
+.cmc .cmc-kpi-s,.cmc .cmc-kpi-x{font-size:.68rem;line-height:1.65}.cmc .cmc-kpi-f{font-size:.61rem;line-height:1.7;color:#9baac0;border-top:1px solid var(--c-line);padding-top:10px;margin-top:auto}
+.cmc .cmc-spark{height:48px;margin:12px 0}.cmc .cmc-spark-a{fill:color-mix(in srgb,var(--k) 10%,transparent)}
+.cmc .cmc-hist-g{grid-template-columns:repeat(3,minmax(0,1fr));flex:1}.cmc .cmc-ev{border-radius:8px;padding:14px 12px;gap:10px;background:#131e32}
+.cmc .cmc-ev.ahora{--k:#06b6d4;background:linear-gradient(180deg,#06b6d40a,#131e32);border-color:#06b6d44d}
+.cmc .cmc-ev header span{font-size:.62rem}.cmc .cmc-ev header b{font-size:.75rem;line-height:1.5}.cmc .cmc-ev-v{font:700 1.35rem var(--c-body);letter-spacing:-.04em}
+.cmc .cmc-ev-s{font-size:.62rem;line-height:1.6;color:#9baac0}.cmc .cmc-ev dt{font-size:.55rem;line-height:1.5;color:#8ca2bc}.cmc .cmc-ev dd{font-size:.68rem;line-height:1.7}.cmc .cmc-ev dl{gap:12px}
+.cmc .cmc-matriz{gap:0}.cmc .cmc-matriz li{border:0;border-bottom:1px solid var(--c-line);border-radius:0;background:none;padding:12px 0;gap:5px 8px}.cmc .cmc-src-n{font-size:.78rem}.cmc .cmc-src-d{font-size:.63rem;line-height:1.6}.cmc .cmc-src-t{font-size:.59rem;color:#9baac0;line-height:1.6}.cmc .cmc-pill{font-size:.5rem;padding:5px 7px;letter-spacing:.03em}
+.cmc-footer{display:flex;align-items:center;flex-wrap:wrap;gap:12px 24px;border-top:1px solid var(--c-line);padding-top:20px}.cmc-footer>span{font-size:.54rem;letter-spacing:.15em;color:#8ca2bc}.cmc-footer p{flex:1;min-width:200px;margin:0;font-size:.68rem;line-height:1.7;color:#a9b6ca}.cmc-footer a{font-size:.72rem;min-height:44px;display:inline-flex;align-items:center;gap:14px}
+#estado-enfen.cmc :is(a,button,select):focus-visible{outline:2px solid #67e8f9;outline-offset:4px}
+@media(min-width:1400px){.cmc .cmc-esc-body{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}.cmc .cmc-mapa svg{min-height:190px}}
+@media(max-width:1100px){.cmc .cmc-hist-g{grid-template-columns:1fr}.cmc .cmc-ev dl{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:900px){#main #estado-enfen.cmc .cmc-hero,.cmc .cmc-grid,.cmc .cmc-grid-b{grid-template-columns:minmax(0,1fr)}#estado-enfen.cmc .citizen-enfen-explain{padding:20px 0 0;border-left:0;border-top:1px solid var(--c-line)}.cmc .cmc-niveles{grid-template-columns:repeat(3,minmax(0,1fr))}.cmc .cmc-kpi h4{min-height:0!important}}
+@media(max-width:600px){#main #estado-enfen.cmc{padding:16px;gap:20px}#estado-enfen.cmc .cmc-bar{grid-template-columns:minmax(0,1fr)}.cmc-bar .cmc-upd{grid-row:2;grid-column:1;padding:0}.cmc-bar .cmc-nav{grid-row:3;flex-wrap:wrap;overflow:visible;gap:3px}.cmc-bar .cmc-nav a{font-size:.7rem;padding:0 9px}.cmc .cmc-card,#main #estado-enfen.cmc .cmc-hero{padding:18px}.cmc .cmc-niveles{grid-template-columns:1fr}.cmc .cmc-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.cmc .cmc-kpi{padding:12px 10px}.cmc .cmc-kpi-v{font-size:1.25rem}.cmc .cmc-ev dl{grid-template-columns:1fr}.cmc .cmc-select{width:100%}.cmc-prob-head{flex-wrap:wrap}}
+@media(max-width:360px){.cmc .cmc-kpis{grid-template-columns:1fr}}
+
+/* Aislamiento del tema anterior: el módulo conserva su propia jerarquía visual. */
+#main #estado-enfen.cmc{display:grid!important;background:#060B14!important;border:1px solid rgba(255,255,255,.08)!important;box-shadow:0 24px 64px -40px #000!important}
+#main #estado-enfen.cmc :is(h2,h3,h4){font-family:var(--c-head)!important}
+#main #estado-enfen.cmc .citizen-enfen-main,#main #estado-enfen.cmc .citizen-enfen-explain{background:none!important;border:0!important;box-shadow:none!important;border-radius:0}
+#main #estado-enfen.cmc .citizen-enfen-explain{border-left:1px solid var(--c-line)!important}
+#main #estado-enfen.cmc .citizen-enfen-main p{color:var(--c-tx2)!important}
+#main #estado-enfen.cmc .citizen-enfen-main .cmc-significa{color:var(--c-tx)!important}
+#main #estado-enfen.cmc .citizen-enfen-control{background:none!important;border:0!important;border-radius:0;padding:0;font-size:.72rem}
+#main #estado-enfen.cmc .citizen-enfen-label{color:#9baac0!important}
+#main #estado-enfen.cmc .citizen-enfen-button{color:#fff!important;background:color-mix(in srgb,var(--nv) 18%,#0f172a)!important}
+#main #estado-enfen.cmc .citizen-enfen-button:hover{background:color-mix(in srgb,var(--nv) 30%,#0f172a)!important}
+#main #estado-enfen.cmc .citizen-enfen-explain h3{color:#fff!important}
+#main #estado-enfen.cmc .citizen-enfen-explain p{color:var(--c-tx2)!important}
+#main #estado-enfen.cmc .kicker{color:#8ca2bc!important}
+.cmc .cmc-hist-g{flex:0;align-items:start}
+.cmc .cmc-grid{align-items:start}
+.cmc .cmc-prob-levels{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 24px}
+.cmc .cmc-prob-levels>span{min-width:0}
+@media(max-width:900px){#main #estado-enfen.cmc .citizen-enfen-explain{border-left:0!important;border-top:1px solid var(--c-line)!important}}
+@media(max-width:600px){.cmc .cmc-prob-levels{grid-template-columns:1fr}}

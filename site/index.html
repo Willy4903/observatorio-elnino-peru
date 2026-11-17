@@ -49,16 +49,16 @@
 <div class="visual-alert-holder"><div id="alert-strip" class="radar-official" hidden><div class="official-heading"><span class="official-dot" aria-hidden="true"></span>El estado oficial para Perú · ENFEN</div><div class="official-main"><span id="enfen-state">Consultando el comunicado…</span><a id="enfen-link" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener">Leer comunicado <span aria-hidden="true">↗</span></a></div><p id="enfen-date"></p></div></div>
 <section id="estado-enfen" class="citizen-enfen cmc" aria-labelledby="citizen-enfen-title">
   <header class="cmc-bar">
-    <p class="cmc-id"><span class="cmc-live" aria-hidden="true"></span><strong>Observatorio El Niño Perú</strong><span class="cmc-tag">#estado-enfen</span></p>
+    <p class="cmc-id"><span class="cmc-live" aria-hidden="true"></span><strong>Observatorio El Niño Perú</strong><span class="cmc-tag">CENTRO DE MONITOREO</span></p>
     <nav class="cmc-nav" aria-label="Secciones del centro de monitoreo">
       <a href="#cmc-oceano">Monitoreo océano</a><a href="#cmc-estado" aria-current="true">Estado ENFEN</a><a href="#cmc-impactos">Impactos</a><a href="#cmc-fuentes">Trazabilidad</a><a href="#fuentes">Recursos</a>
     </nav>
     <p class="cmc-upd" id="cmc-updated" role="status">Consultando la fecha de los datos…</p>
   </header>
-  <div class="citizen-enfen-heading"><span class="kicker">ESTADO OFICIAL DE HOY</span><h2 id="citizen-enfen-title">¿Hay alerta de El Niño en el Perú?</h2></div>
+  <div class="citizen-enfen-heading"><span class="kicker">INTELIGENCIA CLIMÁTICA · PERÚ</span><h2 id="citizen-enfen-title">Estado del sistema de alertas ENFEN</h2></div>
   <div class="citizen-enfen-body cmc-hero" id="cmc-estado" data-nivel="sin-dato">
     <div class="citizen-enfen-main">
-      <span class="citizen-enfen-label">LO QUE COMUNICA ENFEN, EL COMITÉ OFICIAL QUE VIGILA EL MAR Y EL CLIMA</span>
+      <span class="citizen-enfen-label">DIAGNÓSTICO OFICIAL · EL NIÑO COSTERO</span>
       <div id="enfen-semaforo" class="enfen-semaforo" data-estado="sin-dato" role="status"><span class="sem-icon" aria-hidden="true"></span><span class="sem-text">Estado: sin dato</span></div>
       <h3 id="enfen-publicado">Consultando el comunicado oficial…</h3>
       <p id="enfen-resumen">Aquí aparecerá la situación indicada por ENFEN y la fecha del documento.</p>
@@ -68,7 +68,7 @@
       <a id="enfen-documento" class="citizen-enfen-button" href="https://enfen.imarpe.gob.pe/comunicados/" target="_blank" rel="noopener noreferrer">Leer el comunicado oficial <span aria-hidden="true">↗</span></a>
     </div>
     <div class="citizen-enfen-explain">
-      <h3>¿Qué es ENFEN y qué significa una alerta?</h3>
+      <span class="cmc-eyebrow">GUÍA DE LECTURA</span><h3>¿Qué es ENFEN y qué significa una alerta?</h3>
       <p>ENFEN es el Comité Multisectorial encargado del Estudio Nacional del Fenómeno El Niño (<a href="#glosario">ver glosario</a>). Una alerta invita a informarse y a prepararse con tiempo. No significa que ya haya una inundación en tu distrito.</p>
       <ol class="cmc-niveles" aria-label="Estados del sistema de alerta ENFEN">
         <li data-n="no-activo"><b>No activo</b><span>Condiciones normales o sin señales de un evento.</span></li>
@@ -81,9 +81,10 @@
 
   <div class="cmc-grid">
     <section class="cmc-card cmc-esc" aria-labelledby="cmc-esc-h">
-      <div class="cmc-card-head"><h3 id="cmc-esc-h">Escala de magnitud y señal observada</h3>
+      <div class="cmc-card-head"><h3 id="cmc-esc-h"><span class="cmc-index">01</span> Escenarios y magnitudes</h3>
         <label class="cmc-select"><span>Trimestre observado</span><select id="cmc-trimestre" aria-describedby="cmc-esc-nota"></select></label></div>
-      <p class="cmc-sub">Dónde cae el calor del mar frente al Perú dentro de la escala de magnitud que usa ENFEN. Toca cada nivel para ver qué significa.</p>
+      <p class="cmc-sub">Explora la señal observada y consulta las probabilidades futuras en el comunicado oficial. Son productos distintos.</p>
+      <div class="cmc-reading-key"><span>OBSERVACIÓN</span> Lo que ya se midió <span>PRONÓSTICO</span> Lo que podría ocurrir</div>
       <div class="cmc-esc-body">
         <ul class="cmc-escala" id="cmc-escala" aria-label="Escala de magnitud de El Niño costero"></ul>
         <figure class="cmc-mapa" aria-labelledby="cmc-mapa-cap"><div id="cmc-mapa"></div><figcaption id="cmc-mapa-cap">Regiones Niño 1+2 (frente a la costa norte y centro del Perú) y Niño 3.4 (Pacífico central). Color según la última anomalía mensual NOAA.</figcaption></figure>
@@ -92,7 +93,7 @@
       <div class="cmc-prob" id="cmc-prob"></div>
     </section>
     <section class="cmc-card cmc-pulso" id="cmc-oceano" aria-labelledby="cmc-pulso-h">
-      <div class="cmc-card-head"><h3 id="cmc-pulso-h">El pulso del océano</h3><span class="cmc-chip">Factores críticos</span></div>
+      <div class="cmc-card-head"><h3 id="cmc-pulso-h"><span class="cmc-index">02</span> El pulso del océano</h3><span class="cmc-chip">Factores críticos</span></div>
       <p class="cmc-sub">¿Qué está moviendo la señal? Datos publicados por NOAA y ENFEN, con su fecha.</p>
       <div class="cmc-kpis" id="cmc-kpis"></div>
     </section>
@@ -100,17 +101,18 @@
 
   <div class="cmc-grid cmc-grid-b">
     <section class="cmc-card cmc-hist" id="cmc-impactos" aria-labelledby="cmc-hist-h">
-      <div class="cmc-card-head"><h3 id="cmc-hist-h">Comparativo histórico de referencia</h3></div>
-      <p class="cmc-sub">El mar de hoy frente a los dos eventos más recordados en el Perú. La comparación usa la misma serie mensual de NOAA; cada evento tuvo impactos distintos.</p>
+      <div class="cmc-card-head"><h3 id="cmc-hist-h"><span class="cmc-index">03</span> Memoria climática del Perú</h3></div>
+      <p class="cmc-sub">La señal medida frente a dos eventos de referencia; no es una proyección de daños. La comparación usa la misma serie mensual de NOAA; cada evento tuvo impactos distintos.</p>
       <div class="cmc-hist-g" id="cmc-hist"></div>
-      <p class="cmc-nota">Una anomalía alta no repite por sí sola los daños de otros años: también importan las lluvias, la exposición y la preparación. Para cifras oficiales de daños consulta INDECI; para salud, el Minsa y la OPS.</p>
+      <p class="cmc-nota">Una anomalía alta no repite por sí sola los daños de otros años: también importan las lluvias, la exposición y la preparación. Consulta <a href="https://www.senamhi.gob.pe/?p=fenomeno-el-nino" target="_blank" rel="noopener noreferrer">SENAMHI: lluvias y El Niño ↗</a> y <a href="https://www.paho.org/es/temas/el-nino" target="_blank" rel="noopener noreferrer">OPS/PAHO: efectos en salud ↗</a>. Para cifras de daños, consulta INDECI.</p>
     </section>
     <section class="cmc-card cmc-src" id="cmc-fuentes" aria-labelledby="cmc-src-h">
-      <div class="cmc-card-head"><h3 id="cmc-src-h">Fuentes y trazabilidad</h3><span class="cmc-chip" id="cmc-src-resumen">Comprobando…</span></div>
-      <p class="cmc-sub">Estado de la última consulta automática a cada portal oficial. Abre el portal para verificar.</p>
+      <div class="cmc-card-head"><h3 id="cmc-src-h"><span class="cmc-index">04</span> Fuentes y trazabilidad</h3><span class="cmc-chip" id="cmc-src-resumen">Comprobando…</span></div>
+      <p class="cmc-sub">Trazabilidad de las consultas guardadas, no conexión en vivo. Las referencias sin descarga automática se identifican por separado.</p>
       <ul class="cmc-matriz" id="cmc-matriz"></ul>
     </section>
   </div>
+  <footer class="cmc-footer"><span>OBSERVAR · COMPRENDER · PREPARARSE</span><p>Información para anticiparse. Sigue los avisos de SENAMHI y las indicaciones de las autoridades de tu localidad.</p><a href="#preparacion">Preparar mi plan familiar <span aria-hidden="true">↗</span></a></footer>
 </section>
 <section id="un-minuto" class="un-minuto" aria-labelledby="un-minuto-title">
   <div class="um-copy">

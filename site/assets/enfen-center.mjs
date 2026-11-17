@@ -13,7 +13,7 @@ const hora = (iso) => iso ? new Intl.DateTimeFormat('es-PE', { day: 'numeric', m
 
 /* Escala de magnitud de El Niño costero según el ICEN (ENFEN, nota técnica 01-2012). */
 const ESCALA = [
-  { id: 'neutro', n: 'Neutro', r: 'menor a +0,4 °C', min: -Infinity, max: 0.4, d: 'El mar frente al Perú está dentro de lo normal para la época. No hay un evento El Niño costero.' },
+  { id: 'neutro', n: 'Neutro', r: 'menor a +0,4 °C', min: -Infinity, max: 0.4, d: 'Este tramo resume valores por debajo del umbral cálido. También puede incluir condiciones frías: no permite declarar neutralidad ni descartar un evento. La clasificación oficial corresponde al ICEN de ENFEN.' },
   { id: 'debil', n: 'Cálido débil', r: '+0,4 a +1,0 °C', min: 0.4, max: 1.0, d: 'El mar está algo más caliente que lo normal. Puede haber cambios en la pesca y algunas lluvias fuera de temporada.' },
   { id: 'moderado', n: 'Moderado', r: '+1,0 a +1,7 °C', min: 1.0, max: 1.7, d: 'Calentamiento claro. Aumenta la posibilidad de lluvias por encima de lo normal en la costa norte.' },
   { id: 'fuerte', n: 'Fuerte', r: '+1,7 a +3,0 °C', min: 1.7, max: 3.0, d: 'Calentamiento intenso. En eventos fuertes, como 2017, hubo lluvias intensas, huaicos y desbordes en la costa norte y centro.' },
@@ -75,9 +75,9 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
     const nivel = /fin de (la )?alerta/.test(t) ? 'fin' : /no activ/.test(t) ? 'no-activo' : /vigilancia/.test(t) ? 'vigilancia' : /alerta/.test(t) ? 'alerta' : 'sin-dato';
     $('cmc-estado').dataset.nivel = nivel;
     const sig = {
-      alerta: 'En palabras simples: ENFEN considera que El Niño costero ya empezó y que seguirá en los próximos meses. Es momento de prepararse, no de alarmarse.',
-      vigilancia: 'En palabras simples: ENFEN ve probable que se forme El Niño costero. Todavía no empieza; conviene informarse y revisar tu plan familiar.',
-      'no-activo': 'En palabras simples: ENFEN no ve un evento El Niño costero en curso.',
+      alerta: 'ENFEN ha activado la alerta para el evento costero indicado arriba. Revisa los avisos para tu localidad y tu plan familiar: la alerta no significa que haya una inundación en tu distrito.',
+      vigilancia: 'ENFEN mantiene en vigilancia el posible desarrollo del evento costero indicado arriba. Infórmate y revisa tu plan familiar; consulta el comunicado para conocer el horizonte previsto.',
+      'no-activo': 'El sistema de alerta ENFEN está no activo según el comunicado publicado. Mantente al tanto de los avisos meteorológicos de tu localidad.',
       fin: 'En palabras simples: ENFEN da por terminado el evento. Pueden quedar efectos, como lluvias o daños por atender.',
       'sin-dato': '',
     }[nivel];
@@ -92,7 +92,7 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
   const ult = m.at(-1), prev = m.at(-2);
   if (ult && prev) {
     const d = ult.nino12_anomaly - prev.nino12_anomaly;
-    $('cmc-cambio').innerHTML = `<b>Qué cambió en el mar:</b> la anomalía mensual frente a la costa (Niño 1+2) pasó de ${signed(prev.nino12_anomaly, 2)} °C en ${esc(mes(prev.date))} a ${signed(ult.nino12_anomaly, 2)} °C en ${esc(mes(ult.date))}: ${Math.abs(d) < 0.1 ? 'se mantuvo' : d > 0 ? 'se calentó ' + num(d, 2) + ' °C más' : 'se enfrió ' + num(-d, 2) + ' °C'}. Fuente: NOAA CPC. El cambio en el diagnóstico oficial se explica en el comunicado.`;
+    $('cmc-cambio').innerHTML = `<b>Respecto al informe anterior:</b> no hay un diagnóstico anterior estructurado para comparar. <b>En el mar:</b> la anomalía mensual frente a la costa (Niño 1+2) pasó de ${signed(prev.nino12_anomaly, 2)} °C en ${esc(mes(prev.date))} a ${signed(ult.nino12_anomaly, 2)} °C en ${esc(mes(ult.date))}: ${Math.abs(d) < 0.1 ? 'se mantuvo' : d > 0 ? 'se calentó ' + num(d, 2) + ' °C más' : 'se enfrió ' + num(-d, 2) + ' °C'}. Fuente: NOAA CPC. El cambio en el diagnóstico oficial se explica en el comunicado.`;
   }
 
   /* Escala de magnitud con selector de trimestre observado (promedio de tres meses publicados). */
@@ -108,14 +108,14 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
     const actual = t ? nivelDe(t.prom) : null;
     escala.innerHTML = ESCALA.map((x) => {
       const on = actual && actual.id === x.id;
-      const ancho = on ? Math.max(8, Math.min(100, (Math.min(t.prom, 6) / 6) * 100)) : 100;
-      return `<li class="cmc-n cmc-n-${x.id}${on ? ' on' : ''}"><button type="button" aria-expanded="false" aria-controls="cmc-d-${x.id}">` +
+      const ancho = on ? Math.max(0, Math.min(100, (t.prom / 6) * 100)) : 0;
+      return `<li class="cmc-n cmc-n-${x.id}${on ? ' on' : ''}"><button type="button" aria-expanded="false" aria-controls="cmc-d-${x.id}" title="${esc(x.d)}">` +
         `<span class="cmc-n-top"><b>${x.n}</b><span>${x.r}</span>${on ? `<strong>${signed(t.prom, 2)} °C</strong>` : ''}</span>` +
-        `<span class="cmc-bar-t"><span class="cmc-bar-f" style="width:${on ? ancho : 0}%"></span></span></button>` +
+        `<span class="cmc-bar-t"><span class="cmc-bar-f" style="width:${ancho}%"></span></span></button>` +
         `<p class="cmc-n-d" id="cmc-d-${x.id}" hidden>${x.d}</p></li>`;
     }).join('');
     $('cmc-esc-nota').innerHTML = t
-      ? `Promedio de las anomalías mensuales Niño 1+2 de ${t.meses.map((r) => esc(mes(r.date))).join(', ')} (NOAA CPC, OISST): ${signed(t.prom, 2)} °C. Es una referencia orientativa: la magnitud oficial la define ENFEN con el ICEN, calculado con otra serie (ERSST).`
+      ? `Promedio de las anomalías mensuales Niño 1+2 de ${t.meses.map((r) => esc(mes(r.date))).join(', ')} (NOAA CPC, OISST): ${signed(t.prom, 2)} °C. Longitud de barra: anomalía sobre una escala de 0 a +6 °C, no probabilidad. Es una referencia orientativa: la magnitud oficial la define ENFEN con el ICEN, calculado con otra serie (ERSST).`
       : 'No hay meses publicados suficientes para calcular el trimestre.';
   };
   sel.addEventListener('change', pintarEscala);
@@ -125,8 +125,12 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
     b.setAttribute('aria-expanded', String(!open)); d.hidden = open;
   });
   pintarEscala();
-  const doc = $('enfen-documento')?.href || 'https://enfen.imarpe.gob.pe/comunicados/';
-  $('cmc-prob').innerHTML = `<p><b>Probabilidades por magnitud:</b> ENFEN las publica en la tabla de su comunicado para los próximos meses. Este observatorio aún no las convierte en datos porque vienen como imagen en el PDF; para no inventar cifras, consúltalas en el documento.</p><a class="cmc-link" href="${esc(doc)}" target="_blank" rel="noopener noreferrer">Ver la tabla en el comunicado oficial ↗</a>`;
+  // El PDF no ofrece probabilidades estructuradas: nunca convertir ausencia en 0 %.
+  $('cmc-prob').innerHTML = `<div class="cmc-prob-head"><div><span class="cmc-eyebrow">PERSPECTIVA OFICIAL</span><h4>¿Qué podría pasar en los próximos meses?</h4></div><span class="cmc-chip">Consultar PDF</span></div><p>Los horizontes y porcentajes exactos están en la tabla del comunicado ENFEN. No están disponibles como datos estructurados en esta aplicación.</p><div class="cmc-prob-levels">${ESCALA.map(x => `<span class="cmc-n cmc-n-${x.id}"><i aria-hidden="true"></i>${x.n}<b aria-label="Porcentaje no disponible">—</b></span>`).join('')}</div><a id="cmc-prob-doc" class="cmc-link" target="_blank" rel="noopener noreferrer">Ver horizontes y probabilidades oficiales ↗</a>`;
+  const enlace = $('enfen-documento');
+  const syncDoc = () => { $('cmc-prob-doc').href = enlace?.href || 'https://enfen.imarpe.gob.pe/comunicados/'; };
+  syncDoc();
+  if (enlace) new MutationObserver(syncDoc).observe(enlace, { attributes: true, attributeFilter: ['href'] });
 
   const u34 = (mensual?.data || []).filter((r) => r.nino34_anomaly != null).at(-1);
   $('cmc-mapa').innerHTML = mapa(ult?.nino12_anomaly ?? null, u34?.nino34_anomaly ?? null, ult ? mes(ult.date) : '');
@@ -149,7 +153,7 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
     kpi('nv-info', 'Calor sub-superficial (ondas Kelvin)', 'Ver informe', tec ? `Informe técnico ENFEN al ${esc(fecha(tec.reference_date))}` : 'Informe técnico ENFEN',
       '<p class="cmc-kpi-x">Las ondas Kelvin llevan agua caliente bajo la superficie hacia la costa. ENFEN las analiza en su informe técnico; no hay una serie numérica descargable que este observatorio pueda graficar.</p>',
       `<a href="${esc(tec?.url || 'https://enfen.imarpe.gob.pe/')}" target="_blank" rel="noopener noreferrer">Abrir informe técnico ↗</a>`),
-    kpi(racha >= 12 ? 'nv-extra' : racha >= 4 ? 'nv-moderado' : 'nv-neutro', 'Persistencia sobre el umbral', `${racha} ${racha === 1 ? 'semana' : 'semanas'}`,
+    kpi(racha >= 12 ? 'nv-extra' : racha >= 4 ? 'nv-moderado' : 'nv-neutro', 'Persistencia sobre el umbral', s.length ? `${racha} ${racha === 1 ? 'semana' : 'semanas'}` : 'Sin dato',
       'seguidas con Niño 1+2 en +0,4 °C o más', spark(s16.map((r) => r.nino12_anomaly), { umbral: 0.4, label: 'Últimas 16 semanas Niño 1+2' }),
       s.at(-1) ? `Semanal · última: ${esc(fecha(s.at(-1).date))} (${signed(s.at(-1).nino12_anomaly, 1)} °C) · NOAA CPC` : 'NOAA CPC'),
   ].join('');
@@ -163,7 +167,7 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
   const hoyD = new Date((ult?.date || '2026-01-01') + 'T12:00:00Z'); hoyD.setUTCMonth(hoyD.getUTCMonth() - 11);
   const pAct = pico(hoyD.toISOString().slice(0, 10), ult?.date || '');
   const ev = [
-    { cls: 'ahora', k: 'Ahora', t: pAct ? `${pAct.date.slice(0, 4)}` : 'Evento actual', p: pAct, imp: [['Señal', `Mayor anomalía mensual de los últimos 12 meses: ${pAct ? esc(mes(pAct.date)) : 'sin dato'}.`], ['Qué vigilar', 'Lluvias en la costa norte y centro, quebradas activas y avisos de SENAMHI.'], ['Salud', 'Dengue y enfermedades por agua: elimina criaderos y sigue al Minsa.']] },
+    { cls: 'ahora', k: 'Últimos 12 meses', t: pAct ? `${pAct.date.slice(0, 4)}` : 'Evento actual', p: pAct, imp: [['Señal', `Mayor anomalía mensual de los últimos 12 meses: ${pAct ? esc(mes(pAct.date)) : 'sin dato'}.`], ['Qué vigilar', 'Lluvias en la costa norte y centro, quebradas activas y avisos de SENAMHI.'], ['Salud', 'Dengue y enfermedades por agua: elimina criaderos y sigue al Minsa.']] },
     { cls: 'e17', k: 'Niño costero 2017', t: 'Magnitud fuerte (ENFEN)', p: p17, imp: [['Lluvias', 'Lluvias intensas de enero a marzo en la costa norte y centro; desbordes del río Piura y huaicos que llegaron a Lima.'], ['Infraestructura', 'Daños en viviendas, carreteras y puentes, y cortes de agua potable.'], ['Salud', 'Brote de dengue en el norte, sobre todo en Piura.']] },
     { cls: 'e97', k: 'El Niño 1997-98', t: 'Magnitud extraordinaria (ENFEN)', p: p97, imp: [['Lluvias', 'Meses de lluvias extremas en Tumbes y Piura; ríos desbordados y lagunas temporales en el desierto.'], ['Infraestructura', 'Cientos de kilómetros de carreteras y numerosos puentes dañados; pérdidas en agricultura y pesca.'], ['Salud', 'Aumento de enfermedades transmitidas por agua y vectores, como la malaria en la costa norte.']] },
   ];
@@ -179,7 +183,7 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
     if (!fs.length) return { c: 'ref', t: 'Referencia', d: 'Portal de consulta; no se descarga automáticamente.' };
     const ok = fs.filter((f) => f.last_success && !f.error);
     const ultima = fs.map((f) => f.last_success).filter(Boolean).sort().at(-1);
-    if (ok.length === fs.length) return { c: 'ok', t: 'Conectado', d: 'Última consulta válida: ' + hora(ultima) };
+    if (ok.length === fs.length) return { c: 'ok', t: 'Consulta válida', d: 'Última consulta válida: ' + hora(ultima) };
     if (ultima) return { c: 'warn', t: 'Dato conservado', d: 'La última consulta falló; se muestra el dato válido del ' + hora(ultima) };
     return { c: 'bad', t: 'Sin datos', d: 'No hay una consulta válida.' };
   };
@@ -195,7 +199,7 @@ function render({ manifest, mensual, semanal, tecnico, noaaDisc }) {
   ];
   const filas = portales.map(([n, d, u, ids]) => ({ n, d, u, e: estado(ids) }));
   const con = filas.filter((f) => f.e.c === 'ok').length, auto = filas.filter((f) => f.e.c !== 'ref').length;
-  $('cmc-src-resumen').textContent = `${con} de ${auto} conectadas`;
+  $('cmc-src-resumen').textContent = `${con}/${auto} consultas válidas`;
   $('cmc-matriz').innerHTML = filas.map((f) => `<li class="cmc-src-${f.e.c}"><a href="${esc(f.u)}" target="_blank" rel="noopener noreferrer"><span class="cmc-src-n">${f.n}</span><span class="cmc-src-d">${f.d}</span></a>` +
     `<span class="cmc-pill" title="${esc(f.e.d)}">${f.e.t}</span><span class="cmc-src-t">${esc(f.e.d)}</span></li>`).join('');
   if (noaaDisc?.data?.[0]) {
