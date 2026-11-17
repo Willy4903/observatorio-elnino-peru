@@ -83,6 +83,10 @@ PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium node tests/panorama.e2e.cj
 
 El workflow de validación visual prepara Playwright y Chromium sin añadir dependencias al sitio estático.
 
+## Centro de monitoreo ENFEN (`#estado-enfen`)
+
+Cuatro tarjetas: escenarios y magnitudes (barras trimestrales de la anomalía Niño 1+2 observada por NOAA CPC sobre la escala ENFEN, y mapa en canvas con el campo OISST y los departamentos CENEPRED), pulso del océano (cuatro indicadores con series reales), histórico comparativo (2026, 2017 y 1997-98 con la misma escala vertical) y fuentes con el estado real de cada consulta. Estilos en `site/assets/enfen-dashboard.css`, marcado en `site/index.html` y lógica en `site/assets/enfen-center.mjs`. No se muestran probabilidades futuras, cifras de daños ni estados «en vivo» que las fuentes no publiquen como datos estructurados; para eso se enlaza el comunicado oficial. Prueba: `node tests/enfen.e2e.cjs` (requiere `dist/`).
+
 ## ¿Qué es El Niño? · Experiencia interactiva (`#que-es`)
 
 Sección educativa para todos los públicos, pensada para el aula y para compartir. Estética «Cyber-Science»: fondo `#0A0E17` con degradados violeta y cian, tarjetas de cristal, Plus Jakarta Sans y Outfit. Archivos: marcado en `site/index.html`, estilos en `site/assets/que-es.css` (todo bajo `#que-es`, prefijo `qe-`) y comportamiento en `site/assets/que-es.mjs`.

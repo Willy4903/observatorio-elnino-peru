@@ -1,0 +1,135 @@
+/* Tablero del centro de monitoreo (#estado-enfen): barras de magnitud por trimestre, mapa del mar frente al Perú,
+   indicadores con tendencia, histórico comparativo y panel de fuentes. Prefijo cmx-.
+   Se carga después de enfen-center.css y solo reemplaza la presentación de las tarjetas 01 a 04.
+   Las tarjetas usan consultas de contenedor, así que se adaptan al ancho disponible y no solo al de la pantalla. */
+
+#main #estado-enfen.cmc .cmc-grid{align-items:stretch;gap:20px;grid-template-columns:minmax(0,62fr) minmax(0,38fr)}
+#main #estado-enfen.cmc .cmc-grid-b{grid-template-columns:minmax(0,62fr) minmax(0,38fr)}
+#main #estado-enfen.cmc .cmc-card{container-type:inline-size;display:flex;flex-direction:column;padding:22px;border-radius:16px;background:linear-gradient(145deg,#111c30,#0e1627);border:1px solid var(--c-line)}
+#main #estado-enfen.cmc .cmc-card-head h3{font-size:1.1rem;line-height:1.35}
+#main #estado-enfen.cmc .cmc-sub{margin:0 0 16px;font-size:.86rem;line-height:1.6;color:#b4c1d6}
+#main #estado-enfen.cmc .cmc-nota{margin:14px 0 0;font-size:.76rem;line-height:1.6;color:#9baac0}
+
+/* ---------- 01 · Escenarios y magnitudes ---------- */
+.cmx-esc-body{display:grid;grid-template-columns:minmax(0,1fr);gap:20px}
+@container (min-width:600px){.cmx-esc-body{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);align-items:start}}
+.cmx-tri-wrap{--per:5.9rem;--gp:12px;min-width:0}
+.cmx-tri{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cmx-row{display:grid;grid-template-columns:var(--per) minmax(0,1fr);gap:var(--gp);align-items:center}
+.cmx-per{display:grid;gap:2px;font:700 .72rem/1.25 var(--c-body);letter-spacing:.04em;text-transform:uppercase;color:#b4c1d6;font-variant-numeric:tabular-nums}
+.cmx-per em{font-style:normal;font-size:.62rem;letter-spacing:.08em;color:#67e8f9}
+.cmx-track{position:relative;display:block;height:34px;border-radius:9px;overflow:hidden;border:1px solid var(--c-line);
+  background:linear-gradient(90deg,rgba(34,211,238,.1) 0 6.67%,rgba(245,158,11,.1) 6.67% 16.67%,rgba(249,115,22,.1) 16.67% 28.33%,rgba(239,68,68,.1) 28.33% 50%,rgba(220,38,38,.15) 50% 100%),#0b1527}
+.cmx-fill{position:absolute;inset:0 auto 0 0;border-radius:inherit;background:linear-gradient(90deg,color-mix(in srgb,var(--k) 42%,#0b1527),var(--k));box-shadow:0 0 20px -6px var(--k)}
+.cmx-lab{position:absolute;inset:0;display:flex;align-items:center;gap:6px;padding:0 11px;overflow:hidden;white-space:nowrap;font:600 .82rem var(--c-body);font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.cmx-lab b{font-weight:800}
+.cmx-row.is-last .cmx-track{border-color:var(--k);box-shadow:0 0 0 1px color-mix(in srgb,var(--k) 55%,transparent),0 0 24px -10px var(--k)}
+.cmx-vacio{padding:14px;border:1px dashed var(--c-line2);border-radius:10px;color:var(--c-tx2);font-size:.84rem}
+.cmx-axis{list-style:none;margin:8px 0 0 calc(var(--per) + var(--gp));padding:0;position:relative;height:16px}
+.cmx-axis li{position:absolute;top:0;transform:translateX(-50%);font:600 .68rem var(--c-body);color:var(--c-tx3);font-variant-numeric:tabular-nums}
+.cmx-axis li:first-child{transform:none}
+.cmx-axis li:last-child{transform:translateX(-100%)}
+.cmx-key{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px 14px}
+.cmx-key li{display:flex;align-items:center;gap:6px;font-size:.76rem;color:var(--c-tx2);font-variant-numeric:tabular-nums}
+.cmx-key i{width:10px;height:10px;border-radius:3px;background:var(--k);flex:none}
+.cmx-key b{color:#fff;font-weight:700}
+.cmx-key span{color:var(--c-tx3)}
+@container (max-width:440px){
+  .cmx-row{grid-template-columns:minmax(0,1fr);gap:4px}
+  .cmx-per{grid-auto-flow:column;justify-content:start;align-items:baseline;gap:8px}
+  .cmx-axis{margin-left:0}
+}
+
+.cmx-map{margin:0;min-width:0}
+.cmx-lienzo{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--c-line);background:#071a2e}
+.cmx-lienzo canvas{display:block;width:100%;touch-action:manipulation;cursor:crosshair}
+.cmx-tip{position:absolute;transform:translate(-50%,-100%);padding:4px 9px;border-radius:7px;background:rgba(6,12,24,.94);border:1px solid var(--c-line2);color:#fff;font:600 .74rem var(--c-body);font-variant-numeric:tabular-nums;white-space:nowrap;pointer-events:none}
+.cmx-leyenda{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px;font:600 .7rem var(--c-body);color:var(--c-tx3)}
+.cmx-leyenda i{display:block;height:8px;border-radius:99px}
+#main #estado-enfen.cmc .cmx-map figcaption{margin-top:8px;font-size:.72rem;line-height:1.55;color:#9baac0}
+#main #estado-enfen.cmc .cmx-map svg{width:100%;height:auto;min-height:0;border-radius:12px}
+
+.cmx-read{display:flex;gap:12px;align-items:flex-start;margin-top:18px;padding:12px 14px;border-radius:12px;border:1px solid var(--c-line);background:rgba(255,255,255,.03)}
+.cmx-read:empty{display:none}
+.cmx-read-k{flex:none;padding:6px 11px;border-radius:999px;background:color-mix(in srgb,var(--k) 24%,transparent);border:1px solid var(--k);color:#fff;font:800 .7rem/1 var(--c-body);letter-spacing:.05em;text-transform:uppercase}
+.cmx-read p{margin:0;font-size:.84rem;line-height:1.55;color:var(--c-tx2)}
+.cmx-read b{color:#fff}
+@container (max-width:460px){.cmx-read{flex-direction:column;gap:8px}}
+
+#main #estado-enfen.cmc .cmc-prob{margin-top:16px;padding:0;border:0;background:none}
+.cmx-prob{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center;padding:14px 16px;border:1px dashed var(--c-line2);border-radius:12px;background:rgba(255,255,255,.02)}
+.cmx-prob-ic svg{display:block;width:34px;height:34px;fill:none;stroke:#67e8f9;stroke-width:1.8;stroke-linecap:round}
+.cmx-prob h4{margin:2px 0 4px;font-size:.95rem;line-height:1.35}
+.cmx-prob p{margin:0;font-size:.8rem;line-height:1.55;color:var(--c-tx2)}
+#main #estado-enfen.cmc .cmx-btn{grid-column:1/-1;justify-self:start;display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:8px;border:1px solid rgba(103,232,249,.5);background:rgba(6,182,212,.1);color:#e6faff;font:700 .8rem var(--c-body);text-decoration:none}
+#main #estado-enfen.cmc .cmx-btn:hover{background:rgba(6,182,212,.2)}
+@container (min-width:640px){.cmx-prob{grid-template-columns:auto minmax(0,1fr) auto}#main #estado-enfen.cmc .cmx-btn{grid-column:auto}}
+
+/* ---------- 02 · El pulso del océano ---------- */
+.cmx-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:1fr;gap:12px;flex:1}
+@container (max-width:360px){.cmx-kpis{grid-template-columns:minmax(0,1fr)}}
+#main #estado-enfen.cmc .cmx-kpi{--k:var(--c-cyan);position:relative;display:flex;flex-direction:column;gap:2px;min-width:0;overflow:hidden;padding:14px;border-radius:14px;
+  background:linear-gradient(160deg,#16223a,#101a2e);border:1px solid var(--c-line);border-top:1px solid color-mix(in srgb,var(--k) 60%,transparent)}
+#main #estado-enfen.cmc .cmx-kpi h4{margin:0;min-height:2.7em;font-size:.7rem!important;line-height:1.35!important;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#b6c4d7!important}
+#main #estado-enfen.cmc .cmx-kpi .cmx-v{display:flex;align-items:center;gap:8px;margin:4px 0 0;font:800 clamp(1.45rem,2.3vw,1.95rem)/1.1 var(--c-head);letter-spacing:-.03em;color:var(--k);font-variant-numeric:tabular-nums}
+.cmx-v small{font:700 .8rem var(--c-body);letter-spacing:0;color:var(--c-tx2)}
+.cmx-arrow{flex:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.cmx-arrow.down{color:#34d399}
+.cmx-arrow.flat{color:var(--c-tx2)}
+#main #estado-enfen.cmc .cmx-kpi .cmx-d{margin:2px 0 0;font-size:.76rem;line-height:1.45;color:var(--c-tx2);font-variant-numeric:tabular-nums}
+#main #estado-enfen.cmc .cmx-kpi .cmx-x{margin:4px 0 6px;font-size:.72rem;line-height:1.5;color:var(--c-tx2)}
+#main #estado-enfen.cmc .cmx-kpi .cmx-f{margin:auto 0 0;padding-top:8px;border-top:1px solid var(--c-line);font-size:.68rem;line-height:1.5;color:#9baac0}
+.cmx-f a{font-weight:700}
+#main #estado-enfen.cmc .cmx-kpi .cmx-spark{display:block;flex:1 1 50px;width:100%;height:auto;min-height:50px;margin:8px 0 6px;color:var(--k)}
+.cmx-kpi.nv-neutro{--k:var(--c-cyan)}
+.cmx-kpi.is-hot{border-color:#ef4444!important;background:linear-gradient(160deg,#2a1622,#101a2e)!important;box-shadow:0 0 0 1px rgba(239,68,68,.5),0 0 30px -10px #ef4444}
+.cmx-kelvin .cmx-v span{font-size:1.2rem;color:#a5b4fc}
+.cmx-kelvin-art{display:block;width:100%;height:auto;margin:6px 0 2px}
+
+/* ---------- 03 · Histórico comparativo ---------- */
+.cmx-ev-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;flex:1}
+@container (min-width:640px){.cmx-ev-grid{grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch}}
+#main #estado-enfen.cmc .cmx-ev{display:flex;flex-direction:column;gap:6px;padding:14px;border-radius:14px;background:linear-gradient(170deg,#16223a,#101a2e);border:1px solid var(--c-line);border-top:3px solid var(--k)}
+#main #estado-enfen.cmc .cmx-ev.ahora{border-color:var(--k);background:linear-gradient(170deg,color-mix(in srgb,var(--k) 16%,#16223a),#101a2e 72%);box-shadow:0 0 0 1px color-mix(in srgb,var(--k) 45%,transparent),0 0 32px -14px var(--k)}
+.cmx-ev header{display:grid;gap:2px}
+.cmx-ev header span{color:var(--k);font:800 .68rem/1.25 var(--c-body);letter-spacing:.08em;text-transform:uppercase}
+.cmx-ev header b{display:block;color:#fff;font:700 .92rem/1.3 var(--c-head)}
+.cmx-curve{position:relative;height:96px;margin:6px 0 2px;color:var(--k);border-radius:10px;border:1px solid var(--c-line);background:rgba(255,255,255,.025);overflow:hidden}
+.cmx-curve svg{position:absolute;inset:0;width:100%;height:100%}
+.cmx-curve-vacia{display:grid;place-items:center;font-size:.76rem;color:var(--c-tx3)}
+.cmx-linea{fill:none;stroke:var(--k);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.cmx-cero{stroke:rgba(255,255,255,.2);vector-effect:non-scaling-stroke}
+.cmx-umbral{stroke:rgba(255,255,255,.38);stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.cmx-pico{position:absolute;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:#fff;border:2px solid var(--k);box-shadow:0 0 0 4px color-mix(in srgb,var(--k) 28%,transparent)}
+#main #estado-enfen.cmc .cmx-ev .cmx-ev-v{margin:4px 0 0;font:800 1.7rem/1 var(--c-head);letter-spacing:-.03em;color:var(--k);font-variant-numeric:tabular-nums}
+#main #estado-enfen.cmc .cmx-ev .cmx-ev-s{margin:0;font-size:.74rem;line-height:1.45;color:#9baac0}
+.cmx-ev-stats{list-style:none;margin:6px 0 0;padding:8px 0 0;border-top:1px solid var(--c-line);display:grid;gap:4px;font-size:.78rem;line-height:1.4;color:var(--c-tx2)}
+.cmx-ev-stats b{color:#fff;font-variant-numeric:tabular-nums}
+.cmx-ev-d summary{display:flex;align-items:center;min-height:44px;cursor:pointer;color:#7dd3fc;font:700 .78rem var(--c-body)}
+.cmx-ev-d dl{margin:0 0 4px;display:grid;gap:8px}
+.cmx-ev-d dt{font:700 .66rem/1.2 var(--c-body);letter-spacing:.06em;text-transform:uppercase;color:#8ca2bc}
+.cmx-ev-d dd{margin:2px 0 0;font-size:.78rem;line-height:1.5;color:var(--c-tx2)}
+
+/* ---------- 04 · Fuentes y trazabilidad ---------- */
+.cmx-src{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@container (min-width:560px){.cmx-src{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container (max-width:330px){.cmx-src{grid-template-columns:minmax(0,1fr)}}
+#main #estado-enfen.cmc .cmx-src>li{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;padding:12px;border-radius:12px;background:linear-gradient(170deg,#16223a,#101a2e);border:1px solid var(--c-line)}
+.cmx-tile{display:flex;align-items:center;gap:10px;min-width:0;width:100%;min-height:44px;text-decoration:none}
+.cmx-mono{flex:none;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;font:800 .72rem var(--c-head);letter-spacing:.02em;color:#fff;background:linear-gradient(135deg,hsl(var(--h) 72% 44%),hsl(var(--h) 72% 28%));box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.cmx-tile-t{display:grid;gap:1px;min-width:0}
+#main #estado-enfen.cmc .cmx-src .cmc-src-n{font:800 .88rem/1.25 var(--c-head);color:#fff;overflow-wrap:anywhere}
+#main #estado-enfen.cmc .cmx-src .cmc-src-d{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;font-size:.68rem;line-height:1.4;color:var(--c-tx3)}
+#main #estado-enfen.cmc .cmx-src .cmc-pill{padding:5px 9px;font-size:.62rem;letter-spacing:.05em}
+#main #estado-enfen.cmc .cmx-src .cmc-src-t{font-size:.68rem;line-height:1.45;color:#9baac0}
+
+/* ---------- Pantallas estrechas ---------- */
+@media(max-width:900px){#main #estado-enfen.cmc .cmc-grid,#main #estado-enfen.cmc .cmc-grid-b{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:560px){#main #estado-enfen.cmc .cmc-card{padding:16px}}
+
+#main #estado-enfen.cmc .cmx-hist .cmc-nota,#main #estado-enfen.cmc .cmx-fuentes .cmc-nota{margin-top:auto;padding-top:14px}
+
+#main #estado-enfen.cmc .cmx-ev-grid{align-items:stretch}
+#main #estado-enfen.cmc .cmx-ev{align-self:stretch;height:auto}
+
+#main #estado-enfen.cmc .cmc-tag,#main #estado-enfen.cmc .cmc-eyebrow,#main #estado-enfen.cmc .cmc-index{font-size:.6875rem}
