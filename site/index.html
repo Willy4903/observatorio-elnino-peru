@@ -1,5 +1,6 @@
 <!doctype html>
 <html lang="es" class="dark" data-design="radar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="observatorio-version" content="__UI_VERSION__"><meta name="theme-color" content="#061522"><meta name="description" content="Entiende qué es El Niño, qué dice ENFEN, qué tiempo se espera en tu distrito y cómo prepararte. Datos oficiales con fechas y explicaciones sencillas."><title>El Niño Perú | Mar, tiempo y zonas de riesgo</title><link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="assets/vendor/tailwind.css"><link rel="stylesheet" href="assets/vendor/leaflet.css"><link rel="stylesheet" href="assets/reference.css"><link rel="stylesheet" href="assets/style.css"><link rel="stylesheet" href="assets/radar.css"><link rel="stylesheet" href="assets/simple.css"><link rel="stylesheet" href="assets/visual.css?v=4"><link rel="stylesheet" href="assets/ocean-theme.css?v=1"><link rel="stylesheet" href="assets/pathways-enhance.css?v=1"><link rel="stylesheet" href="assets/panorama.css"><link rel="stylesheet" href="assets/ciudadano.css"><link rel="stylesheet" href="assets/rediseno.css"><link rel="stylesheet" href="assets/enfen-center.css">
+<link rel="stylesheet" href="assets/enfen-dashboard.css">
 <link rel="stylesheet" href="assets/que-es.css"><script defer src="assets/vendor/leaflet.js"></script><script defer src="assets/vendor/chart.umd.js"></script><script type="module" src="assets/app.mjs"></script><script type="module" src="assets/publication.mjs"></script><script type="module" src="assets/appearance.mjs"></script><script type="module" src="assets/guide3d.mjs?v=1"></script><script type="module" src="assets/ocean-experience.mjs?v=1"></script><script type="module" src="assets/entrada.mjs"></script><script type="module" src="assets/enfen-center.mjs"></script>
 <script type="module" src="assets/que-es.mjs"></script></head><body id="top" class="min-h-screen flex flex-col selection:bg-cyan-500 selection:text-slate-950"><a class="skip" href="#main">Ir al contenido</a>
   <header class="radar-header">
@@ -82,36 +83,39 @@
   </div>
 
   <div class="cmc-grid">
-    <section class="cmc-card cmc-esc" aria-labelledby="cmc-esc-h">
-      <div class="cmc-card-head"><h3 id="cmc-esc-h"><span class="cmc-index">01</span> Escenarios y magnitudes</h3>
-        <label class="cmc-select"><span>Trimestre observado</span><select id="cmc-trimestre" aria-describedby="cmc-esc-nota"></select></label></div>
-      <p class="cmc-sub">Explora la señal observada y consulta las probabilidades futuras en el comunicado oficial. Son productos distintos.</p>
-      <div class="cmc-reading-key"><span>OBSERVACIÓN</span> Lo que ya se midió <span>PRONÓSTICO</span> Lo que podría ocurrir</div>
-      <div class="cmc-esc-body">
-        <ul class="cmc-escala" id="cmc-escala" aria-label="Escala de magnitud de El Niño costero"></ul>
-        <figure class="cmc-mapa" aria-labelledby="cmc-mapa-cap"><div id="cmc-mapa"></div><figcaption id="cmc-mapa-cap">Regiones Niño 1+2 (frente a la costa norte y centro del Perú) y Niño 3.4 (Pacífico central). Color según la última anomalía mensual NOAA.</figcaption></figure>
+    <section class="cmc-card cmx-esc cmc-esc" aria-labelledby="cmc-esc-h">
+      <div class="cmc-card-head"><h3 id="cmc-esc-h"><span class="cmc-index">01</span> Escenarios y magnitudes</h3><span class="cmc-chip">Observación · NOAA CPC</span></div>
+      <p class="cmc-sub">Cuánto se calentó el mar frente al Perú, trimestre a trimestre, y en qué magnitud de la escala de ENFEN cae. Las probabilidades futuras están en el comunicado oficial: son productos distintos.</p>
+      <div class="cmx-esc-body">
+        <div class="cmx-tri-wrap">
+          <ul class="cmx-tri" id="cmc-escala" aria-label="Magnitud observada por trimestre"></ul>
+          <ol class="cmx-axis" id="cmc-eje" aria-hidden="true"></ol>
+          <ul class="cmx-key" id="cmc-clave" aria-label="Escala de magnitud de El Niño costero"></ul>
+        </div>
+        <figure class="cmx-map cmc-mapa" aria-labelledby="cmc-mapa-cap"><div id="cmc-mapa"></div><figcaption id="cmc-mapa-cap">Cargando el campo de temperatura del mar…</figcaption></figure>
       </div>
+      <div class="cmx-read" id="cmc-lectura" aria-live="polite"></div>
       <p class="cmc-nota" id="cmc-esc-nota"></p>
       <div class="cmc-prob" id="cmc-prob"></div>
     </section>
-    <section class="cmc-card cmc-pulso" id="cmc-oceano" aria-labelledby="cmc-pulso-h">
+    <section class="cmc-card cmx-pulso cmc-pulso" id="cmc-oceano" aria-labelledby="cmc-pulso-h">
       <div class="cmc-card-head"><h3 id="cmc-pulso-h"><span class="cmc-index">02</span> El pulso del océano</h3><span class="cmc-chip">Factores críticos</span></div>
       <p class="cmc-sub">¿Qué está moviendo la señal? Datos publicados por NOAA y ENFEN, con su fecha.</p>
-      <div class="cmc-kpis" id="cmc-kpis"></div>
+      <div class="cmx-kpis cmc-kpis" id="cmc-kpis"></div>
     </section>
   </div>
 
   <div class="cmc-grid cmc-grid-b">
-    <section class="cmc-card cmc-hist" id="cmc-impactos" aria-labelledby="cmc-hist-h">
-      <div class="cmc-card-head"><h3 id="cmc-hist-h"><span class="cmc-index">03</span> Memoria climática del Perú</h3></div>
-      <p class="cmc-sub">La señal medida frente a dos eventos de referencia; no es una proyección de daños. La comparación usa la misma serie mensual de NOAA; cada evento tuvo impactos distintos.</p>
-      <div class="cmc-hist-g" id="cmc-hist"></div>
-      <p class="cmc-nota">Una anomalía alta no repite por sí sola los daños de otros años: también importan las lluvias, la exposición y la preparación. Consulta <a href="https://www.senamhi.gob.pe/?p=fenomeno-el-nino" target="_blank" rel="noopener noreferrer">SENAMHI: lluvias y El Niño ↗</a> y <a href="https://www.paho.org/es/temas/el-nino" target="_blank" rel="noopener noreferrer">OPS/PAHO: efectos en salud ↗</a>. Para cifras de daños, consulta INDECI.</p>
+    <section class="cmc-card cmx-hist cmc-hist" id="cmc-impactos" aria-labelledby="cmc-hist-h">
+      <div class="cmc-card-head"><h3 id="cmc-hist-h"><span class="cmc-index">03</span> Histórico comparativo</h3><span class="cmc-chip">Misma serie NOAA</span></div>
+      <p class="cmc-sub">La señal medida frente a dos eventos de referencia, con la misma escala vertical. No es una proyección de daños: cada evento tuvo impactos distintos.</p>
+      <div class="cmx-ev-grid cmc-hist-g" id="cmc-hist"></div>
+      <p class="cmc-nota">Una anomalía alta no repite por sí sola los daños de otros años: también importan las lluvias, la exposición y la preparación. Consulta <a href="https://www.senamhi.gob.pe/?p=fenomeno-el-nino" target="_blank" rel="noopener noreferrer">SENAMHI: lluvias y El Niño ↗</a> y <a href="https://www.paho.org/es/temas/el-nino" target="_blank" rel="noopener noreferrer">OPS/PAHO: efectos en salud ↗</a>. Para cifras de daños, consulta <a href="https://www.gob.pe/indeci" target="_blank" rel="noopener noreferrer">INDECI ↗</a>.</p>
     </section>
-    <section class="cmc-card cmc-src" id="cmc-fuentes" aria-labelledby="cmc-src-h">
+    <section class="cmc-card cmx-fuentes cmc-src" id="cmc-fuentes" aria-labelledby="cmc-src-h">
       <div class="cmc-card-head"><h3 id="cmc-src-h"><span class="cmc-index">04</span> Fuentes y trazabilidad</h3><span class="cmc-chip" id="cmc-src-resumen">Comprobando…</span></div>
       <p class="cmc-sub">Trazabilidad de las consultas guardadas, no conexión en vivo. Las referencias sin descarga automática se identifican por separado.</p>
-      <ul class="cmc-matriz" id="cmc-matriz"></ul>
+      <ul class="cmx-src cmc-matriz" id="cmc-matriz"></ul>
     </section>
   </div>
   <footer class="cmc-footer"><span>OBSERVAR · COMPRENDER · PREPARARSE</span><p>Información para anticiparse. Sigue los avisos de SENAMHI y las indicaciones de las autoridades de tu localidad.</p><a href="#preparacion">Preparar mi plan familiar <span aria-hidden="true">↗</span></a></footer>
