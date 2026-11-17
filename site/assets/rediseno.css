@@ -118,3 +118,24 @@ html{scroll-padding-top:84px}
 
 .um-list,.prep-list,#elnino-ciudadano .oc-effects{list-style:disc}
 .um-list li::marker,.prep-list li::marker,#elnino-ciudadano .oc-effects li::marker{color:var(--rd-cyan)}
+
+/* Lectura y decisiones: continuidad entre explicación, consulta y preparación. */
+#elnino-ciudadano .oc-intro{background:radial-gradient(ellipse at top right,#12617555,transparent 65%);border-radius:22px 22px 0 0}
+#elnino-ciudadano .oc-reading-nav a{border-radius:999px;text-decoration:none}
+#elnino-ciudadano .oc-card{border-top:3px solid #7fe0ee}
+#elnino-ciudadano .oc-card:nth-child(2){border-top-color:#f7c772}
+#elnino-ciudadano .oc-card:nth-child(3){border-top-color:#a6dcae}
+.guide-next,.guide-faq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:28px;padding:28px;border:1px solid var(--rd-line);border-radius:20px;background:#0b2236;color:var(--rd-text);min-width:0}
+.guide-next h2,.guide-faq h2{font-size:clamp(1.35rem,3vw,1.8rem);line-height:1.25;margin:8px 0 12px}
+.guide-next p,.guide-faq p{color:var(--rd-muted);line-height:1.7;margin:0}
+.guide-next-links{display:grid;gap:10px}
+.guide-next-links a{display:flex;flex-direction:column;gap:4px;padding:15px 18px;border:1px solid var(--rd-line);border-radius:12px;background:#0f2a40;color:var(--rd-text);font-weight:700;text-decoration:none;min-height:64px}
+.guide-next-links span{font-size:.78rem;font-weight:500;letter-spacing:.05em;color:var(--rd-cyan)}
+.guide-next-links a:hover{border-color:var(--rd-cyan);background:#15374d}
+.guide-faq details{border-bottom:1px solid var(--rd-line);padding:15px 0}
+.guide-faq details:first-child{padding-top:0}
+.guide-faq summary{cursor:pointer;min-height:44px;align-content:center;font-weight:650;line-height:1.5}
+.guide-faq details p{padding:10px 0 8px}
+.guide-faq a{color:var(--rd-cyan);text-underline-offset:3px}
+.guide-next a:focus-visible,.guide-faq summary:focus-visible{outline:3px solid var(--rd-cyan);outline-offset:4px}
+@media(max-width:760px){.guide-next,.guide-faq{grid-template-columns:1fr;padding:20px;gap:20px}}
