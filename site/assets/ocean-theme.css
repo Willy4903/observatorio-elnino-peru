@@ -91,7 +91,6 @@ body{
 }
 #main .visual-guide .guide-back-actions a:hover{background:#c3f3fb!important}
 #main #guia-contenido,
-#main #que-es,
 #main #preparacion,
 #main #estado-enfen,
 #main .citizen-questions,
@@ -103,7 +102,6 @@ body{
 }
 .citizen-kicker,
 #estado-enfen .kicker{color:var(--oceano-coral)!important}
-#main #que-es h2,
 #main #preparacion h2,
 #main #guia-contenido h2,
 #main #estado-enfen h2{
@@ -115,12 +113,6 @@ body{
 .guide-dossier-head p,
 #estado-enfen .citizen-enfen-heading>p{
   color:var(--oceano-muted)!important
-}
-#main #que-es{position:relative;isolation:isolate;overflow:hidden}
-#main #que-es::before{
-  content:"";position:absolute;right:-130px;top:-150px;width:410px;height:410px;
-  border-radius:50%;background:radial-gradient(circle,#3dd2df16,transparent 69%);
-  z-index:-1;pointer-events:none
 }
 .citizen-link,
 .citizen-primer-steps a,
@@ -391,7 +383,7 @@ body{
 #main .citizen-questions>summary:focus-visible{outline-offset:-3px}
 @media(max-width:760px){
   #main .visual-guide{border-radius:20px}
-  #main #que-es,#main #preparacion,#main #estado-enfen,#main #guia-contenido{
+  #main #preparacion,#main #estado-enfen,#main #guia-contenido{
     box-shadow:0 14px 33px -27px #000e!important
   }
   #main .citizen-review{padding:12px 13px}

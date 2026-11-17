@@ -286,10 +286,9 @@ html{scroll-padding-top:88px}
   color:#e7f4fd!important;font:500 .98rem/1.6 Inter,system-ui,sans-serif!important
 }
 #main .visual-guide{margin:14px auto 26px!important}
-#main #que-es,#main #preparacion,#main #detalle-tecnico{
+#main #preparacion,#main #detalle-tecnico{
   width:calc(100% - 36px);max-width:1260px;margin-left:auto;margin-right:auto
 }
-#main #que-es{margin-top:30px;margin-bottom:28px}
 .citizen-primer{
   border:1px solid #d9e7f1;border-radius:24px;padding:clamp(20px,3.8vw,40px);
   background:linear-gradient(132deg,#f5fbff 0%,#fff 64%);color:#14243b;
@@ -386,7 +385,7 @@ html{scroll-padding-top:88px}
 #main #ultimo{margin-top:18px}
 #main .workspace-heading a{color:#1e91c1;text-decoration:underline;text-underline-offset:3px}
 #main #panorama,#main #consulta,#main #glosario,#main #fuentes,
-#main #que-es,#main #preparacion,#main #detalle-tecnico{scroll-margin-top:90px}
+#main #preparacion,#main #detalle-tecnico{scroll-margin-top:90px}
 #main a:focus-visible,#main summary:focus-visible,.radar-header a:focus-visible{
   outline:3px solid #2b9edf!important;outline-offset:4px
 }
@@ -401,8 +400,7 @@ html{scroll-padding-top:88px}
   .citizen-primer-steps{grid-template-columns:1fr;gap:10px}
   .citizen-actions{grid-template-columns:1fr;gap:10px}
   .citizen-primer-steps li{padding:16px 17px}
-  #main #que-es,#main #preparacion,#main #detalle-tecnico{width:calc(100% - 22px)}
-  #main #que-es{margin-top:15px;margin-bottom:18px;padding:21px 17px;border-radius:17px}
+  #main #preparacion,#main #detalle-tecnico{width:calc(100% - 22px)}
   #main #preparacion{margin-top:16px;margin-bottom:20px;padding:21px 17px;border-radius:17px}
   .citizen-primer-intro>p,.citizen-preparation-heading p{font-size:.95rem;line-height:1.66}
   .citizen-primer-note{font-size:.82rem}
